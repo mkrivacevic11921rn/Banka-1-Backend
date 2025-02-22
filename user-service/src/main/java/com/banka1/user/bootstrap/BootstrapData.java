@@ -3,18 +3,21 @@ package com.banka1.user.bootstrap;
 import com.banka1.user.model.Employee;
 import com.banka1.user.model.helper.Department;
 import com.banka1.user.model.helper.Gender;
+import com.banka1.user.model.helper.Permission;
 import com.banka1.user.model.helper.Position;
 import com.banka1.user.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
+
 @Component
-public class BootstapData implements CommandLineRunner {
+public class BootstrapData implements CommandLineRunner {
     public final EmployeeRepository employeeRepository;
 
     @Autowired
-    public BootstapData(EmployeeRepository employeeRepository) {
+    public BootstrapData(EmployeeRepository employeeRepository) {
         this.employeeRepository = employeeRepository;
     }
 
@@ -38,6 +41,8 @@ public class BootstapData implements CommandLineRunner {
         admin.setAddress("Admin Address");
         admin.setSaltPassword("salt");
         admin.setUsername("admin123");
+
+        admin.setPermissions(Arrays.asList(Permission.CREATE_EMPLOYEE, Permission.READ_EMPLOYEE));
 
         employeeRepository.save(admin);
 
