@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
 @Aspect
 @Configuration
@@ -57,7 +58,7 @@ public class AuthAspect {
 
         Authorization authorization = method.getAnnotation(Authorization.class);
 
-        if(new HashSet<>(Arrays.asList(claims.get("permissions", String[].class))).equals(new HashSet<>(Arrays.asList(authorization.permissions())))) {
+        if(new HashSet<>(Arrays.asList(claims.get("permissions", String[].class))).equals(new HashSet<>(Arrays.stream(authorization.permissions()).map(String::valueOf).collect(Collectors.toList())))) {
             return joinPoint.proceed();
         }
 

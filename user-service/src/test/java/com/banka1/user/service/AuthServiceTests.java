@@ -60,7 +60,7 @@ public class AuthServiceTests {
         when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization" });
         when(joinPoint.getArgs()).thenReturn(new String[] { "Bearer ValidanToken" });
         when(authService.parseToken(notNull(String.class))).thenReturn(claims);
-        when(authorization.permissions()).thenReturn(new String[] { String.valueOf(Permission.READ_EMPLOYEE) });
+        when(authorization.permissions()).thenReturn(new Permission[] { Permission.READ_EMPLOYEE });
         when(method.getAnnotation(Authorization.class)).thenReturn(authorization);
         when(methodSignature.getMethod()).thenReturn(method);
 
@@ -75,7 +75,7 @@ public class AuthServiceTests {
         when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization" });
         when(joinPoint.getArgs()).thenReturn(new String[] { "Bearer ValidanToken" });
         when(authService.parseToken(notNull(String.class))).thenReturn(claims);
-        when(authorization.permissions()).thenReturn(new String[] { String.valueOf(Permission.CREATE_EMPLOYEE) });
+        when(authorization.permissions()).thenReturn(new Permission[] { Permission.CREATE_EMPLOYEE });
         when(method.getAnnotation(Authorization.class)).thenReturn(authorization);
         when(methodSignature.getMethod()).thenReturn(method);
 
