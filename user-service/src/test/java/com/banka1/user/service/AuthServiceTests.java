@@ -70,7 +70,7 @@ public class AuthServiceTests {
 
     @Test
     void authorizationTest_completelyValidToken() throws Throwable {
-        when(claims.get("permissions", String[].class)).thenReturn(new String[] { String.valueOf(Permission.CREATE_EMPLOYEE) });
+        when(claims.get("permissions", String[].class)).thenReturn(new String[] { String.valueOf(Permission.CREATE_EMPLOYEE), String.valueOf(Permission.READ_EMPLOYEE) });
         when(joinPoint.getSignature()).thenReturn(methodSignature);
         when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization" });
         when(joinPoint.getArgs()).thenReturn(new String[] { "Bearer ValidanToken" });

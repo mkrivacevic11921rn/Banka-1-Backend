@@ -9,15 +9,18 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
+/**
+ * Standardna implementacija {@link IAuthService} interfejsa.
+ */
 @Service
 public class AuthService implements IAuthService {
     @Value("${oauth.jwt.secret}")
     private String secret;
 
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        return Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret));
     }
 
     @Override
