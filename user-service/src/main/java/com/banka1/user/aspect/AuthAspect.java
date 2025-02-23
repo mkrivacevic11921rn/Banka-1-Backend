@@ -1,5 +1,7 @@
 package com.banka1.user.aspect;
 
+import com.banka1.user.model.helper.Permission;
+import com.banka1.user.model.helper.Position;
 import com.banka1.user.service.IAuthService;
 import io.jsonwebtoken.Claims;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -12,10 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Implementacija logike middleware-a za autorizaciju i autentifikaciju.
@@ -46,11 +47,11 @@ public class AuthAspect {
     }
 
     /**
-     * Pri pozivanju kontroler metode, proverava da li je njoj prosledjen validan auth header koji sadrži potrebne permisije na osnovu date {@link Authorization} anotacije.
+     * Pri pozivanju kontroler metode, proverava da li je njoj prosledjen validan auth header koji sadrži potrebne permisije i pozicije (ili poklapajući id) na osnovu date {@link Authorization} anotacije.
      * Ova metoda se ne treba eksplicitno pozivati van testova.
      */
     @Around("@annotation(com.banka1.user.aspect.Authorization)")
-    public Object checkPermissions(ProceedingJoinPoint joinPoint) throws Throwable {
+    public Object authorize(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         Method method = methodSignature.getMethod();
         String token = parseAuthToken(methodSignature.getParameterNames(), joinPoint.getArgs());
@@ -68,12 +69,24 @@ public class AuthAspect {
 
         Authorization authorization = method.getAnnotation(Authorization.class);
 
-        Set<String> necessaryPermissions = Arrays.stream(authorization.permissions()).map(String::valueOf).collect(Collectors.toSet());
+        Set<String> necessaryPermissions = Arrays.stream(authorization.permissions()).map(Permission::getPermission).collect(Collectors.toSet());
         Set<String> grantedPermissions = new HashSet<>(Arrays.asList(claims.get("permissions", String[].class)));
 
+        Set<String> possiblePositions = Arrays.stream(authorization.positions()).map(Position::getPosition).collect(Collectors.toSet());
+
         // Moguće je da korisnik ima i više permisija nego što je potrebno
-        if(grantedPermissions.containsAll(necessaryPermissions)) {
+        if(grantedPermissions.containsAll(necessaryPermissions) && (possiblePositions.size() == 0 || possiblePositions.contains(claims.get("position", String.class)))) {
             return joinPoint.proceed();
+        }
+
+        if(authorization.allowIdFallback()) {
+            OptionalInt maybeIdIndex = IntStream.range(0, methodSignature.getParameterNames().length).filter(i -> methodSignature.getParameterNames()[i].compareTo("id") == 0).findFirst();
+            if(maybeIdIndex.isPresent()) {
+                Long givenId = Long.parseLong(joinPoint.getArgs()[maybeIdIndex.getAsInt()].toString());
+                if (Objects.equals(claims.get("id", Long.class), givenId)) {
+                    return joinPoint.proceed();
+                }
+            }
         }
 
         return new ResponseEntity<>(HttpStatus.FORBIDDEN);
