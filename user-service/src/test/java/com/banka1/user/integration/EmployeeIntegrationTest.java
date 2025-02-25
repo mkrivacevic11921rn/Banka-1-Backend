@@ -59,7 +59,7 @@ class EmployeeIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true));
 
-        Employee employee = employeeRepository.findByEmail("petar@example.com");
+        Employee employee = employeeRepository.findByEmail("petar@example.com").orElse(null);
         assertNotNull(employee);
     }
 
