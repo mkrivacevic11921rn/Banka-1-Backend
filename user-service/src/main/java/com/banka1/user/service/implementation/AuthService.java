@@ -25,7 +25,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class AuthService implements IAuthService {
+public class
+AuthService implements IAuthService {
     @Value("${oauth.jwt.secret}")
     private String secret;
     @Value("${oauth.jwt.expiration}")
