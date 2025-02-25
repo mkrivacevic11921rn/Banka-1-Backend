@@ -2,7 +2,10 @@ package com.banka1.user.aspect;
 
 import com.banka1.user.model.helper.Permission;
 import com.banka1.user.model.helper.Position;
+import com.banka1.user.service.BlackListTokenService;
 import com.banka1.user.service.IAuthService;
+import com.banka1.user.utils.ResponseMessage;
+import com.banka1.user.utils.ResponseTemplate;
 import io.jsonwebtoken.Claims;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -28,9 +31,11 @@ import java.util.stream.IntStream;
 @EnableAspectJAutoProxy
 public class AuthAspect {
     private final IAuthService authService;
+    private final BlackListTokenService blackListTokenService;
 
-    public AuthAspect(IAuthService authService) {
+    public AuthAspect(IAuthService authService, BlackListTokenService blackListTokenService) {
         this.authService = authService;
+        this.blackListTokenService = blackListTokenService;
     }
 
     // Izvlači token iz prosledjenog autorizacionog parametra
@@ -40,8 +45,8 @@ public class AuthAspect {
             if(args[i] == null)
                 continue;
 
-            if(params[i].toLowerCase().compareTo("authorization") == 0 && args[i].toString().startsWith("Bearer"))
-                token = args[i].toString().split(" ")[1];
+            if(params[i].toLowerCase().compareTo("authorization") == 0)
+                token = authService.getToken(args[i].toString());
         }
         return token;
     }
@@ -58,21 +63,26 @@ public class AuthAspect {
 
         if(token == null) {
             // Token ne postoji, tj. korisnik nije ulogovan
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.UNAUTHORIZED), false, null, ResponseMessage.INVALID_LOGIN.toString());
+        }
+
+        if(blackListTokenService.isTokenBlacklisted(token)) {
+            // Token je blacklist-ovan
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.UNAUTHORIZED), false, null, ResponseMessage.INVALID_LOGIN.toString());
         }
 
         Claims claims = authService.parseToken(token);
         if(claims == null) {
             // Token postoji ali nije autentičan, verovatno je pokušaj neodobrenog pristupa
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.UNAUTHORIZED), false, null, ResponseMessage.INVALID_LOGIN.toString());
         }
 
         Authorization authorization = method.getAnnotation(Authorization.class);
 
-        Set<String> necessaryPermissions = Arrays.stream(authorization.permissions()).map(Permission::getPermission).collect(Collectors.toSet());
-        Set<String> grantedPermissions = new HashSet<>(Arrays.asList(claims.get("permissions", String[].class)));
+        Set<String> necessaryPermissions = Arrays.stream(authorization.permissions()).map(Permission::toString).collect(Collectors.toSet());
+        Set<String> grantedPermissions = new HashSet<>((List<String>) claims.get("permissions"));
 
-        Set<String> possiblePositions = Arrays.stream(authorization.positions()).map(Position::getPosition).collect(Collectors.toSet());
+        Set<String> possiblePositions = Arrays.stream(authorization.positions()).map(Position::toString).collect(Collectors.toSet());
 
         // Moguće je da korisnik ima i više permisija nego što je potrebno
         if(grantedPermissions.containsAll(necessaryPermissions) && (possiblePositions.size() == 0 || possiblePositions.contains(claims.get("position", String.class)))) {
@@ -89,6 +99,6 @@ public class AuthAspect {
             }
         }
 
-        return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        return ResponseTemplate.create(ResponseEntity.status(HttpStatus.FORBIDDEN), false, null, ResponseMessage.FORBIDDEN.toString());
     }
 }

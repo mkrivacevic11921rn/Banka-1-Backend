@@ -5,6 +5,7 @@ import lombok.Getter;
 @Getter
 public enum Position {
     // primer pozicija koje zaposleni mogu da imaju u banci
+    NONE("Nijedna"),
     DIRECTOR("Direktor"),
     MANAGER("Menadžer"),
     WORKER("Radnik");
@@ -13,5 +14,10 @@ public enum Position {
 
     Position(String position) {
         this.position = position;
+    }
+
+    @Override
+    public String toString() {
+        return getPosition();
     }
 }
