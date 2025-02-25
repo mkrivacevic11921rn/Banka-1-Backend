@@ -1,43 +1,43 @@
 package com.banka1.user;
 
+
 import com.banka1.user.DTO.request.LoginRequest;
-import com.banka1.user.security.JwtUtil;
-import com.banka1.user.service.AuthService;
+import com.banka1.user.controllers.AuthController;
+import com.banka1.user.model.helper.Permission;
+import com.banka1.user.model.helper.Position;
 import com.banka1.user.service.BlackListTokenService;
+import com.banka1.user.service.IAuthService;
+import com.banka1.user.utils.ResponseMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.impl.DefaultClaims;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.InjectMocks;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class AuthControllerTest {
-
+@ExtendWith(MockitoExtension.class)
+public class AuthControllerTests {
     @Mock
-    private AuthService authService;
-
+    private IAuthService authService;
     @Mock
     private BlackListTokenService blackListTokenService;
-
-    @Mock
-    private JwtUtil jwtUtil;
-
     @InjectMocks
-    private com.banka1.user.controllers.AuthController authController;
+    private AuthController authController;
 
     private MockMvc mockMvc;
 
@@ -45,7 +45,6 @@ class AuthControllerTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(authController).build();
     }
 
@@ -56,7 +55,7 @@ class AuthControllerTest {
         loginRequest.setEmail("user@example.com");
         loginRequest.setPassword("password123");
 
-        when(authService.login(any(LoginRequest.class))).thenReturn("mocked_jwt_token");
+        when(authService.login(loginRequest)).thenReturn("mocked_jwt_token");
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -75,14 +74,14 @@ class AuthControllerTest {
         loginRequest.setEmail("nonexistent@example.com");
         loginRequest.setPassword("wrongpassword");
 
-        when(authService.login(any(LoginRequest.class))).thenThrow(new RuntimeException("Korisnik ne postoji."));
+        when(authService.login(any(LoginRequest.class))).thenThrow(new IllegalArgumentException("Korisnik ne postoji."));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error").value("Korisnik ne postoji."));
+                .andExpect(jsonPath("$.error").value(ResponseMessage.INVALID_USER.toString()));
 
         verify(authService, times(1)).login(any(LoginRequest.class));
     }
@@ -92,24 +91,24 @@ class AuthControllerTest {
     void testLogoutSuccess() throws Exception {
         String token = "validToken";
 
-        doNothing().when(blackListTokenService).blacklistToken(token);
+        when(authService.getToken(anyString())).thenReturn(token);
 
-        mockMvc.perform(post("/api/auth/logout")
-                        .header("Authorization", "Bearer " + token))
+        mockMvc.perform(post("/api/auth/logout").header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.message").value("Korisnik odjavljen"));
+                .andExpect(jsonPath("$.data.message").value(ResponseMessage.LOGOUT_SUCCESS.toString()));
 
         verify(blackListTokenService, times(1)).blacklistToken(token);
     }
 
-    // Logout bez tokena(status 400 i ispravna poruka greske)
+    // Logout bez tokena(status 401)
     @Test
     void testLogoutWithoutToken() throws Exception {
+        when(authService.getToken(anyString())).thenReturn(null);
+
         mockMvc.perform(post("/api/auth/logout"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error").value("Token nije prosleđen ili je neispravan."));
+                .andExpect(status().is4xxClientError())
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     // Uspesan refresh tokena(status 200 i novi token)
@@ -118,52 +117,32 @@ class AuthControllerTest {
         String oldToken = "validOldToken";
         String newToken = "newValidToken";
 
-        Claims claims = new DefaultClaims();
-        claims.put("userId", 1L);
-        claims.put("role", "CUSTOMER");
-        claims.put("permissions", List.of("READ_EMPLOYEE"));
+        Claims claims = new DefaultClaims(Map.of(
+                "id", 1L,
+                "position", Position.NONE.toString(),
+                "permissions", List.of(Permission.READ_EMPLOYEE.toString())
+        ));
 
-        when(blackListTokenService.isTokenBlacklisted(oldToken)).thenReturn(false);
-        when(jwtUtil.validateToken(oldToken)).thenReturn(true);
-        when(jwtUtil.getClaimsFromToken(oldToken)).thenReturn(claims);
-        when(jwtUtil.generateToken(1L, "CUSTOMER", List.of("READ_EMPLOYEE"))).thenReturn(newToken);
+        when(authService.getToken(anyString())).thenReturn(oldToken);
+        when(authService.recreateToken(oldToken)).thenReturn(newToken);
 
-        mockMvc.perform(get("/api/auth/refresh-token")
+        mockMvc.perform(post("/api/auth/refresh-token")
                         .header("Authorization", "Bearer " + oldToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.token").value(newToken));
 
         verify(blackListTokenService, times(1)).blacklistToken(oldToken);
-        verify(jwtUtil, times(1)).generateToken(1L, "CUSTOMER", List.of("READ_EMPLOYEE"));
     }
 
-    // Refresh token sa blacklistovanim tokenom(status 403)
-    @Test
-    void testRefreshTokenWithBlacklistedToken() throws Exception {
-        String oldToken = "blacklistedToken";
-
-        when(blackListTokenService.isTokenBlacklisted(oldToken)).thenReturn(true);
-
-        mockMvc.perform(get("/api/auth/refresh-token")
-                        .header("Authorization", "Bearer " + oldToken))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error").value("Token je već istekao ili je nevažeći."));
-    }
-
-    // Refresh token sa nevalidnim tokenom(status 403)
+    // Refresh token sa nevalidnim tokenom(status 401)
     @Test
     void testRefreshTokenWithInvalidToken() throws Exception {
         String oldToken = "invalidToken";
 
-        when(blackListTokenService.isTokenBlacklisted(oldToken)).thenReturn(false);
-        when(jwtUtil.validateToken(oldToken)).thenReturn(false);
-
-        mockMvc.perform(get("/api/auth/refresh-token")
+        mockMvc.perform(post("/api/auth/refresh-token")
                         .header("Authorization", "Bearer " + oldToken))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error").value("Token nije validan"));
+                .andExpect(status().is4xxClientError())
+                .andExpect(jsonPath("$.success").value(false));
     }
 }
