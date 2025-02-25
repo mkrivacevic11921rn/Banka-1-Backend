@@ -1,23 +1,22 @@
 package com.banka1.user.bootstrap;
 
+import com.banka1.user.model.Customer;
 import com.banka1.user.model.Employee;
 import com.banka1.user.model.helper.Department;
 import com.banka1.user.model.helper.Gender;
 import com.banka1.user.model.helper.Position;
+import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.repository.EmployeeRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class BootstapData implements CommandLineRunner {
     public final EmployeeRepository employeeRepository;
-
-    @Autowired
-    public BootstapData(EmployeeRepository employeeRepository) {
-        this.employeeRepository = employeeRepository;
-    }
+    public final CustomerRepository customerRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -44,6 +43,21 @@ public class BootstapData implements CommandLineRunner {
         admin.setUsername("admin123");
 
         employeeRepository.save(admin);
+
+        var musterija = new Customer();
+
+        musterija.setFirstName("musterija");
+        musterija.setLastName("musterija");
+        musterija.setEmail("musterija@musterija.com");
+        musterija.setPassword("musterija");
+        musterija.setPhoneNumber("1234567890");
+        musterija.setBirthDate(20000101L);
+        musterija.setGender(Gender.MALE);
+        musterija.setAddress("musterija Address");
+        musterija.setSaltPassword("salt");
+        musterija.setUsername("musterija123");
+
+        customerRepository.save(musterija);
 
         System.out.println("============== Data Loaded ==============");
     }
