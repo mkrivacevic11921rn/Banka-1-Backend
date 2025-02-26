@@ -64,6 +64,8 @@ public class Employee {
     @Column(nullable = false)
     private Boolean isAdmin;
 
+    private String verificationCode;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
     @CollectionTable(name = "employee_permissions", joinColumns = @JoinColumn(name = "employee_id"))

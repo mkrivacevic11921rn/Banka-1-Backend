@@ -48,6 +48,8 @@ public class Customer {
     @Column(nullable = false)
     private String saltPassword;
 
+    private String verificationCode;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
     @CollectionTable(name = "customer_permissions", joinColumns = @JoinColumn(name = "customer_id"))
