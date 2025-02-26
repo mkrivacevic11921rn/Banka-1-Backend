@@ -53,11 +53,12 @@ public class AuthService implements IAuthService {
     }
 
     // Generiše token bez zahtevanja enum tipova
-    private String generateTokenRaw(Long userId, String position, List<String> permissions) {
+    private String generateTokenRaw(Long userId, String position, List<String> permissions, Boolean isAdmin) {
         return Jwts.builder()
                 .claim("id", userId)
                 .claim("position", position)
                 .claim("permissions", permissions)
+                .claim("isAdmin", isAdmin)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSigningKey(), Jwts.SIG.HS256)
@@ -87,15 +88,16 @@ public class AuthService implements IAuthService {
 
             return generateTokenRaw(claims.get("id", Long.class),
                                     claims.get("position", String.class),
-                                    (List<String>) claims.get("permissions"));
+                                    (List<String>) claims.get("permissions"),
+                                    claims.get("isAdmin", Boolean.class));
         } catch (Exception e) {
             return null;
         }
     }
 
     @Override
-    public String generateToken(Long userId, Position position, List<Permission> permissions) {
-        return generateTokenRaw(userId, position.toString(), permissions.stream().map(Permission::toString).collect(Collectors.toList()));
+    public String generateToken(Long userId, Position position, List<Permission> permissions, Boolean isAdmin) {
+        return generateTokenRaw(userId, position.toString(), permissions.stream().map(Permission::toString).collect(Collectors.toList()), isAdmin);
     }
 
     @Override
@@ -105,11 +107,11 @@ public class AuthService implements IAuthService {
 
         Customer customer = customerRepository.findByEmail(email).orElse(null);
         if(customer != null && verifyPassword(password, customer.getPassword(), customer.getSaltPassword()))
-            return generateToken(customer.getId(), Position.NONE, customer.getPermissions());
+            return generateToken(customer.getId(), Position.NONE, customer.getPermissions(), false);
 
         Employee employee = employeeRepository.findByEmail(email).orElse(null);
         if(employee != null && verifyPassword(password, employee.getPassword(), employee.getSaltPassword()))
-            return generateToken(employee.getId(), employee.getPosition(), employee.getPermissions());
+            return generateToken(employee.getId(), employee.getPosition(), employee.getPermissions(), employee.getIsAdmin());
 
         throw new IllegalArgumentException(ResponseMessage.INVALID_USER.toString());
     }

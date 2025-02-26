@@ -19,7 +19,7 @@ import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/")
+@RequestMapping("/api/users/search/")
 @Tag(name = "Pretraga korisnika")
 public class SearchController {
     private final CustomerService customerService;
@@ -30,10 +30,8 @@ public class SearchController {
             description = "Vraca sve zaposlene koji zadovoljavaju (opcioni) filter, sortirani po zadatom polju. Rezultati se vracaju podeljeni na stranice."
     )
     @GetMapping("employees")
-//    @Authorization(permissions = {Permission.})
+    @Authorization(permissions = {Permission.LIST_EMPLOYEE})
     public ResponseEntity<?> searchEmployees(
-//            @RequestHeader("Authorization")
-//            String authorization,
             @Parameter(
                     description = "Redni broj stranice rezultata (podrazumevana vrednost je prva stranica)",
                     example = "0"
@@ -87,7 +85,7 @@ public class SearchController {
             description = "Vraca sve musterije koji zadovoljavaju (opcioni) filter, sortirani po zadatom polju. Rezultati se vracaju podeljeni na stranice."
     )
     @GetMapping("customers")
-    //@Authorization(permissions = { Permission.LIST_CUSTOMERS })
+    @Authorization(permissions = { Permission.LIST_CUSTOMER })
     public ResponseEntity<?> searchCustomers(
 //            @RequestHeader("Authorization")
 //            String authorization,

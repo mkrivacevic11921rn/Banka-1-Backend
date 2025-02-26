@@ -37,7 +37,7 @@ public interface IAuthService {
     String recreateToken(String token);
 
     // Kreira jwt sa korisnickim ID-em, rolom i permisijama.
-    String generateToken(Long userId, Position position, List<Permission> permissions);
+    String generateToken(Long userId, Position position, List<Permission> permissions, Boolean isAdmin);
 
     // Login metoda omogucava korisnicima da se prijave koristeci email i lozinku.
     // Prvo trazi korisnika kao customer, ako nije pronadjen trazi korisnika kao employee, u suprotnom baca izuzetak.
