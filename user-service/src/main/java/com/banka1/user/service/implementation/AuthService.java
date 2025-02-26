@@ -24,9 +24,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Standardna implementacija {@link IAuthService} interfejsa.
+ */
 @Service
-public class
-AuthService implements IAuthService {
+public class AuthService implements IAuthService {
     @Value("${oauth.jwt.secret}")
     private String secret;
     @Value("${oauth.jwt.expiration}")
@@ -84,8 +86,8 @@ AuthService implements IAuthService {
             Claims claims = parseToken(token);
 
             return generateTokenRaw(claims.get("id", Long.class),
-                    claims.get("position", String.class),
-                    (List<String>) claims.get("permissions"));
+                                    claims.get("position", String.class),
+                                    (List<String>) claims.get("permissions"));
         } catch (Exception e) {
             return null;
         }

@@ -6,10 +6,14 @@ import lombok.Getter;
 public enum Permission {
     CREATE_EMPLOYEE("user.employee.create"),
     READ_EMPLOYEE("user.employee.view");
-
     private final String permission;
 
     Permission(String permission) {
         this.permission = permission;
+    }
+
+    @Override
+    public String toString() {
+        return getPermission();
     }
 }

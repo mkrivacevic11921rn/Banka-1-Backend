@@ -29,26 +29,26 @@ public class AuthController {
     private final BlackListTokenService blackListTokenService;
 
     @Operation(
-            summary = "Login korisnika",
-            description = "Loguje korisnika na sistem i vraća JWT token koji sadrži ID korisnika, rolu i set permisija."
+        summary = "Login korisnika",
+        description = "Loguje korisnika na sistem i vraća JWT token koji sadrži ID korisnika, rolu i set permisija."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200",description = "Uspešan login",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{ \"success\": true, \"data\": { \"token\": \"jwt_token\" } }"))
-            ),
-            @ApiResponse(responseCode = "400", description = "Neispravni podaci ili korisnik ne postoji",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{ \"success\": false, \"error\": \"Korisnik ne postoji.\" }"))
-            )
+        @ApiResponse(responseCode = "200",description = "Uspešan login",
+            content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = "{ \"success\": true, \"data\": { \"token\": \"jwt_token\" } }"))
+        ),
+        @ApiResponse(responseCode = "400", description = "Neispravni podaci ili korisnik ne postoji",
+            content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = "{ \"success\": false, \"error\": \"Korisnik ne postoji.\" }"))
+        )
     })
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            description = "Podaci za login",
-            required = true,
-            content = @Content(schema = @Schema(implementation = LoginRequest.class),
-                    examples = @ExampleObject(value = "{ \"email\": \"korisnik@primer.com\", \"password\": \"lozinkA123\" }")
-            )) LoginRequest loginRequest) {
+        description = "Podaci za login",
+        required = true,
+        content = @Content(schema = @Schema(implementation = LoginRequest.class),
+        examples = @ExampleObject(value = "{ \"email\": \"korisnik@primer.com\", \"password\": \"lozinkA123\" }")
+    )) LoginRequest loginRequest) {
         try {
             String token = authService.login(loginRequest);
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("token", token), null);
@@ -58,25 +58,25 @@ public class AuthController {
     }
 
     @Operation(
-            summary = "Logout korisnika",
-            description = "Odjavljuje korisnika i blacklistuje trenutni JWT token."
+        summary = "Logout korisnika",
+        description = "Odjavljuje korisnika i blacklistuje trenutni JWT token."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Uspešan logout",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{ \"success\": true , \"data\": { \"message\": \"Korisnik odjavljen\" } }"))
-            ),
-            @ApiResponse(responseCode = "401", description = "Token nije prosleđen ili je neispravan/istekao.",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{ \"success\": false, \"error\": \"Token nije prosleđen ili je neispravan/istekao.\" }"))
-            )
+        @ApiResponse(responseCode = "200", description = "Uspešan logout",
+            content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = "{ \"success\": true , \"data\": { \"message\": \"Korisnik odjavljen\" } }"))
+        ),
+        @ApiResponse(responseCode = "401", description = "Token nije prosleđen ili je neispravan/istekao.",
+            content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = "{ \"success\": false, \"error\": \"Token nije prosleđen ili je neispravan/istekao.\" }"))
+        )
     })
     @PostMapping("/logout")
     @Authorization
     public ResponseEntity<?> logout(@Parameter(
-            description = "JWT token korisnika u Authorization header-u",
-            required = true,
-            example = "Bearer jwt_token"
+        description = "JWT token korisnika u Authorization header-u",
+        required = true,
+        example = "Bearer jwt_token"
     ) @RequestHeader(value = "Authorization", required = false) String authorization) {
         try {
             blackListTokenService.blacklistToken(authService.getToken(authorization));
@@ -87,25 +87,25 @@ public class AuthController {
     }
 
     @Operation(
-            summary = "Osvežavanje JWT tokena",
-            description = "Generiše novi JWT token i blacklistuje stari token."
+        summary = "Osvežavanje JWT tokena",
+        description = "Generiše novi JWT token i blacklistuje stari token."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Uspešno generisan novi token",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{ \"success\": true, \"data\": { \"token\": \"new_jwt_token\" } }"))
-            ),
-            @ApiResponse(responseCode = "401", description = "Token nije prosleđen ili je neispravan/istekao.",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{ \"success\": false, \"error\": \"Token nije prosleđen ili je neispravan/istekao.\" }"))
-            )
+        @ApiResponse(responseCode = "200", description = "Uspešno generisan novi token",
+            content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = "{ \"success\": true, \"data\": { \"token\": \"new_jwt_token\" } }"))
+        ),
+        @ApiResponse(responseCode = "401", description = "Token nije prosleđen ili je neispravan/istekao.",
+            content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = "{ \"success\": false, \"error\": \"Token nije prosleđen ili je neispravan/istekao.\" }"))
+        )
     })
     @PostMapping("/refresh-token")
     @Authorization
     public ResponseEntity<?> refreshToken(@Parameter(
-            description = "JWT token korisnika u Authorization header-u",
-            required = true,
-            example = "Bearer jwt_token"
+        description = "JWT token korisnika u Authorization header-u",
+        required = true,
+        example = "Bearer jwt_token"
     ) @RequestHeader(value = "Authorization", required = false) String authorization) {
         try {
             String oldToken = authService.getToken(authorization);

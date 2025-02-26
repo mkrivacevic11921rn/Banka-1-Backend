@@ -9,25 +9,22 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class BlackListTokenService {
-
     private final Map<String, Instant> blacklistedTokens = new ConcurrentHashMap<>();
 
     // Dodaje token u blacklist sa trenutnim vremenom.
-    public void blacklistToken(String token){
-        blacklistedTokens.put(token,Instant.now());
+    public void blacklistToken(String token) {
+        blacklistedTokens.put(token, Instant.now());
     }
 
     // Proverava da li je token na blacklisti.
-    public boolean isTokenBlacklisted(String token){
+    public boolean isTokenBlacklisted(String token) {
         return blacklistedTokens.containsKey(token);
     }
 
     // Brise sve tokene sa blacklist liste koji su stariji od 30 minuta
     // Pokretanje ove metode na svakih 5 minuta
     @Scheduled(fixedRate = 300000)
-    public void cleanExpiredTokens(){
-        Instant deletion = Instant.now().minusSeconds(1800); // Tokeni stariji od 30 minuta
-        blacklistedTokens.entrySet().removeIf(entry -> entry.getValue().isBefore(deletion));
+    public void cleanExpiredTokens() {
+        blacklistedTokens.entrySet().removeIf(e -> e.getValue().isBefore(Instant.now().minusSeconds(1800)));
     }
-
 }
