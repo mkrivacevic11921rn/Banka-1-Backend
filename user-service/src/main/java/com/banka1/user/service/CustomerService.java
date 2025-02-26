@@ -149,7 +149,7 @@ public class CustomerService {
                 customer.setLastName(customerDTO.getPrezime());
             }
             if (customerDTO.getDatum_rodjenja() != null) {
-                customer.setBirthDate(LocalDate.parse(customerDTO.getDatum_rodjenja()));
+                customer.setBirthDate(Long.parseLong(customerDTO.getDatum_rodjenja()));
             }
             if (customerDTO.getPol() != null) {
                 customer.setGender(customerDTO.getPol().equalsIgnoreCase("M") ? Gender.MALE : Gender.FEMALE);
@@ -202,4 +202,22 @@ public class CustomerService {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Permissions updated successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid request - empty permissions list"),
-            @ApiResponse(responseCode = "404", description = "Customer not
+            @ApiResponse(responseCode = "404", description = "Customer not found")
+    })
+    public Optional<Customer> updateCustomerPermissions(Long id, List<Permission> permissions) {
+        if (permissions == null || permissions.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Lista permisija ne može biti prazna ili null");
+        }
+
+        return customerRepository.findById(id).map(customer -> {
+            customer.setPermissions(permissions);
+            return customerRepository.save(customer);
+        });
+    }
+
+    private String generateSalt() {
+        byte[] saltBytes = new byte[16];
+        new SecureRandom().nextBytes(saltBytes);
+        return Base64.getEncoder().encodeToString(saltBytes);
+    }
+}

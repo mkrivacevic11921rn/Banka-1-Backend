@@ -4,9 +4,11 @@ import com.banka1.user.model.helper.Permission;
 import com.banka1.user.model.helper.Position;
 import com.banka1.user.service.BlackListTokenService;
 import com.banka1.user.service.IAuthService;
+import com.banka1.user.service.implementation.AuthService;
 import com.banka1.user.utils.ResponseMessage;
 import com.banka1.user.utils.ResponseTemplate;
 import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -15,6 +17,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -26,33 +30,42 @@ import java.util.stream.IntStream;
 @Configuration
 @EnableAspectJAutoProxy
 public class AuthAspect {
-    private final IAuthService authService;
+    private final AuthService authService;
     private final BlackListTokenService blackListTokenService;
 
-    public AuthAspect(IAuthService authService, BlackListTokenService blackListTokenService) {
+    public AuthAspect(AuthService authService, BlackListTokenService blackListTokenService) {
         this.authService = authService;
         this.blackListTokenService = blackListTokenService;
     }
 
     // Izvlači token iz prosledjenog autorizacionog parametra
-    private String parseAuthToken(String[] params, Object[] args) {
-        String token = null;
-        for (int i = 0; i < params.length; i++) {
-            if(args[i] == null)
-                continue;
-
-            if(params[i].toLowerCase().compareTo("authorization") == 0)
-                token = authService.getToken(args[i].toString());
+    private String parseAuthToken(String[] parameterNames, Object[] args) {
+        for (int i = 0; i < parameterNames.length; i++) {
+            if (parameterNames[i].equals("token")) {
+                return args[i].toString();
+            }
         }
-        return token;
+        return null;
     }
 
+    private String getAuthToken() {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes != null) {
+            HttpServletRequest request = attributes.getRequest();
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                return authHeader.substring(7);
+            }
+        }
+        return null;
+    }
 
     @Around("@annotation(com.banka1.user.aspect.Authorization)")
     public Object authorize(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         Method method = methodSignature.getMethod();
-        String token = parseAuthToken(methodSignature.getParameterNames(), joinPoint.getArgs());
+//        String token = parseAuthToken(methodSignature.getParameterNames(), joinPoint.getArgs());
+        String token = getAuthToken();
 
         if(token == null) {
             // Token ne postoji, tj. korisnik nije ulogovan
@@ -74,11 +87,17 @@ public class AuthAspect {
 
         Set<String> necessaryPermissions = Arrays.stream(authorization.permissions()).map(Permission::toString).collect(Collectors.toSet());
         Set<String> grantedPermissions = new HashSet<>((List<String>) claims.get("permissions"));
+        System.out.println(grantedPermissions);
 
         Set<String> possiblePositions = Arrays.stream(authorization.positions()).map(Position::toString).collect(Collectors.toSet());
 
         // Moguće je da korisnik ima i više permisija nego što je potrebno
         if(grantedPermissions.containsAll(necessaryPermissions) && (possiblePositions.size() == 0 || possiblePositions.contains(claims.get("position", String.class)))) {
+            return joinPoint.proceed();
+        }
+
+        // ako je admin
+        if(claims.get("isAdmin", Boolean.class).equals(true)) {
             return joinPoint.proceed();
         }
 

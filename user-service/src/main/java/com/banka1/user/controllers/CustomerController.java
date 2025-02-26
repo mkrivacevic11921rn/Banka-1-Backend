@@ -1,18 +1,19 @@
 package com.banka1.user.controllers;
 
 import com.banka1.user.DTO.CustomerDTO.CustomerDTO;
+import com.banka1.user.aspect.Authorization;
 import com.banka1.user.model.Customer;
 import com.banka1.user.model.helper.Permission;
 import com.banka1.user.service.CustomerService;
+import com.banka1.user.utils.ResponseTemplate;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -32,23 +33,50 @@ public class CustomerController {
         this.customerService = customerService;
     }
 
+    @Operation(
+            summary = "Dobavljanje informacija o musteriji datog ID-a"
+    )
+    @GetMapping("{id}")
+    @Authorization(permissions = { Permission.READ_CUSTOMER }, allowIdFallback = true )
+    public ResponseEntity<?> getById(
+            @Parameter(required = true, example = "1")
+            @PathVariable String id
+    ) {
+        try {
+            var customer = customerService.findById(id);
+            if (customer == null)
+                return ResponseEntity.status(HttpStatusCode.valueOf(404)).body(Map.of(
+                        "success", false,
+                        "error", "Korisnik nije pronadjen."
+                ));
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "data", customer
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "error", e.getMessage()
+            ));
+        }
+    }
+
     @PostMapping
-    @PreAuthorize("hasAuthority('user.customer.create')")
+    @Authorization(permissions = { Permission.CREATE_CUSTOMER }, allowIdFallback = true )
     @Operation(summary = "Create a new customer", description = "Creates a new customer and returns the created customer ID.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Customer successfully created",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Zaposleni uspešno kreiran"),
+            @ApiResponse(responseCode = "403", description = "Nemaš permisije za ovu akciju")
     })
     public ResponseEntity<?> createCustomer(
             @RequestBody @Parameter(description = "Customer data for creation") CustomerDTO customerDTO) {
         Customer savedCustomer = customerService.createCustomer(customerDTO);
-        return ResponseEntity.ok().body(new ApiResponse(true, savedCustomer.getId(), "Mušterija uspešno kreirana"));
+        return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("id", savedCustomer.getId()), null);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('user.customer.edit')")
-    @Operation(summary = "Update customer", description = "Updates the details of an existing customer.")
+    @Authorization(permissions = { Permission.EDIT_CUSTOMER }, allowIdFallback = true )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Customer updated successfully"),
             @ApiResponse(responseCode = "404", description = "Customer not found")
@@ -59,14 +87,15 @@ public class CustomerController {
         Optional<Customer> updatedCustomer = customerService.updateCustomer(id, customerDTO);
 
         if (updatedCustomer.isPresent()) {
-            return ResponseEntity.ok().body(new ApiResponse(true, "Podaci korisnika ažurirani"));
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Podaci korisnika ažurirani"), null);
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(false, "Korisnik nije pronađen"));
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, "Korisnik nije pronađen");
         }
+
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('user.customer.delete')")
+    @Authorization(permissions = { Permission.DELETE_CUSTOMER }, allowIdFallback = true )
     @Operation(summary = "Delete customer", description = "Deletes a customer by ID.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Customer deleted successfully"),
@@ -77,16 +106,17 @@ public class CustomerController {
         boolean deleted = customerService.deleteCustomer(id);
 
         if (deleted) {
-            return ResponseEntity.ok().body(new ApiResponse(true, "Korisnik uspešno obrisan"));
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Korisnik uspešno obrisan"), null);
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(false, "Korisnik nije pronađen"));
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, "Korisnik nije pronađen");
         }
+
     }
 
     @PutMapping("/{id}/permissions")
-    @PreAuthorize("hasAuthority('user.customer.set_permissions')")
+    @Authorization(permissions = { Permission.SET_CUSTOMER_PERMISSION }, allowIdFallback = true )
     @Operation(summary = "Update customer permissions", description = "Updates the permissions of a specific customer.")
-    @ApiResponses(value = {
+    @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Permissions updated successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid request - empty permissions list"),
             @ApiResponse(responseCode = "404", description = "Customer not found")
@@ -99,27 +129,10 @@ public class CustomerController {
         Optional<Customer> updatedCustomer = customerService.updateCustomerPermissions(id, permissions);
 
         if (updatedCustomer.isPresent()) {
-            return ResponseEntity.ok().body(new ApiResponse(true, "Permisije ažurirane"));
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Permisije ažurirane"), null);
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(false, "Korisnik nije pronađen"));
-        }
-    }
-
-    static class ApiResponse {
-        private boolean success;
-        private Object data;
-
-        public ApiResponse(boolean success, Object data) {
-            this.success = success;
-            this.data = data;
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, "Korisnik nije pronađen");
         }
 
-        public boolean isSuccess() {
-            return success;
-        }
-
-        public Object getData() {
-            return data;
-        }
     }
 }

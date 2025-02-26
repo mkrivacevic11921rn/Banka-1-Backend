@@ -1,6 +1,6 @@
 package com.banka1.user.mapper;
 
-import com.banka1.user.dto.CustomerDTO;
+import com.banka1.user.DTO.CustomerDTO.CustomerDTO;
 import com.banka1.user.model.Customer;
 import com.banka1.user.model.helper.Gender;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -27,7 +27,7 @@ public class CustomerMapper {
         customer.setLastName(dto.getPrezime());
 
         if (dto.getDatum_rodjenja() != null) {
-            customer.setBirthDate(LocalDate.parse(dto.getDatum_rodjenja()));
+            customer.setBirthDate(Long.parseLong(dto.getDatum_rodjenja()));
         }
         if (dto.getPol() != null) {
             customer.setGender(dto.getPol().equalsIgnoreCase("M") ? Gender.MALE : Gender.FEMALE);
