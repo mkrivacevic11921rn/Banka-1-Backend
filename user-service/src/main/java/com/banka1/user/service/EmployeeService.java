@@ -1,6 +1,7 @@
 package com.banka1.user.service;
 
 import com.banka1.user.DTO.request.CreateEmployeeDto;
+import com.banka1.user.DTO.request.SetPasswordDTO;
 import com.banka1.user.DTO.request.UpdateEmployeeDto;
 import com.banka1.user.DTO.request.UpdatePermissionsDto;
 import com.banka1.user.DTO.response.EmployeeResponse;
@@ -9,6 +10,7 @@ import com.banka1.user.model.Employee;
 import com.banka1.user.model.helper.Department;
 import com.banka1.user.model.helper.Gender;
 import com.banka1.user.model.helper.Position;
+import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -16,16 +18,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatchers.contains;
 
 @Service
-@RequiredArgsConstructor
 public class EmployeeService {
     private final EmployeeRepository employeeRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    public EmployeeService(EmployeeRepository customerRepository) {
+        this.employeeRepository = customerRepository;
+        this.passwordEncoder = new BCryptPasswordEncoder();
+    }
 
     public EmployeeResponse findById(String id) {
         var employeeOptional = employeeRepository.findById(Long.parseLong(id));
@@ -46,11 +58,29 @@ public class EmployeeService {
         Employee employee = modelMapper.map(createEmployeeDto, Employee.class);
         employee.setActive(createEmployeeDto.getActive());
 
+        String verificationCode = UUID.randomUUID().toString();
+        employee.setVerificationCode(verificationCode);
+
+        System.out.println("Verification code: " + verificationCode);
+
         if (employee.getGender() == null) {
             throw new RuntimeException("Polje pol je obavezno");
         }
 
         return employeeRepository.save(employee);
+    }
+
+    public void setPassword(SetPasswordDTO setPasswordDTO) {
+        Employee employee = employeeRepository.findByVerificationCode(setPasswordDTO.getCode())
+                .orElseThrow(() -> new RuntimeException("Korisnik nije pronađen"));
+
+        var salt = generateSalt();
+        var hashed = passwordEncoder.encode(setPasswordDTO.getPassword() + salt);
+        employee.setPassword(hashed);
+        employee.setSaltPassword(salt);
+        employee.setVerificationCode(null);
+
+        employeeRepository.save(employee);
     }
 
     public Employee updateEmployee(Long id, UpdateEmployeeDto updateEmployeeDto) {
@@ -163,5 +193,11 @@ public class EmployeeService {
                 employeePage.getTotalElements(),
                 employeePage.stream().map(EmployeeService::getEmployeeResponse).toList()
         );
+    }
+
+    private String generateSalt() {
+        byte[] saltBytes = new byte[16];
+        new SecureRandom().nextBytes(saltBytes);
+        return Base64.getEncoder().encodeToString(saltBytes);
     }
 }

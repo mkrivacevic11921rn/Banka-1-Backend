@@ -49,6 +49,8 @@ public class AuthService implements IAuthService {
 
     // Provera validnosti lozinke koriscenjem BCrypt-a kombinovanjem sa salt-om.
     private boolean verifyPassword(String rawPassword, String hashedPassword, String salt){
+        if (rawPassword == null || hashedPassword == null || salt == null)
+            return false;
         return BCrypt.checkpw(rawPassword + salt, hashedPassword);
     }
 

@@ -1,6 +1,7 @@
 package com.banka1.user.service;
 
 import com.banka1.user.DTO.CustomerDTO.CustomerDTO;
+import com.banka1.user.DTO.request.SetPasswordDTO;
 import com.banka1.user.DTO.response.CustomerPageResponse;
 import com.banka1.user.DTO.response.CustomerResponse;
 import com.banka1.user.mapper.CustomerMapper;
@@ -26,6 +27,7 @@ import java.time.LocalDate;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatchers.contains;
 
@@ -163,15 +165,26 @@ public class CustomerService {
             if (customerDTO.getAdresa() != null) {
                 customer.setAddress(customerDTO.getAdresa());
             }
-            if (customerDTO.getPassword() != null) {
-                String salt = generateSalt();
-                String saltedPassword = salt + customerDTO.getPassword();
-                customer.setPassword(passwordEncoder.encode(saltedPassword));
-                customer.setSaltPassword(salt);
-            }
+
+            String verificationCode = UUID.randomUUID().toString();
+            customer.setVerificationCode(verificationCode);
+
+            System.out.println("Verification code: " + verificationCode);
 
             return customerRepository.save(customer);
         });
+    }
+
+    public void setPassword(SetPasswordDTO setPasswordDTO) {
+        var customer = customerRepository.findByVerificationCode(setPasswordDTO.getCode());
+        if (customer.isEmpty())
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Korisnik nije pronađen.");
+        var salt = generateSalt();
+        var hashed = passwordEncoder.encode(setPasswordDTO.getPassword() + salt);
+        customer.get().setPassword(hashed);
+        customer.get().setSaltPassword(salt);
+        customer.get().setVerificationCode(null);
+        customerRepository.save(customer.get());
     }
 
     /**

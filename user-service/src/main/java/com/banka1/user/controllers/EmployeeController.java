@@ -1,6 +1,7 @@
 package com.banka1.user.controllers;
 
 import com.banka1.user.DTO.request.CreateEmployeeDto;
+import com.banka1.user.DTO.request.SetPasswordDTO;
 import com.banka1.user.DTO.request.UpdateEmployeeDto;
 import com.banka1.user.DTO.request.UpdatePermissionsDto;
 import com.banka1.user.aspect.Authorization;
@@ -8,6 +9,7 @@ import com.banka1.user.model.Employee;
 import com.banka1.user.model.helper.Permission;
 import com.banka1.user.model.helper.Position;
 import com.banka1.user.service.EmployeeService;
+import com.banka1.user.utils.ResponseTemplate;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -84,6 +86,22 @@ public class EmployeeController {
         response.put("data", data);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PutMapping("/set-password")
+    @Operation(summary = "Set password", description = "Sets password for the user")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Password set successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request - missing required fields")
+    })
+    public ResponseEntity<?> setPassword(@RequestBody SetPasswordDTO setPasswordDTO) {
+        System.out.println(setPasswordDTO);
+        try {
+            employeeService.setPassword(setPasswordDTO);
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Lozinka uspešno postavljena"), null);
+        } catch (Exception e) {
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
     }
 
     @PutMapping("/{id}")

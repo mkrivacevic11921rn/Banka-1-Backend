@@ -1,6 +1,7 @@
 package com.banka1.user.controllers;
 
 import com.banka1.user.DTO.CustomerDTO.CustomerDTO;
+import com.banka1.user.DTO.request.SetPasswordDTO;
 import com.banka1.user.aspect.Authorization;
 import com.banka1.user.model.Customer;
 import com.banka1.user.model.helper.Permission;
@@ -135,4 +136,21 @@ public class CustomerController {
         }
 
     }
+
+    @PutMapping("/set-password")
+    @Operation(summary = "Set customer password", description = "Sets the password for a specific customer.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Password set successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request - missing required fields")
+    })
+    public ResponseEntity<?> setPassword(@RequestBody SetPasswordDTO setPasswordDTO) {
+        try {
+            customerService.setPassword(setPasswordDTO);
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Lozinka uspešno postavljena"), null);
+        } catch (Exception e) {
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
+    }
+
+
 }
