@@ -1,12 +1,16 @@
 package com.banka1.user.service;
 
+import com.banka1.user.DTO.NotificationDTO;
 import com.banka1.user.DTO.request.ResetPasswordDTO;
 import com.banka1.user.DTO.request.ResetPasswordRequestDTO;
+import com.banka1.user.listener.MessageHelper;
 import com.banka1.user.model.ResetPassword;
 import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.repository.EmployeeRepository;
 import com.banka1.user.repository.ResetPasswordRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.jms.core.JmsTemplate;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -21,11 +25,17 @@ public class ResetPasswordService {
     private final CustomerRepository customerRepository;
     private final ResetPasswordRepository resetPasswordRepository;
     private final EmployeeRepository employeeRepository;
+    private JmsTemplate jmsTemplate;
+    private MessageHelper messageHelper;
+    private String destinationEmail;
 
-    public ResetPasswordService(CustomerRepository customerRepository, ResetPasswordRepository resetPasswordRepository, EmployeeRepository employeeRepository) {
+    public ResetPasswordService(CustomerRepository customerRepository, ResetPasswordRepository resetPasswordRepository, EmployeeRepository employeeRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("${destination.email}") String destinationEmail) {
         this.customerRepository = customerRepository;
         this.resetPasswordRepository = resetPasswordRepository;
         this.employeeRepository = employeeRepository;
+        this.jmsTemplate = jmsTemplate;
+        this.messageHelper = messageHelper;
+        this.destinationEmail = destinationEmail;
     }
 
     public void requestPasswordReset(ResetPasswordRequestDTO resetPasswordRequestDTO) {
@@ -38,17 +48,26 @@ public class ResetPasswordService {
         resetPassword.setUsed(false);
         resetPassword.setExpirationDate(System.currentTimeMillis() + 1000 * 60 * 60 * 24);
         resetPassword.setCreatedDate(System.currentTimeMillis());
+
+        NotificationDTO emailDTO = new NotificationDTO();
+
         if (!customer.isEmpty()) {
             resetPassword.setUserId(customer.get().getId());
             resetPassword.setType(0);
+            emailDTO.setEmail(customer.get().getEmail());
         } else {
             resetPassword.setUserId(employee.get().getId());
             resetPassword.setType(1);
+            emailDTO.setEmail(employee.get().getEmail());
         }
 
-        resetPasswordRepository.save(resetPassword);
+        emailDTO.setSubject("Zahtev za resetovanje lozinke");
+        emailDTO.setMessage("Zahtev za resetovanje lozinke je uspešno poslat. Kliknite na link da biste resetovali lozinku: http://localhost:3000/reset-password/" + resetPassword.getToken());
+        emailDTO.setType("email");
 
-        System.out.println("Email sent with token: " + resetPassword.getToken());
+        jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
+
+        resetPasswordRepository.save(resetPassword);
     }
 
     public void resetPassword(ResetPasswordDTO resetPasswordDTO) {

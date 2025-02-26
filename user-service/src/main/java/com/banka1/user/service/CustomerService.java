@@ -1,9 +1,11 @@
 package com.banka1.user.service;
 
 import com.banka1.user.DTO.CustomerDTO.CustomerDTO;
+import com.banka1.user.DTO.NotificationDTO;
 import com.banka1.user.DTO.request.SetPasswordDTO;
 import com.banka1.user.DTO.response.CustomerPageResponse;
 import com.banka1.user.DTO.response.CustomerResponse;
+import com.banka1.user.listener.MessageHelper;
 import com.banka1.user.mapper.CustomerMapper;
 import com.banka1.user.model.Customer;
 import com.banka1.user.model.helper.Gender;
@@ -16,8 +18,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.jms.core.JmsTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -37,11 +41,17 @@ public class CustomerService {
 
     private final CustomerRepository customerRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private JmsTemplate jmsTemplate;
+    private MessageHelper messageHelper;
+    private String destinationEmail;
 
     @Autowired
-    public CustomerService(CustomerRepository customerRepository) {
+    public CustomerService(CustomerRepository customerRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("${destination.email}") String destinationEmail) {
         this.customerRepository = customerRepository;
         this.passwordEncoder = new BCryptPasswordEncoder();
+        this.jmsTemplate = jmsTemplate;
+        this.messageHelper = messageHelper;
+        this.destinationEmail = destinationEmail;
     }
 
     public CustomerResponse findById(String id) {
@@ -127,6 +137,19 @@ public class CustomerService {
 
         customer.setPassword(hashedPassword);
         customer.setSaltPassword(salt);
+
+        String verificationCode = UUID.randomUUID().toString();
+        customer.setVerificationCode(verificationCode);
+
+        NotificationDTO emailDTO = new NotificationDTO();
+        emailDTO.setSubject("Nalog uspešno kreiran");
+        emailDTO.setEmail(customer.getEmail());
+        emailDTO.setMessage("Vaš nalog je uspešno kreiran. Kliknite na sledeći link da biste postavili lozinku: http://localhost:8080/set-password/" + verificationCode);
+        emailDTO.setFirstName(customer.getFirstName());
+        emailDTO.setLastName(customer.getLastName());
+        emailDTO.setType("email");
+
+        jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
 
         return customerRepository.save(customer);
     }

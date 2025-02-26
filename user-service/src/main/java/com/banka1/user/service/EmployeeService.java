@@ -1,11 +1,13 @@
 package com.banka1.user.service;
 
+import com.banka1.user.DTO.NotificationDTO;
 import com.banka1.user.DTO.request.CreateEmployeeDto;
 import com.banka1.user.DTO.request.SetPasswordDTO;
 import com.banka1.user.DTO.request.UpdateEmployeeDto;
 import com.banka1.user.DTO.request.UpdatePermissionsDto;
 import com.banka1.user.DTO.response.EmployeeResponse;
 import com.banka1.user.DTO.response.EmployeesPageResponse;
+import com.banka1.user.listener.MessageHelper;
 import com.banka1.user.model.Employee;
 import com.banka1.user.model.helper.Department;
 import com.banka1.user.model.helper.Gender;
@@ -15,7 +17,9 @@ import com.banka1.user.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
+import org.springframework.jms.core.JmsTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -32,11 +36,18 @@ import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatc
 public class EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private JmsTemplate jmsTemplate;
+    private MessageHelper messageHelper;
+    private String destinationEmail;
 
     @Autowired
-    public EmployeeService(EmployeeRepository customerRepository) {
+    public EmployeeService(EmployeeRepository customerRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("${destination.email}") String destinationEmail) {
         this.employeeRepository = customerRepository;
         this.passwordEncoder = new BCryptPasswordEncoder();
+        this.jmsTemplate = jmsTemplate;
+        this.messageHelper = messageHelper;
+        this.destinationEmail = destinationEmail;
+
     }
 
     public EmployeeResponse findById(String id) {
@@ -61,11 +72,19 @@ public class EmployeeService {
         String verificationCode = UUID.randomUUID().toString();
         employee.setVerificationCode(verificationCode);
 
-        System.out.println("Verification code: " + verificationCode);
-
         if (employee.getGender() == null) {
             throw new RuntimeException("Polje pol je obavezno");
         }
+
+        NotificationDTO emailDTO = new NotificationDTO();
+        emailDTO.setSubject("Nalog uspešno kreiran");
+        emailDTO.setEmail(employee.getEmail());
+        emailDTO.setMessage("Vaš nalog je uspešno kreiran. Kliknite na sledeći link da biste postavili lozinku: http://localhost:8080/set-password/" + verificationCode);
+        emailDTO.setFirstName(employee.getFirstName());
+        emailDTO.setLastName(employee.getLastName());
+        emailDTO.setType("email");
+
+        jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
 
         return employeeRepository.save(employee);
     }

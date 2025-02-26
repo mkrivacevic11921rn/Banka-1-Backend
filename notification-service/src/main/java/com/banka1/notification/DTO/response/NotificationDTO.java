@@ -11,10 +11,12 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class NotificationDTO {
+    private String email;
     private String subject;
-    private String body;
-    private String notificationType;
-    private UserType role;
-    private String userId;
-    private LocalDateTime sentAt;
+    private String message;
+    private String firstName;
+    private String lastName;
+    private String type;
+    private Long userId;
+    private UserType userType;
 }

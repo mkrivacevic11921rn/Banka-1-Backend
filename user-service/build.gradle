@@ -34,6 +34,9 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt:0.12.6'
 	implementation 'io.jsonwebtoken:jjwt-impl:0.12.6'
 	implementation 'org.springframework.security:spring-security-core'
+	implementation 'javax.jms:javax.jms-api:2.0.1'
+	implementation 'javax.validation:validation-api:2.0.1.Final'
+	implementation 'org.springframework.boot:spring-boot-starter-activemq'
 
 	runtimeOnly 'org.aspectj:aspectjweaver'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
