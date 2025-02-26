@@ -1,6 +1,6 @@
 package com.banka1.user.controllers;
 
-import com.banka1.user.dto.CustomerDTO;
+import com.banka1.user.DTO.CustomerDTO.CustomerDTO;
 import com.banka1.user.model.Customer;
 import com.banka1.user.model.helper.Permission;
 import com.banka1.user.service.CustomerService;
@@ -22,13 +22,12 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/users/customers")
-@Tag(name = "Customer Management", description = "APIs for managing customers")
+@RequestMapping("/api/customer")
+@Tag(name = "Musterije")
 public class CustomerController {
 
     private final CustomerService customerService;
 
-    @Autowired
     public CustomerController(CustomerService customerService) {
         this.customerService = customerService;
     }
