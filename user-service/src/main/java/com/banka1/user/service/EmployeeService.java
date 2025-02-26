@@ -30,17 +30,16 @@ public class EmployeeService {
         Employee employee = modelMapper.map(createEmployeeDto, Employee.class);
         employee.setActive(createEmployeeDto.getActive());
 
+        if (employee.getGender() == null) {
+            throw new RuntimeException("Polje pol je obavezno");
+        }
+
         return employeeRepository.save(employee);
     }
 
     public Employee updateEmployee(Long id, UpdateEmployeeDto updateEmployeeDto) {
         Employee existingEmployee = employeeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Zaposleni nije pronađen"));
-
-//        // Provera da li korisnik ima dozvolu za ažuriranje
-//        if (!hasPermissionToEdit(existingEmployee)) {
-//            throw new AccessDeniedException("Nemate dozvolu za ažuriranje ovog zaposlenog");
-//        }
 
         // Ažuriranje dozvoljenih polja
         Optional.ofNullable(updateEmployeeDto.getFirstName()).ifPresent(existingEmployee::setFirstName);
@@ -51,6 +50,7 @@ public class EmployeeService {
         Optional.ofNullable(updateEmployeeDto.getDepartment()).ifPresent(existingEmployee::setDepartment);
         Optional.ofNullable(updateEmployeeDto.getActive()).ifPresent(existingEmployee::setActive);
         Optional.ofNullable(updateEmployeeDto.getIsAdmin()).ifPresent(existingEmployee::setIsAdmin);
+        Optional.ofNullable(updateEmployeeDto.getGender()).ifPresent(existingEmployee::setGender);
 
         return employeeRepository.save(existingEmployee);
     }
