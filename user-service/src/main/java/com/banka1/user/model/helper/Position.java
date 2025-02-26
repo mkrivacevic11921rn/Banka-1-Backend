@@ -8,7 +8,8 @@ public enum Position {
     NONE("Nijedna"),
     DIRECTOR("Direktor"),
     MANAGER("Menadžer"),
-    WORKER("Radnik");
+    WORKER("Radnik"),
+    HR("HR");
 
     private final String position;
 
