@@ -34,7 +34,7 @@ public class BootstrapData implements CommandLineRunner {
 
         Employee admin = new Employee();
 
-        String rawPassword = "admin";
+        String rawPassword = "admin123";
         String salt = "salt";
         String hashedPassword = BCrypt.hashpw(rawPassword + salt, BCrypt.gensalt());
 
@@ -103,7 +103,7 @@ public class BootstrapData implements CommandLineRunner {
         employee2.setFirstName("Jovana");
         employee2.setLastName("Jovanović");
         employee2.setEmail("jovana.jovanovic@banka.com");
-        employee1.setUsername("jjovanaa");
+        employee2.setUsername("jjovanaa");
         employee2.setPhoneNumber("+381641001001");
         employee2.setBirthDate("2000-10-10");
         employee2.setAddress("Knez Mihailova 6");
