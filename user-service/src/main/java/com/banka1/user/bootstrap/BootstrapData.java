@@ -1,7 +1,5 @@
 package com.banka1.user.bootstrap;
 
-import com.banka1.user.DTO.CustomerDTO.CustomerDTO;
-import com.banka1.user.DTO.request.CreateEmployeeDto;
 import com.banka1.user.model.Customer;
 import com.banka1.user.model.Employee;
 import com.banka1.user.model.helper.Department;
@@ -53,7 +51,7 @@ public class BootstrapData implements CommandLineRunner {
         admin.setSaltPassword(salt);
         admin.setUsername("admin123");
 
-        admin.setPermissions(List.of(Permission.CREATE_EMPLOYEE, Permission.READ_EMPLOYEE));
+        admin.setPermissions(List.of(Permission.values()));
 
         employeeRepository.save(admin);
 

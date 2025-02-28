@@ -1,11 +1,15 @@
 package com.banka1.user;
 
+import com.banka1.user.DTO.request.LoginRequest;
+import com.banka1.user.service.BlackListTokenService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.RestTemplate;
@@ -28,10 +32,19 @@ public class PregledIntegrationTest {
         return "http://localhost:" + port + "/api";
     }
 
+    @Autowired
+    private BlackListTokenService blacklistTokenService;
+
     @BeforeEach
     void setup() {
         restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
     }
+
+    @AfterEach
+    void tearDown() {
+        blacklistTokenService.clear();
+    }
+
 
     @Test
     void testEmployee() {
@@ -134,6 +147,17 @@ public class PregledIntegrationTest {
     @Test
     void testCustomer() {
         String id = "1";
+
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setEmail("admin@admin.com");
+        loginRequest.setPassword("admin123");
+
+        @SuppressWarnings("rawtypes") ResponseEntity<Map> loginResponse = restTemplate.postForEntity(getBaseUrl() + "/login", loginRequest, Map.class);
+
+        assertNotNull(loginResponse.getBody());
+        @SuppressWarnings("unchecked")
+        var token = (String) ((Map<String, Object>) loginResponse.getBody().get("data")).get("token");
+        System.out.println(token);
 
         var responseEntity = restTemplate.getForEntity(getBaseUrl() + "/customer/" + id, Map.class);
 
