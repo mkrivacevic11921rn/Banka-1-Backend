@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
@@ -36,18 +37,24 @@ import java.util.UUID;
 import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatchers.contains;
 
 @Service
+@Slf4j
 @Tag(name = "Customer Service", description = "Business logic for customer operations")
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-    private JmsTemplate jmsTemplate;
-    private MessageHelper messageHelper;
-    private String destinationEmail;
+    private final SetPasswordService setPasswordService;
+    private final JmsTemplate jmsTemplate;
+    private final MessageHelper messageHelper;
+    private final String destinationEmail;
+
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     @Autowired
-    public CustomerService(CustomerRepository customerRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("${destination.email}") String destinationEmail) {
+    public CustomerService(CustomerRepository customerRepository, SetPasswordService setPasswordService, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("${destination.email}") String destinationEmail) {
         this.customerRepository = customerRepository;
+        this.setPasswordService = setPasswordService;
         this.passwordEncoder = new BCryptPasswordEncoder();
         this.jmsTemplate = jmsTemplate;
         this.messageHelper = messageHelper;
@@ -144,14 +151,20 @@ public class CustomerService {
         NotificationDTO emailDTO = new NotificationDTO();
         emailDTO.setSubject("Nalog uspešno kreiran");
         emailDTO.setEmail(customer.getEmail());
-        emailDTO.setMessage("Vaš nalog je uspešno kreiran. Kliknite na sledeći link da biste postavili lozinku: http://localhost:8080/set-password/" + verificationCode);
+        emailDTO.setMessage("Vaš nalog je uspešno kreiran. Kliknite na sledeći link da biste postavili lozinku: "
+                + frontendUrl + "/set-password?token=" + verificationCode);
         emailDTO.setFirstName(customer.getFirstName());
         emailDTO.setLastName(customer.getLastName());
         emailDTO.setType("email");
 
-        jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
 
-        return customerRepository.save(customer);
+        // Saving the customer in the database gives it an ID, which can be used to generate the set-password token
+        customer = customerRepository.save(customer);
+
+        setPasswordService.saveSetPasswordRequest(verificationCode, customer.getId());
+
+        jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
+        return customer;
     }
 
     /**
