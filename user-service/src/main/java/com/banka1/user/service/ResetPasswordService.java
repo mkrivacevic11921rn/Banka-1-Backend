@@ -25,9 +25,12 @@ public class ResetPasswordService {
     private final CustomerRepository customerRepository;
     private final ResetPasswordRepository resetPasswordRepository;
     private final EmployeeRepository employeeRepository;
-    private JmsTemplate jmsTemplate;
-    private MessageHelper messageHelper;
-    private String destinationEmail;
+    private final JmsTemplate jmsTemplate;
+    private final MessageHelper messageHelper;
+    private final String destinationEmail;
+
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     public ResetPasswordService(CustomerRepository customerRepository, ResetPasswordRepository resetPasswordRepository, EmployeeRepository employeeRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("${destination.email}") String destinationEmail) {
         this.customerRepository = customerRepository;
@@ -41,7 +44,7 @@ public class ResetPasswordService {
     public void requestPasswordReset(ResetPasswordRequestDTO resetPasswordRequestDTO) {
         var customer = customerRepository.findByEmail(resetPasswordRequestDTO.getEmail());
         var employee = employeeRepository.findByEmail(resetPasswordRequestDTO.getEmail());
-        if (customer == null && employee == null)
+        if (customer.isEmpty() && employee.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Email not found.");
         var resetPassword = new ResetPassword();
         resetPassword.setToken(generateToken());
@@ -51,7 +54,7 @@ public class ResetPasswordService {
 
         NotificationDTO emailDTO = new NotificationDTO();
 
-        if (!customer.isEmpty()) {
+        if (customer.isPresent()) {
             resetPassword.setUserId(customer.get().getId());
             resetPassword.setType(0);
             emailDTO.setEmail(customer.get().getEmail());
@@ -62,7 +65,9 @@ public class ResetPasswordService {
         }
 
         emailDTO.setSubject("Zahtev za resetovanje lozinke");
-        emailDTO.setMessage("Zahtev za resetovanje lozinke je uspešno poslat. Kliknite na link da biste resetovali lozinku: http://localhost:3000/reset-password/" + resetPassword.getToken());
+        emailDTO.setMessage("Zahtev za resetovanje lozinke je uspešno poslat." +
+                " Kliknite na link da biste resetovali lozinku: " + frontendUrl +
+                "/reset-password/" + resetPassword.getToken());
         emailDTO.setType("email");
 
         jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
