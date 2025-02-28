@@ -75,6 +75,7 @@ public class EmployeeController {
         try {
             savedEmployee = employeeService.createEmployee(createEmployeeDto);
         } catch (RuntimeException e) {
+            System.err.println(e);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
 
