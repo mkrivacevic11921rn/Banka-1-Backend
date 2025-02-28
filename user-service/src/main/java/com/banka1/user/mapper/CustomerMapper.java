@@ -25,6 +25,7 @@ public class CustomerMapper {
         Customer customer = new Customer();
         customer.setFirstName(dto.getIme());
         customer.setLastName(dto.getPrezime());
+        customer.setUsername(dto.getUsername());
 
         if (dto.getDatum_rodjenja() != null) {
             customer.setBirthDate(Long.parseLong(dto.getDatum_rodjenja()));

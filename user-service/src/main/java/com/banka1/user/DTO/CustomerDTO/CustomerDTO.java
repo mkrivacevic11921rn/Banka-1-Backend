@@ -12,6 +12,7 @@ import java.time.LocalDate;
 public class CustomerDTO {
     private String ime;
     private String prezime;
+    private String username;
     private String datum_rodjenja;
     private String pol;
     private String email;
