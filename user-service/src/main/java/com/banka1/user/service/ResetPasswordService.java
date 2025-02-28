@@ -67,7 +67,7 @@ public class ResetPasswordService {
         emailDTO.setSubject("Zahtev za resetovanje lozinke");
         emailDTO.setMessage("Zahtev za resetovanje lozinke je uspešno poslat." +
                 " Kliknite na link da biste resetovali lozinku: " + frontendUrl +
-                "/reset-password/" + resetPassword.getToken());
+                "/reset-password?token=" + resetPassword.getToken());
         emailDTO.setType("email");
 
         jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
@@ -88,11 +88,17 @@ public class ResetPasswordService {
         String hashed = BCrypt.hashpw(resetPasswordDTO.getPassword() + salt, BCrypt.gensalt());
         if (resetPassword.getType() == 0) {
             var customer = customerRepository.findById(resetPassword.getUserId());
+            if(customer.isEmpty()) {
+                throw new IllegalStateException("Impossible state reached");
+            }
             customer.get().setPassword(hashed);
             customer.get().setSaltPassword(salt);
             customerRepository.save(customer.get());
         } else {
             var employee = employeeRepository.findById(resetPassword.getUserId());
+            if (employee.isEmpty()) {
+                throw new IllegalStateException("Impossible state reached");
+            }
             employee.get().setPassword(hashed);
             employee.get().setSaltPassword(salt);
             employeeRepository.save(employee.get());
