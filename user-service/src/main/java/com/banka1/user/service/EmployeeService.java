@@ -116,6 +116,9 @@ public class EmployeeService {
         Optional.ofNullable(updateEmployeeDto.getActive()).ifPresent(existingEmployee::setActive);
         Optional.ofNullable(updateEmployeeDto.getIsAdmin()).ifPresent(existingEmployee::setIsAdmin);
         Optional.ofNullable(updateEmployeeDto.getGender()).ifPresent(existingEmployee::setGender);
+        Optional.ofNullable(updateEmployeeDto.getUsername()).ifPresent(existingEmployee::setUsername);
+        Optional.ofNullable(updateEmployeeDto.getEmail()).ifPresent(existingEmployee::setEmail);
+        Optional.ofNullable(updateEmployeeDto.getBirthDate()).ifPresent(existingEmployee::setBirthDate);
 
         return employeeRepository.save(existingEmployee);
     }
@@ -157,6 +160,7 @@ public class EmployeeService {
                 employee.getId(),
                 employee.getFirstName(),
                 employee.getLastName(),
+                employee.getUsername(),
                 employee.getBirthDate(),
                 employee.getGender(),
                 employee.getEmail(),

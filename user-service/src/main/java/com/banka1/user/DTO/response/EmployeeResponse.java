@@ -25,6 +25,9 @@ public class EmployeeResponse {
     private String lastName;
 
     @NonNull
+    private String username;
+
+    @NonNull
     private String birthDate; // Format: "YYYY-MM-DD"
 
     @NonNull
