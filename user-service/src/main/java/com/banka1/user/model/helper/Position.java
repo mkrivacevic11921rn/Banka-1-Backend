@@ -1,5 +1,6 @@
 package com.banka1.user.model.helper;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 
 @Getter
@@ -20,5 +21,15 @@ public enum Position {
     @Override
     public String toString() {
         return getPosition();
+    }
+
+    @JsonCreator
+    public static Position fromString(String position) {
+        for (Position p : Position.values()) {
+            if (p.getPosition().equals(position)) {
+                return p;
+            }
+        }
+        throw new IllegalArgumentException("Invalid position: " + position);
     }
 }

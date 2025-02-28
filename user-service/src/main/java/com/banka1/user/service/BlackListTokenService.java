@@ -27,4 +27,9 @@ public class BlackListTokenService {
     public void cleanExpiredTokens() {
         blacklistedTokens.entrySet().removeIf(e -> e.getValue().isBefore(Instant.now().minusSeconds(1800)));
     }
+
+
+    public void clear() {
+        blacklistedTokens.clear();
+    }
 }

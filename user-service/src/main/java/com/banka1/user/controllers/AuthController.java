@@ -78,6 +78,9 @@ public class AuthController {
         required = true,
         example = "Bearer jwt_token"
     ) @RequestHeader(value = "Authorization", required = false) String authorization) {
+
+
+
         try {
             blackListTokenService.blacklistToken(authService.getToken(authorization));
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", ResponseMessage.LOGOUT_SUCCESS.toString()), null);

@@ -37,7 +37,7 @@ public class CustomerController {
     @Operation(
             summary = "Dobavljanje informacija o musteriji datog ID-a"
     )
-    @GetMapping("{id}")
+    @GetMapping("/{id}")
     @Authorization(permissions = { Permission.READ_CUSTOMER }, allowIdFallback = true )
     public ResponseEntity<?> getById(
             @Parameter(required = true, example = "1")

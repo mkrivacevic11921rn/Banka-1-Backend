@@ -1,12 +1,14 @@
 package com.banka1.user.controllers;
 
 import com.banka1.user.DTO.request.CreateEmployeeDto;
+import com.banka1.user.DTO.request.LoginRequest;
 import com.banka1.user.DTO.request.UpdateEmployeeDto;
 import com.banka1.user.DTO.request.UpdatePermissionsDto;
 import com.banka1.user.model.Employee;
 import com.banka1.user.model.helper.Permission;
 import com.banka1.user.service.EmployeeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -23,7 +25,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
 @WebMvcTest(EmployeeController.class)
@@ -39,8 +42,31 @@ class EmployeeControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+
+    private String token;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setEmail("admin@admin.com");
+        loginRequest.setPassword("admin123");  // Podaci iz BootstrapData
+
+        var loginResponse = mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+                .andDo(result -> {
+                    System.out.println(result.getAsyncResult());
+                });
+
+    }
+
+
+
     @Test
     void testCreateEmployee() throws Exception {
+
+
+
         CreateEmployeeDto dto = new CreateEmployeeDto();
         dto.setFirstName("Marko");
         dto.setLastName("Markovic");

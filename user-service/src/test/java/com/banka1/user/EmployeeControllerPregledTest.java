@@ -58,7 +58,7 @@ public class EmployeeControllerPregledTest {
 
         Mockito.when(employeeService.findById(id)).thenReturn(response);
 
-        var responseContent = mockMvc.perform(MockMvcRequestBuilders.get("/api/employee/" + id))
+        var responseContent = mockMvc.perform(MockMvcRequestBuilders.get("/api/users/employees/" + id))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.success").value(true))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.id").value(id))

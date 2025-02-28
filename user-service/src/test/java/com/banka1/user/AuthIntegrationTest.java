@@ -1,7 +1,9 @@
 package com.banka1.user;
 
 import com.banka1.user.DTO.request.LoginRequest;
+import com.banka1.user.service.BlackListTokenService;
 import com.banka1.user.utils.ResponseMessage;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
@@ -26,6 +29,9 @@ public class AuthIntegrationTest {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private BlackListTokenService blacklistTokenService;
+
     private String getBaseUrl() {
         return "http://localhost:" + port + "/api/auth";
     }
@@ -35,12 +41,17 @@ public class AuthIntegrationTest {
         restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
     }
 
+    @AfterEach
+    void tearDown() {
+        blacklistTokenService.clear();
+    }
+
     @Test
     void testLoginAndLogoutFlow() {
         // Login
         LoginRequest loginRequest = new LoginRequest();
         loginRequest.setEmail("admin@admin.com");
-        loginRequest.setPassword("admin");  // Podaci iz BootstrapData
+        loginRequest.setPassword("admin123");  // Podaci iz BootstrapData
 
         @SuppressWarnings("rawtypes")
         ResponseEntity<Map> loginResponse = restTemplate.postForEntity(getBaseUrl() + "/login", loginRequest, Map.class);
@@ -51,7 +62,7 @@ public class AuthIntegrationTest {
         @SuppressWarnings("unchecked")
         String token = (String) ((Map<String, Object>) loginResponse.getBody().get("data")).get("token");
         assertNotNull(token, "Token nije generisan tokom login-a.");
-
+        System.out.println(token);
         // Logout
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer " + token);
@@ -71,7 +82,7 @@ public class AuthIntegrationTest {
         // Login
         LoginRequest loginRequest = new LoginRequest();
         loginRequest.setEmail("admin@admin.com");
-        loginRequest.setPassword("admin");
+        loginRequest.setPassword("admin123");
 
         @SuppressWarnings("rawtypes")
         ResponseEntity<Map> loginResponse = restTemplate.postForEntity(getBaseUrl() + "/login", loginRequest, Map.class);
