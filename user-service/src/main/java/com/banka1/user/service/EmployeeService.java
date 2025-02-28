@@ -36,9 +36,11 @@ import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatc
 public class EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-    private JmsTemplate jmsTemplate;
-    private MessageHelper messageHelper;
-    private String destinationEmail;
+    private final JmsTemplate jmsTemplate;
+    private final MessageHelper messageHelper;
+    private final String destinationEmail;
+	@Value("${frontend.url}")
+	private String frontendUrl;
 
     @Autowired
     public EmployeeService(EmployeeRepository customerRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("${destination.email}") String destinationEmail) {
@@ -79,7 +81,9 @@ public class EmployeeService {
         NotificationDTO emailDTO = new NotificationDTO();
         emailDTO.setSubject("Nalog uspešno kreiran");
         emailDTO.setEmail(employee.getEmail());
-        emailDTO.setMessage("Vaš nalog je uspešno kreiran. Kliknite na sledeći link da biste postavili lozinku: http://localhost:8080/set-password/" + verificationCode);
+	    emailDTO
+	    .setMessage("Vaš nalog je uspešno kreiran. Kliknite na sledeći link da biste postavili lozinku: "
+			    + frontendUrl + "/set-password?token=" + verificationCode);
         emailDTO.setFirstName(employee.getFirstName());
         emailDTO.setLastName(employee.getLastName());
         emailDTO.setType("email");
