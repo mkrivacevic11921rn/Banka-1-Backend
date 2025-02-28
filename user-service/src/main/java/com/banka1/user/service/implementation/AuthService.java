@@ -112,7 +112,7 @@ public class AuthService implements IAuthService {
             return generateToken(customer.getId(), Position.NONE, customer.getPermissions(), false);
 
         Employee employee = employeeRepository.findByEmail(email).orElse(null);
-        if(employee != null && verifyPassword(password, employee.getPassword(), employee.getSaltPassword()))
+        if(employee != null && verifyPassword(password, employee.getPassword(), employee.getSaltPassword()) && employee.getActive())
             return generateToken(employee.getId(), employee.getPosition(), employee.getPermissions(), employee.getIsAdmin());
 
         throw new IllegalArgumentException(ResponseMessage.INVALID_USER.toString());
