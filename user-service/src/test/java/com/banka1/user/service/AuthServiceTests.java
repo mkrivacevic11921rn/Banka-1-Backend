@@ -85,6 +85,7 @@ public class AuthServiceTests {
     @Test
     void authorizationTest_validTokenNoPerms() throws Throwable {
         when(claims.get("permissions")).thenReturn(List.of(Permission.CREATE_EMPLOYEE.toString()));
+        when(claims.get("isAdmin", Boolean.class)).thenReturn(false);
         when(joinPoint.getSignature()).thenReturn(methodSignature);
         when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization" });
         when(joinPoint.getArgs()).thenReturn(new Object[] { "Bearer ValidanToken" });
@@ -104,6 +105,7 @@ public class AuthServiceTests {
     void authorizationTest_validTokenWrongPosition() throws Throwable {
         when(claims.get("permissions")).thenReturn(List.of());
         when(claims.get("position", String.class)).thenReturn(Position.WORKER.toString());
+        when(claims.get("isAdmin", Boolean.class)).thenReturn(false);
         when(joinPoint.getSignature()).thenReturn(methodSignature);
         when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization" });
         when(joinPoint.getArgs()).thenReturn(new Object[] { "Bearer ValidanToken" });
@@ -123,6 +125,7 @@ public class AuthServiceTests {
     void authorizationTest_validTokenWithInvalidIdFallback() throws Throwable {
         when(claims.get("permissions")).thenReturn(List.of(Permission.CREATE_EMPLOYEE.toString()));
         when(claims.get("id", Long.class)).thenReturn(1L);
+        when(claims.get("isAdmin", Boolean.class)).thenReturn(false);
         when(joinPoint.getSignature()).thenReturn(methodSignature);
         when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization", "id" });
         when(joinPoint.getArgs()).thenReturn(new Object[] { "Bearer ValidanToken", 2L });
