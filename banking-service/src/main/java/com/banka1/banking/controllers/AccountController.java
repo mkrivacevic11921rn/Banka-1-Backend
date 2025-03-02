@@ -1,6 +1,7 @@
 package com.banka1.banking.controllers;
 
 import com.banka1.banking.dto.request.CreateAccountDTO;
+import com.banka1.banking.dto.request.UpdateAccountDTO;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.services.AccountService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,7 +26,8 @@ public class AccountController {
 
     @PostMapping("/")
 //    @Authorization(permissions = { Permission.CREATE_EMPLOYEE }, positions = { Position.HR })
-    @Operation(summary = "Kreiranje racuna", description = "Dodaje novi racun u sistem.")
+    @Operation(summary = "Kreiranje računa",
+            description = "Dodaje novi račun u sistem.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Račun uspešno kreiran.\n"),
             @ApiResponse(responseCode = "403", description = "Nevalidni podaci")
@@ -74,7 +76,8 @@ public class AccountController {
     }
 
     @GetMapping("/user/{userId}")
-    @Operation(summary = "Dohvatanje računa specificnog korisnika", description = "Vraća sve račune vezane za određenog korisnika.")
+    @Operation(summary = "Dohvatanje računa specificnog korisnika",
+            description = "Vraća sve račune vezane za određenog korisnika.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Računi uspešno dohvaćeni"),
             @ApiResponse(responseCode = "404", description = "Nema računa za datog korisnika")
@@ -93,4 +96,25 @@ public class AccountController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PutMapping("/{accountId}")
+    @Operation(summary = "Ažuriranje računa",
+            description = "Omogućava zaposlenima da ažuriraju podatke o računu.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Račun uspešno ažuriran"),
+            @ApiResponse(responseCode = "404", description = "Račun nije pronađen"),
+            @ApiResponse(responseCode = "400", description = "Nevalidni podaci za ažuriranje")
+    })
+    public ResponseEntity<?> updateAccount(
+            @PathVariable Long accountId,
+            @RequestBody UpdateAccountDTO updateAccountDTO) {
+
+        try {
+            Account updatedAccount = accountService.updateAccount(accountId, updateAccountDTO);
+            return ResponseEntity.ok(updatedAccount);
+        } catch (RuntimeException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
+    }
+
 }

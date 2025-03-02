@@ -1,6 +1,7 @@
 package com.banka1.banking.services;
 
 import com.banka1.banking.dto.request.CreateAccountDTO;
+import com.banka1.banking.dto.request.UpdateAccountDTO;
 import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.helper.AccountSubtype;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 
 @Service
@@ -69,4 +71,20 @@ public class AccountService {
     public List<Account> getAccountsByOwnerId(Long ownerId) {
         return accountRepository.findByOwnerID(ownerId);
     }
+
+    public Account updateAccount(Long accountId, UpdateAccountDTO updateAccountDTO) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new RuntimeException("Račun sa ID-jem " + accountId + " nije pronađen"));
+
+        Optional.ofNullable(updateAccountDTO.getReservedBalance()).ifPresent(account::setReservedBalance);
+        Optional.ofNullable(updateAccountDTO.getExpirationDate()).ifPresent(account::setExpirationDate);
+        Optional.ofNullable(updateAccountDTO.getDailyLimit()).ifPresent(account::setDailyLimit);
+        Optional.ofNullable(updateAccountDTO.getMonthlyLimit()).ifPresent(account::setMonthlyLimit);
+        Optional.ofNullable(updateAccountDTO.getSubtype()).ifPresent(account::setSubtype);
+        Optional.ofNullable(updateAccountDTO.getStatus()).ifPresent(account::setStatus);
+        Optional.ofNullable(updateAccountDTO.getMonthlyMaintenanceFee()).ifPresent(account::setMonthlyMaintenanceFee);
+
+        return accountRepository.save(account);
+    }
+
 }
