@@ -55,6 +55,7 @@ public class EmployeeServicePregledTest {
                 1L,
                 "Petar",
                 "Petrovic",
+                "ppetrovic",
                 "9999-09-09",
                 Gender.MALE,
                 "ppetrovic@banka.rs",

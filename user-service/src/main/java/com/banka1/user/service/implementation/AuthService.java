@@ -69,7 +69,7 @@ public class AuthService implements IAuthService {
 
     @Override
     public String getToken(String authHeader) {
-        if(authHeader.startsWith("Bearer"))
+        if(authHeader != null && authHeader.startsWith("Bearer"))
             return authHeader.split(" ")[1];
         return null;
     }
