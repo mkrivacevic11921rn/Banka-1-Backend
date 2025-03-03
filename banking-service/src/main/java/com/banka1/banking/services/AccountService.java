@@ -13,10 +13,13 @@ import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.repository.TransactionRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -128,6 +131,16 @@ public class AccountService {
     @Autowired
     private TransactionRepository transactionRepository;
     public List<Transaction> getTransactionsForAccount(Long accountId) {
-        return transactionRepository.findByFromAccountId(accountRepository.findById(accountId));
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
+
+        List<Transaction> transactionsFrom = transactionRepository.findByFromAccountId(account);
+        List<Transaction> transactionsTo = transactionRepository.findByToAccountId(account);
+
+        List<Transaction> allTransactions = new ArrayList<>();
+        allTransactions.addAll(transactionsFrom);
+        allTransactions.addAll(transactionsTo);
+
+        return allTransactions;
     }
 }

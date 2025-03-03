@@ -10,5 +10,6 @@ import java.util.Optional;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
-    List<Transaction> findByFromAccountId(Optional<Account> fromAccountId);
+    List<Transaction> findByFromAccountId(Account fromAccountId);
+    List<Transaction> findByToAccountId(Account toAccountId);
 }

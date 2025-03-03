@@ -12,6 +12,5 @@ import java.util.List;
 public interface AccountRepository extends JpaRepository<Account, Long> {
     boolean existsByOwnerID(Long checkId);
     boolean existsByAccountNumber(@NotBlank @Size(min = 2, max = 30) String accountNumber);
-
     List<Account> findByOwnerID(Long ownerId);
 }
