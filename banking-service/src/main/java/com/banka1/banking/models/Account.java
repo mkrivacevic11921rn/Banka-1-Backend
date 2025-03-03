@@ -5,6 +5,7 @@ import com.banka1.banking.models.helper.AccountSubtype;
 import com.banka1.banking.models.helper.AccountType;
 import com.banka1.banking.models.helper.CurrencyType;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -37,6 +38,10 @@ public class Account {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
+    private CurrencyType currencyType;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private AccountSubtype subtype;
 
     @Column(nullable = false)
@@ -56,6 +61,9 @@ public class Account {
 
     @Column(nullable = false)
     private Double monthlySpent;
+
+    @Column(nullable = false)
+    private Boolean isPersonal;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)

@@ -7,7 +7,9 @@ import com.banka1.banking.models.Account;
 import com.banka1.banking.models.helper.AccountSubtype;
 import com.banka1.banking.repository.AccountRepository;
 
+import com.banka1.user.repository.CustomerRepository;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 
@@ -21,40 +23,44 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final JmsTemplate jmsTemplate;
     private final MessageHelper messageHelper;
+//    private final CustomerRepository customerRepository;
 
-    public AccountService(AccountRepository accountRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper) {
+    public AccountService(AccountRepository accountRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper/*, CustomerRepository customerRepository*/) {
         this.accountRepository = accountRepository;
         this.jmsTemplate = jmsTemplate;
         this.messageHelper = messageHelper;
+//        this.customerRepository = customerRepository;
     }
-
+    @Autowired
     private ModelMapper modelMapper;
 
     public Account createAccount(CreateAccountDTO createAccountDTO) {
+
+//        if (! customerRepository.existsById(createAccountDTO.getOwnerID())) {
+//            create customer
+//        }
+//
         if (accountRepository.existsByOwnerID((createAccountDTO.getOwnerID())) &&
                 accountRepository.existsByAccountNumber((createAccountDTO.getAccountNumber()))) {
             throw new RuntimeException("Nalog sa ovim parametrima već postoji!");
         }
-
+        System.out.println(createAccountDTO.getOwnerID());
         Account account = modelMapper.map(createAccountDTO, Account.class);
-        account.setBalance(0.0);
-        account.setReservedBalance(0.0);
         account.setSubtype(AccountSubtype.STANDARD);
+        account.setReservedBalance(100.0);
         account.setCreatedDate(Instant.now().getEpochSecond());
-        account.setExpirationDate(account.getCreatedDate() + 365 * 24 * 60 * 60);
+        account.setExpirationDate(account.getCreatedDate() + 4 * 365 * 24 * 60 * 60);
         account.setDailySpent(0.0);
         account.setMonthlySpent(0.0);
         account.setMonthlyMaintenanceFee(0.0);
-//        account.setEmployeeID(null);
-//      obavestenje korisniku racuna na mejl da mu je kreiran racun?
-//        String verificationCode = UUID.randomUUID().toString();
-//        owner.setVerificationCode(verificationCode);
+        account.setEmployeeID(Long.valueOf(1));
+
+//      obavestenje korisniku racuna na mejl da mu je kreiran racun
 //
 //        NotificationDTO emailDTO = new NotificationDTO();
-//        emailDTO.setSubject("Nalog uspešno kreiran");
+//        emailDTO.setSubject("Račun uspešno kreiran");
 //        emailDTO.setEmail(owner.getEmail());
-//        emailDTO
-//                .setMessage("Vaš racun je uspešno kreiran");
+//        emailDTO.setMessage("Vaš racun je uspešno kreiran");
 //        emailDTO.setFirstName(owner.getFirstName());
 //        emailDTO.setLastName(owner.getLastName());
 //        emailDTO.setType("email");
@@ -76,13 +82,10 @@ public class AccountService {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new RuntimeException("Račun sa ID-jem " + accountId + " nije pronađen"));
 
-        Optional.ofNullable(updateAccountDTO.getReservedBalance()).ifPresent(account::setReservedBalance);
-        Optional.ofNullable(updateAccountDTO.getExpirationDate()).ifPresent(account::setExpirationDate);
+
         Optional.ofNullable(updateAccountDTO.getDailyLimit()).ifPresent(account::setDailyLimit);
         Optional.ofNullable(updateAccountDTO.getMonthlyLimit()).ifPresent(account::setMonthlyLimit);
-        Optional.ofNullable(updateAccountDTO.getSubtype()).ifPresent(account::setSubtype);
         Optional.ofNullable(updateAccountDTO.getStatus()).ifPresent(account::setStatus);
-        Optional.ofNullable(updateAccountDTO.getMonthlyMaintenanceFee()).ifPresent(account::setMonthlyMaintenanceFee);
 
         return accountRepository.save(account);
     }

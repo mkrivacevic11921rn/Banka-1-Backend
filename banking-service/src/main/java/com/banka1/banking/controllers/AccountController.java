@@ -3,11 +3,14 @@ package com.banka1.banking.controllers;
 import com.banka1.banking.dto.request.CreateAccountDTO;
 import com.banka1.banking.dto.request.UpdateAccountDTO;
 import com.banka1.banking.models.Account;
+import com.banka1.banking.models.Transaction;
 import com.banka1.banking.services.AccountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,23 +24,25 @@ import java.util.Map;
 @RequestMapping("/accounts")
 @Tag(name = "Account API", description = "API za upravljanje racunima")
 public class AccountController {
-
+    @Autowired
     private AccountService accountService;
-
+    /// pristup imaju samo zaposleni
+    /// Da bi zaposleni mogao da kreira novi račun, potrebno je da se prijavi u aplikaciju.
+    /// Pored čuvanja podataka o vlasniku (klijentu), čuvaju se i podaci o zaposlenima koji su napravili račune.
+    /// Nakon prijave, izabira jedan od tipova računa: Tekući račun, Devizni račun. Nakon uspešnog kreiranog računa vlasnik dobija email o uspehu.
     @PostMapping("/")
-//    @Authorization(permissions = { Permission.CREATE_EMPLOYEE }, positions = { Position.HR })
     @Operation(summary = "Kreiranje računa",
             description = "Dodaje novi račun u sistem.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Račun uspešno kreiran.\n"),
+            @ApiResponse(responseCode = "200", description = "Račun uspešno kreiran.\n"),
             @ApiResponse(responseCode = "403", description = "Nevalidni podaci")
     })
 
-    public ResponseEntity<?> createAccount(@RequestBody CreateAccountDTO createAccountDTO) {
+    public ResponseEntity<?> createAccount(@Valid @RequestBody CreateAccountDTO createAccountDTO) {
         Account savedAccount = null;
         try {
             savedAccount = accountService.createAccount(createAccountDTO);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             System.err.println(e);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
@@ -45,14 +50,13 @@ public class AccountController {
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         Map<String, Object> data = new HashMap<>();
-        data.put("id vlasnika racuna", savedAccount.getOwnerID());
         data.put("id racuna", savedAccount.getId());
         data.put("message", "Račun uspešno kreiran.\n");
         response.put("data", data);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-
+    /// pristup imaju samo zaposleni
     @GetMapping("/")
     @Operation(summary = "Dohvatanje svih računa",
             description = "Vraća listu svih računa u sistemu.")
@@ -65,7 +69,7 @@ public class AccountController {
         List<Account> accounts = accountService.getAllAccounts();
 
         if (accounts.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nema dostupnih računa.");
+            return ResponseEntity.ok("prazno");
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -74,7 +78,7 @@ public class AccountController {
 
         return ResponseEntity.ok(response);
     }
-
+    /// pristup imaju zaposleni i vlasnici racuna
     @GetMapping("/user/{userId}")
     @Operation(summary = "Dohvatanje računa specificnog korisnika",
             description = "Vraća sve račune vezane za određenog korisnika.")
@@ -83,11 +87,11 @@ public class AccountController {
             @ApiResponse(responseCode = "404", description = "Nema računa za datog korisnika")
     })
 
-    public ResponseEntity<?> getAccountsByUser(@PathVariable Long userId) {
+    public ResponseEntity<?> getAccountsByOwner(@PathVariable Long userId) {
         List<Account> accounts = accountService.getAccountsByOwnerId(userId);
 
         if (accounts.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nema računa za ovog korisnika.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Ovaj korisnik nema račun.");
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -97,6 +101,7 @@ public class AccountController {
         return ResponseEntity.ok(response);
     }
 
+    /// pristup imaju samo zaposleni
     @PutMapping("/{accountId}")
     @Operation(summary = "Ažuriranje računa",
             description = "Omogućava zaposlenima da ažuriraju podatke o računu.")
