@@ -4,6 +4,7 @@ import com.banka1.banking.dto.CreateCardDTO;
 import com.banka1.banking.dto.UpdateCardDTO;
 import com.banka1.banking.models.Card;
 import com.banka1.banking.services.CardService;
+import com.banka1.banking.utils.ResponseMessage;
 import com.banka1.banking.utils.ResponseTemplate;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -33,75 +34,51 @@ public class CardController {
     }
 
     @GetMapping("/")
-//    @Authorization(permissions = { Permission.READ_EMPLOYEE }, allowIdFallback = true )
     @Operation(summary = "Pregled svih kartica", description = "Pregled svih kartica korisnika za traženi račun")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista kartica korisnika za određeni račun."),
             @ApiResponse(responseCode = "404", description = "Nema kartica za traženi račun.")
     })
-    public ResponseEntity<?> getCardsByAccountID(@RequestParam int account_id) {
+    public ResponseEntity<?> getCardsByAccountID(@RequestParam int account_id) { //treba iz jwta????
         try {
             List<Card> cards = cardService.findAllByAccountId(account_id);
-            if (cards.isEmpty())
-                return ResponseEntity.status(HttpStatusCode.valueOf(404)).body(Map.of(
-                        "success", false,
-                        "error", "Nema kartica za traženi račun."
-                ));
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "data", cards
-            ));
+            if (cards.isEmpty()) {
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, ResponseMessage.CARD_NOT_FOUND.toString());
+            }
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("cards", cards), null);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "error", e.getMessage()
-            ));
+            log.error("Greška prilikom trazenja kartica: ", e);
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
     }
 
     @PostMapping("/")
-//    @Authorization(permissions = { Permission.CREATE_EMPLOYEE }, positions = { Position.HR })
     @Operation(summary = "Kreiranje kartice", description = "Kreira novu karticu povezanu sa računom korisnika.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Kartica uspešno kreirana."),
             @ApiResponse(responseCode = "400", description = "Nevalidni podaci.")
     })
     public ResponseEntity<?> createCard(@RequestBody CreateCardDTO createCardDTO) {
-        Card card = null;
         try {
-            card = cardService.createCard(createCardDTO);
+            Card card = cardService.createCard(createCardDTO);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.CREATED), true, Map.of("id", card.getId(), "message", ResponseMessage.CARD_CREATED_SUCCESS.toString()), null);
         } catch (RuntimeException e) {
-            log.error("e: ", e);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+            log.error("Greška prilikom kreiranja kartice: ", e);
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        Map<String, Object> data = new HashMap<>();
-        data.put("id", card.getId());
-        data.put("message", "Kartica uspešno kreirana.");
-        response.put("data", data);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PutMapping("/{card_id}")
+    @PatchMapping("/{card_id}")
     @Operation(summary = "Blokiranje i deblokiranje kartice", description = "Blokiranje i deblokiranje kartice")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Kartica uspešno ažurirana"),
             @ApiResponse(responseCode = "400", description = "Nevalidni podaci.")
     })
     public ResponseEntity<?> blockCard(@PathVariable int card_id, @RequestBody UpdateCardDTO updateCardDTO) {
-        try {
-            cardService.updateCard(card_id, updateCardDTO);
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Kartica uspešno ažurirana"), null);
-        } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
-        }
+        return updateCardStatus(card_id, updateCardDTO);
     }
 
     @GetMapping("/admin/{account_id}")
-//    @Authorization(permissions = { Permission.READ_EMPLOYEE }, allowIdFallback = true )
     @Operation(summary = "Pregled svih kartica od strane zaposlenog", description = "Pregled svih kartica za traženi račun od strane zaposlenog")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista kartica za određeni račun."),
@@ -110,34 +87,32 @@ public class CardController {
     public ResponseEntity<?> getAdminCardsByAccountID(@PathVariable int account_id) {
         try {
             List<Card> cards = cardService.findAllByAccountId(account_id);
-            if (cards.isEmpty())
-                return ResponseEntity.status(HttpStatusCode.valueOf(404)).body(Map.of(
-                        "success", false,
-                        "error", "Nema kartica za traženi račun."
-                ));
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "data", cards
-            ));
+            if (cards.isEmpty()) {
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, ResponseMessage.CARD_NOT_FOUND.toString());
+            }
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("cards", cards), null);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "error", e.getMessage()
-            ));
+            log.error("Greška prilikom trazenja kartica: ", e);
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
     }
 
-    @PutMapping("/admin/{account_id}")
+    @PatchMapping("/admin/{card_id}")
     @Operation(summary = "Aktivacija i deaktivacija kartice od strane zaposlenog", description = "Aktivacija i deaktivacija kartice od strane zaposlenog")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Kartica uspešno ažurirana"),
             @ApiResponse(responseCode = "400", description = "Nevalidni podaci.")
     })
-    public ResponseEntity<?> activateCard(@PathVariable int account_id, @RequestParam int card_id, @RequestBody UpdateCardDTO updateCardDTO) {
+    public ResponseEntity<?> activateCard(@PathVariable int card_id, @RequestBody UpdateCardDTO updateCardDTO) {
+        return updateCardStatus(card_id, updateCardDTO);
+    }
+
+    private ResponseEntity<?> updateCardStatus(int card_id, UpdateCardDTO updateCardDTO) {
         try {
             cardService.updateCard(card_id, updateCardDTO);
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Kartica uspešno ažurirana"), null);
-        } catch (Exception e) {
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", ResponseMessage.CARD_UPDATED_SUCCESS.toString()), null);
+        } catch (RuntimeException e) {
+            log.error("Greška prilikom ažuriranja kartice: ", e);
             return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
     }
