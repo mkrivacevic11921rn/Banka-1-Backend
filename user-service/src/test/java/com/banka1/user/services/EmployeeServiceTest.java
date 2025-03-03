@@ -3,7 +3,9 @@ package com.banka1.user.services;
 import com.banka1.user.DTO.request.CreateEmployeeDto;
 import com.banka1.user.DTO.request.UpdateEmployeeDto;
 import com.banka1.user.DTO.request.UpdatePermissionsDto;
+import com.banka1.user.listener.MessageHelper;
 import com.banka1.user.model.Employee;
+import com.banka1.user.model.helper.Gender;
 import com.banka1.user.model.helper.Permission;
 import com.banka1.user.repository.EmployeeRepository;
 import com.banka1.user.service.EmployeeService;
@@ -14,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
+import org.springframework.jms.core.JmsTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,6 +38,12 @@ class EmployeeServiceTest {
     @Mock
     private ModelMapper modelMapper;
 
+    @Mock
+    private JmsTemplate jmsTemplate;
+
+    @Mock
+    private MessageHelper messageHelper;
+
     @InjectMocks
     private EmployeeService employeeService;
 
@@ -46,7 +55,7 @@ class EmployeeServiceTest {
         employee.setId(1L);
         employee.setFirstName("Marko");
         employee.setLastName("Markovic");
-
+        employee.setGender(Gender.MALE);
     }
 
     @Test

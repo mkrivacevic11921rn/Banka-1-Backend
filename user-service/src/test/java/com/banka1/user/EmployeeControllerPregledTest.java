@@ -64,6 +64,7 @@ public class EmployeeControllerPregledTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.success").value(true))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.id").value(id))
                 .andReturn().getResponse().getContentAsString();
+        System.out.println(responseContent);
         var responseJson = objectMapper.convertValue(objectMapper.readTree(responseContent).get("data"), EmployeeResponse.class);
 
         AssertionErrors.assertEquals("Response", response, responseJson);
@@ -77,7 +78,7 @@ public class EmployeeControllerPregledTest {
 
         Mockito.when(employeeService.findById(id)).thenReturn(null);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/employee/" + id))
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/users/employees/" + id))
                 .andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.success").value(false));
 
@@ -90,7 +91,7 @@ public class EmployeeControllerPregledTest {
 
         Mockito.when(employeeService.findById(id)).thenThrow(new RuntimeException("Poruka"));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/employee/" + id))
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/users/employees/" + id))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.success").value(false));
 

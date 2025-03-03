@@ -33,24 +33,18 @@ import java.util.UUID;
 import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatchers.contains;
 
 @Service
+@RequiredArgsConstructor
 public class EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final JmsTemplate jmsTemplate;
+    private final ModelMapper modelMapper;
     private final MessageHelper messageHelper;
-    private final String destinationEmail;
+
+    @Value("${destination.email}")
+    private String destinationEmail;
 	@Value("${frontend.url}")
 	private String frontendUrl;
-
-    @Autowired
-    public EmployeeService(EmployeeRepository customerRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("${destination.email}") String destinationEmail) {
-        this.employeeRepository = customerRepository;
-        this.passwordEncoder = new BCryptPasswordEncoder();
-        this.jmsTemplate = jmsTemplate;
-        this.messageHelper = messageHelper;
-        this.destinationEmail = destinationEmail;
-
-    }
 
     public EmployeeResponse findById(String id) {
         var employeeOptional = employeeRepository.findById(Long.parseLong(id));
@@ -60,8 +54,6 @@ public class EmployeeService {
         return getEmployeeResponse(employee);
     }
 
-    @Autowired
-    private ModelMapper modelMapper;
 
     public Employee createEmployee(CreateEmployeeDto createEmployeeDto) {
         // Provera da li već postoji nalog sa istim email-om

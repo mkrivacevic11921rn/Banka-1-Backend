@@ -39,8 +39,6 @@ public class EmployeeController {
     @GetMapping("/{id}")
     @Authorization(permissions = { Permission.READ_EMPLOYEE }, allowIdFallback = true )
     public ResponseEntity<?> getById(
-//            @RequestHeader("Authorization")
-//            String authorization,
             @Parameter(required = true, example = "1")
             @PathVariable String id
     ) {

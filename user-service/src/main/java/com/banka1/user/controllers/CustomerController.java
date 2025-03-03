@@ -40,6 +40,8 @@ public class CustomerController {
     @GetMapping("/{id}")
     @Authorization(permissions = { Permission.READ_CUSTOMER }, allowIdFallback = true )
     public ResponseEntity<?> getById(
+            @RequestHeader(value = "Authorization", required = false)
+            String authorization,
             @Parameter(required = true, example = "1")
             @PathVariable String id
     ) {

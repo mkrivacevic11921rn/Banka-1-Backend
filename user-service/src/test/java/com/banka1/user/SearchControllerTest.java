@@ -53,7 +53,7 @@ public class SearchControllerTest {
         Mockito.when(employeeService.search(0, 10, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty()))
                 .thenReturn(response);
 
-        var responseContent = mockMvc.perform(MockMvcRequestBuilders.get("/api/employees"))
+        var responseContent = mockMvc.perform(MockMvcRequestBuilders.get("/api/users/search/employees"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.success").value(true))
                 .andReturn().getResponse().getContentAsString();
@@ -85,7 +85,7 @@ public class SearchControllerTest {
         Mockito.when(employeeService.search(0, 10, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty()))
                 .thenReturn(response);
 
-        var responseContent = mockMvc.perform(MockMvcRequestBuilders.get("/api/employees"))
+        var responseContent = mockMvc.perform(MockMvcRequestBuilders.get("/api/users/search/employees"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.success").value(true))
                 .andReturn().getResponse().getContentAsString();
@@ -101,7 +101,7 @@ public class SearchControllerTest {
         Mockito.when(employeeService.search(0, 10, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty()))
                 .thenThrow(new RuntimeException("Poruka"));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/employees"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/users/search/employees"))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.success").value(false));
 
@@ -115,7 +115,7 @@ public class SearchControllerTest {
         Mockito.when(customerService.search(0, 10, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty()))
                 .thenReturn(response);
 
-        var responseContent = mockMvc.perform(MockMvcRequestBuilders.get("/api/customers"))
+        var responseContent = mockMvc.perform(MockMvcRequestBuilders.get("/api/users/search/customers"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.success").value(true))
                 .andReturn().getResponse().getContentAsString();
@@ -132,6 +132,7 @@ public class SearchControllerTest {
                 1L,
                 "Petar",
                 "Petrovic",
+                "ppetrovic",
                 1234567890L,
                 Gender.MALE,
                 "ppetrovic@banka.rs",
@@ -142,7 +143,7 @@ public class SearchControllerTest {
         Mockito.when(customerService.search(0, 10, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty()))
                 .thenReturn(response);
 
-        var responseContent = mockMvc.perform(MockMvcRequestBuilders.get("/api/customers"))
+        var responseContent = mockMvc.perform(MockMvcRequestBuilders.get("/api/users/search/customers"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.success").value(true))
                 .andReturn().getResponse().getContentAsString();
@@ -158,7 +159,7 @@ public class SearchControllerTest {
         Mockito.when(customerService.search(0, 10, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty()))
                 .thenThrow(new RuntimeException("Poruka"));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/customers"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/users/search/customers"))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.success").value(false));
 

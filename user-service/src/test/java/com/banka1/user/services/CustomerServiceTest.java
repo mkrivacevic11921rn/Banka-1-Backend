@@ -1,16 +1,21 @@
 package com.banka1.user.services;
 
 import com.banka1.user.DTO.CustomerDTO.CustomerDTO;
+import com.banka1.user.listener.MessageHelper;
 import com.banka1.user.mapper.CustomerMapper;
 import com.banka1.user.model.Customer;
 import com.banka1.user.model.helper.Permission;
 import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.service.CustomerService;
+import com.banka1.user.service.SetPasswordService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.jms.core.JmsTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -29,6 +34,15 @@ public class CustomerServiceTest {
     private CustomerRepository customerRepository;
 
     @Mock
+    private SetPasswordService setPasswordService;
+
+    @Mock
+    private MessageHelper messageHelper;
+
+    @Mock
+    private JmsTemplate jmsTemplate;
+
+    @Mock
     private BCryptPasswordEncoder passwordEncoder;
 
     @InjectMocks
@@ -37,11 +51,23 @@ public class CustomerServiceTest {
     @Test
     void testCreateCustomer() {
         CustomerDTO customerDTO = new CustomerDTO();
+        customerDTO.setIme("Petar");
+        customerDTO.setPrezime("Petrovic");
+        customerDTO.setUsername("ppetrovic");
         customerDTO.setPassword("1234");
-        Customer customer = CustomerMapper.dtoToCustomer(customerDTO);
+        customerDTO.setAdresa("Ulica");
+        customerDTO.setEmail("ppetrovic@example.com");
+        customerDTO.setPol("M");
+        customerDTO.setDatum_rodjenja("90012002");
+        customerDTO.setBroj_telefona("555333");
 
-        when(passwordEncoder.encode(anyString())).thenReturn("####");
-        when(customerRepository.save(any(Customer.class))).thenReturn(customer);
+        when(passwordEncoder.encode(any(CharSequence.class))).thenReturn("####");
+        when(customerRepository.save(any(Customer.class)))
+                .then(invocation -> {
+                    var savedCustomer = (Customer) invocation.getArguments()[0];
+                    savedCustomer.setId(1L);
+                    return savedCustomer;
+                });
 
         Customer createdCustomer = customerService.createCustomer(customerDTO);
 
@@ -73,7 +99,7 @@ public class CustomerServiceTest {
         CustomerDTO customerDTO = new CustomerDTO();
         customerDTO.setIme("Petar");
 
-        when(customerRepository.findById(1L)).thenReturn(Optional.empty());
+        //when(customerRepository.findById(1L)).thenReturn(Optional.empty());
 
 //      assertThrows(...)
     }
@@ -118,18 +144,18 @@ public class CustomerServiceTest {
 
     @Test
     void testUpdateCustomerPermissionsInvalid() {
-        when(customerRepository.findById(1L)).thenReturn(Optional.of(new Customer()));
-
-        Exception exception = assertThrows(ResponseStatusException.class, () -> {
+        var exception = assertThrows(ResponseStatusException.class, () -> {
             customerService.updateCustomerPermissions(1L, null);
         });
 
-        assertEquals("Lista permisija ne može biti prazna ili null", exception.getMessage());
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        assertEquals("Lista permisija ne može biti prazna ili null", exception.getBody().getDetail());
 
         exception = assertThrows(ResponseStatusException.class, () -> {
             customerService.updateCustomerPermissions(1L, List.of());
         });
 
-        assertEquals("Lista permisija ne može biti prazna ili null", exception.getMessage());
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        assertEquals("Lista permisija ne može biti prazna ili null", exception.getBody().getDetail());
     }
 }

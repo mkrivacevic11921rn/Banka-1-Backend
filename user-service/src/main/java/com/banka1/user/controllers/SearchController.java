@@ -87,8 +87,6 @@ public class SearchController {
     @GetMapping("customers")
     @Authorization(permissions = { Permission.LIST_CUSTOMER })
     public ResponseEntity<?> searchCustomers(
-//            @RequestHeader("Authorization")
-//            String authorization,
             @Parameter(
                     description = "Redni broj stranice rezultata (podrazumevana vrednost je prva stranica)",
                     example = "0"

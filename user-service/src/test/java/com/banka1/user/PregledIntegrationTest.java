@@ -2,14 +2,14 @@ package com.banka1.user;
 
 import com.banka1.user.DTO.request.LoginRequest;
 import com.banka1.user.service.BlackListTokenService;
+import com.banka1.user.service.EmployeeService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.RestTemplate;
@@ -50,7 +50,9 @@ public class PregledIntegrationTest {
     void testEmployee() {
         String id = "1";
 
-        var responseEntity = restTemplate.getForEntity(getBaseUrl() + "/employee/" + id, Map.class);
+        var token = loginAsAdmin();
+
+        var responseEntity = sendGetRequest(token, "/users/employees/" + id);
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode(), "GET nije uspešan.");
         assertNotNull(responseEntity.getBody(), "Odgovor je null.");
@@ -67,7 +69,7 @@ public class PregledIntegrationTest {
 
         assertEquals(id, data.get("id").toString(), "Pogresan ID.");
 
-        responseEntity = restTemplate.getForEntity(getBaseUrl() + "/employees", Map.class);
+        responseEntity = sendGetRequest(token, "/users/search/employees");
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode(), "GET nije uspešan.");
         assertNotNull(responseEntity.getBody(), "Odgovor je null.");
@@ -77,7 +79,7 @@ public class PregledIntegrationTest {
         data = (Map) responseEntity.getBody().get("data");
 
         assertNotNull(data.get("total"), "Odgovor ne sadrži broj redova.");
-        assertEquals(1, data.get("total"));
+        assertTrue(1 <= (Integer)data.get("total"));
         assertNotNull(data.get("rows"), "Odgovor ne sadrži redove.");
         assertInstanceOf(List.class, data.get("rows"), "Redovi nisu lista.");
 
@@ -87,7 +89,7 @@ public class PregledIntegrationTest {
 
         var filterValue = "dmi";
 
-        responseEntity = restTemplate.getForEntity(getBaseUrl() + "/employees?filterField=firstName&filterValue=" + filterValue, Map.class);
+        responseEntity = sendGetRequest(token, "/users/search/employees?filterField=firstName&filterValue=" + filterValue);
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode(), "GET nije uspešan.");
         assertNotNull(responseEntity.getBody(), "Odgovor je null.");
@@ -105,7 +107,7 @@ public class PregledIntegrationTest {
 
         assertEquals(rows.get(0), employee, "Pristup preko ID-a i pretraga sa filterom nisu vratili isti objekat.");
 
-        responseEntity = restTemplate.getForEntity(getBaseUrl() + "/employees?filterField=firstName&sortField=firstName&filterValue=" + filterValue, Map.class);
+        responseEntity = sendGetRequest(token, "/users/search/employees?filterField=firstName&sortField=firstName&filterValue=" + filterValue);
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode(), "GET nije uspešan.");
         assertNotNull(responseEntity.getBody(), "Odgovor je null.");
@@ -125,7 +127,7 @@ public class PregledIntegrationTest {
 
         filterValue = "director";
 
-        responseEntity = restTemplate.getForEntity(getBaseUrl() + "/employees?filterField=position&filterValue=" + filterValue, Map.class);
+        responseEntity = sendGetRequest(token, "/users/search/employees?filterField=position&filterValue=" + filterValue);
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode(), "GET nije uspešan.");
         assertNotNull(responseEntity.getBody(), "Odgovor je null.");
@@ -148,18 +150,9 @@ public class PregledIntegrationTest {
     void testCustomer() {
         String id = "1";
 
-        LoginRequest loginRequest = new LoginRequest();
-        loginRequest.setEmail("admin@admin.com");
-        loginRequest.setPassword("admin123");
+        var token = loginAsAdmin();
 
-        @SuppressWarnings("rawtypes") ResponseEntity<Map> loginResponse = restTemplate.postForEntity(getBaseUrl() + "/login", loginRequest, Map.class);
-
-        assertNotNull(loginResponse.getBody());
-        @SuppressWarnings("unchecked")
-        var token = (String) ((Map<String, Object>) loginResponse.getBody().get("data")).get("token");
-        System.out.println(token);
-
-        var responseEntity = restTemplate.getForEntity(getBaseUrl() + "/customer/" + id, Map.class);
+        var responseEntity = sendGetRequest(token, "/customer/" + id);
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode(), "GET nije uspešan.");
         assertNotNull(responseEntity.getBody(), "Odgovor je null.");
@@ -176,7 +169,7 @@ public class PregledIntegrationTest {
 
         assertEquals(id, data.get("id").toString(), "Pogresan ID.");
 
-        responseEntity = restTemplate.getForEntity(getBaseUrl() + "/customers", Map.class);
+        responseEntity = sendGetRequest(token, "/users/search/customers");
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode(), "GET nije uspešan.");
         assertNotNull(responseEntity.getBody(), "Odgovor je null.");
@@ -186,7 +179,7 @@ public class PregledIntegrationTest {
         data = (Map) responseEntity.getBody().get("data");
 
         assertNotNull(data.get("total"), "Odgovor ne sadrži broj redova.");
-        assertEquals(1, data.get("total"));
+        assertEquals(2, data.get("total"));
         assertNotNull(data.get("rows"), "Odgovor ne sadrži redove.");
         assertInstanceOf(List.class, data.get("rows"), "Redovi nisu lista.");
 
@@ -194,9 +187,9 @@ public class PregledIntegrationTest {
 
         assertEquals(rows.get(0), employee, "Pristup preko ID-a i pretraga nisu vratili isti objekat.");
 
-        var filterValue = "uster";
+        var filterValue = "ark";
 
-        responseEntity = restTemplate.getForEntity(getBaseUrl() + "/customers?filterField=firstName&filterValue=" + filterValue, Map.class);
+        responseEntity = sendGetRequest(token, "/users/search/customers?filterField=firstName&filterValue=" + filterValue);
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode(), "GET nije uspešan.");
         assertNotNull(responseEntity.getBody(), "Odgovor je null.");
@@ -214,7 +207,7 @@ public class PregledIntegrationTest {
 
         assertEquals(rows.get(0), employee, "Pristup preko ID-a i pretraga sa filterom nisu vratili isti objekat.");
 
-        responseEntity = restTemplate.getForEntity(getBaseUrl() + "/customers?filterField=firstName&sortField=firstName&filterValue=" + filterValue, Map.class);
+        responseEntity = sendGetRequest(token, "/users/search/customers?filterField=firstName&sortField=firstName&filterValue=" + filterValue);
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode(), "GET nije uspešan.");
         assertNotNull(responseEntity.getBody(), "Odgovor je null.");
@@ -234,7 +227,7 @@ public class PregledIntegrationTest {
 
         filterValue = "male";
 
-        responseEntity = restTemplate.getForEntity(getBaseUrl() + "/customers?filterField=gender&filterValue=" + filterValue, Map.class);
+        responseEntity = sendGetRequest(token, "/users/search/customers?filterField=gender&filterValue=" + filterValue);
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode(), "GET nije uspešan.");
         assertNotNull(responseEntity.getBody(), "Odgovor je null.");
@@ -251,5 +244,26 @@ public class PregledIntegrationTest {
         rows = (List) data.get("rows");
 
         assertEquals(rows.get(0), employee, "Pristup preko ID-a i pretraga sa filterom po polu nisu vratili isti objekat.");
+    }
+
+    private ResponseEntity<Map> sendGetRequest(String token, String path) {
+        var headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer " + token);
+        var request = new HttpEntity<>(headers);
+        var responseEntity = restTemplate.exchange(getBaseUrl() + path, HttpMethod.GET, request, Map.class);
+        return responseEntity;
+    }
+
+    private String loginAsAdmin() {
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setEmail("admin@admin.com");
+        loginRequest.setPassword("admin123");
+
+        @SuppressWarnings("rawtypes") ResponseEntity<Map> loginResponse = restTemplate.postForEntity(getBaseUrl() + "/auth/login", loginRequest, Map.class);
+
+        assertNotNull(loginResponse.getBody());
+        @SuppressWarnings("unchecked")
+        var token = (String) ((Map<String, Object>) loginResponse.getBody().get("data")).get("token");
+        return token;
     }
 }

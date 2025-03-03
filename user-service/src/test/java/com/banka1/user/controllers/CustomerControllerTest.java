@@ -7,17 +7,23 @@ import com.banka1.user.model.helper.Permission;
 import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.service.CustomerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -27,18 +33,23 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
-@WebMvcTest(CustomerController.class)
-@ExtendWith(MockitoExtension.class)
 class CustomerControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @MockitoBean
+    @Mock
     private CustomerService customerService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @InjectMocks
+    private CustomerController customerController;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        mockMvc = MockMvcBuilders.standaloneSetup(customerController).build();
+    }
 
     @Test
     void testCreateCustomer() throws Exception {
@@ -53,11 +64,11 @@ class CustomerControllerTest {
 
         when(customerService.createCustomer(any(CustomerDTO.class))).thenReturn(customer);
 
-        mockMvc.perform(post("/api/users/customers")
+        mockMvc.perform(post("/api/customer")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(customerDTO)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").value("Mušterija uspešno kreirana"));
+                .andExpect(jsonPath("$.data.id").value(1L));
     }
 
     @Test
@@ -73,29 +84,29 @@ class CustomerControllerTest {
 
         when(customerService.updateCustomer(eq(1L), any(CustomerDTO.class))).thenReturn(Optional.of(customer));
 
-        mockMvc.perform(put("/api/users/customers/1")
+        mockMvc.perform(put("/api/customer/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(customerDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").value("Podaci korisnika ažurirani"));
+                .andExpect(jsonPath("$.data.message").value("Podaci korisnika ažurirani"));
     }
 
     @Test
     void testDeleteCustomer() throws Exception {
         when(customerService.deleteCustomer(1L)).thenReturn(true);
 
-        mockMvc.perform(delete("/api/users/customers/1"))
+        mockMvc.perform(delete("/api/customer/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").value("Korisnik uspešno obrisan"));
+                .andExpect(jsonPath("$.data.message").value("Korisnik uspešno obrisan"));
     }
 
 //    @Test
 //    void testDeleteCustomerNotFound() throws Exception {
 //        when(customerService.deleteCustomer(1L)).thenReturn(false);
 //
-//        mockMvc.perform(delete("/api/users/customers/1")
+//        mockMvc.perform(delete("/api/customer/1")
 //                .andExpect(status().isNotFound())
 //                .andExpect(jsonPath("$.success").value(false))
 //                .andExpect(jsonPath("$.data").value("Korisnik nije pronađen"));
@@ -112,27 +123,25 @@ class CustomerControllerTest {
 
         when(customerService.updateCustomerPermissions(eq(1L), anyList())).thenReturn(Optional.of(customer));
 
-        mockMvc.perform(put("/api/users/customers/1/permissions")
+        mockMvc.perform(put("/api/customer/1/permissions")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(customer)))
+                .content(objectMapper.writeValueAsString(Map.of("permissions", permissions))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").value("Permisije ažurirane"));
+                .andExpect(jsonPath("$.data.message").value("Permisije ažurirane"));
     }
 
     @Test
     void testUpdateCustomerPermissionsNotFound() throws Exception {
+        List<Permission> permissions = List.of(Permission.READ_EMPLOYEE);
 
-        Customer customer = new Customer();
-        customer.setId(1L);
+        when(customerService.updateCustomerPermissions(eq(1L), anyList())).thenReturn(Optional.empty());
 
-        when(customerService.updateCustomerPermissions(eq(customer.getId()), anyList())).thenReturn(Optional.empty());
-
-        mockMvc.perform(put("/api/users/customers/" + 1L + "/permissions")
+        mockMvc.perform(put("/api/customer/" + 1L + "/permissions")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(customer)))
+                .content(objectMapper.writeValueAsString(Map.of("permissions", permissions))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.data").value("Korisnik nije pronađen"));
+                .andExpect(jsonPath("$.error").value("Korisnik nije pronađen"));
     }
 }

@@ -11,6 +11,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.util.AssertionErrors;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -43,6 +44,7 @@ public class CustomerControllerPregledTest {
                 1L,
                 "Petar",
                 "Petrovic",
+                "ppetrovic",
                 1234567890L,
                 Gender.MALE,
                 "ppetrovic@banka.rs",

@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,27 +40,18 @@ import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatc
 @Service
 @Slf4j
 @Tag(name = "Customer Service", description = "Business logic for customer operations")
+@RequiredArgsConstructor
 public class CustomerService {
-
     private final CustomerRepository customerRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final SetPasswordService setPasswordService;
     private final JmsTemplate jmsTemplate;
     private final MessageHelper messageHelper;
-    private final String destinationEmail;
 
+    @Value("${destination.email}")
+    private String destinationEmail;
     @Value("${frontend.url}")
     private String frontendUrl;
-
-    @Autowired
-    public CustomerService(CustomerRepository customerRepository, SetPasswordService setPasswordService, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("${destination.email}") String destinationEmail) {
-        this.customerRepository = customerRepository;
-        this.setPasswordService = setPasswordService;
-        this.passwordEncoder = new BCryptPasswordEncoder();
-        this.jmsTemplate = jmsTemplate;
-        this.messageHelper = messageHelper;
-        this.destinationEmail = destinationEmail;
-    }
 
     public CustomerResponse findById(String id) {
         return findById(Long.parseLong(id));
@@ -78,6 +70,7 @@ public class CustomerService {
                 customer.getId(),
                 customer.getFirstName(),
                 customer.getLastName(),
+                customer.getUsername(),
                 customer.getBirthDate(),
                 customer.getGender(),
                 customer.getEmail(),

@@ -11,13 +11,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
 
@@ -29,44 +32,27 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
-@WebMvcTest(EmployeeController.class)
-@ExtendWith(MockitoExtension.class)
 class EmployeeControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Mock
     private EmployeeService employeeService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @InjectMocks
+    private EmployeeController employeeController;
 
-
-    private String token;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
-    void setUp() throws Exception {
-        LoginRequest loginRequest = new LoginRequest();
-        loginRequest.setEmail("admin@admin.com");
-        loginRequest.setPassword("admin123");  // Podaci iz BootstrapData
-
-        var loginResponse = mockMvc.perform(post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginRequest)))
-                .andDo(result -> {
-                    System.out.println(result.getAsyncResult());
-                });
-
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        mockMvc = MockMvcBuilders.standaloneSetup(employeeController).build();
     }
-
-
 
     @Test
     void testCreateEmployee() throws Exception {
-
-
-
         CreateEmployeeDto dto = new CreateEmployeeDto();
         dto.setFirstName("Marko");
         dto.setLastName("Markovic");
@@ -78,7 +64,7 @@ class EmployeeControllerTest {
 
         when(employeeService.createEmployee(any(CreateEmployeeDto.class))).thenReturn(employee);
 
-        mockMvc.perform(post("/api/users/employees")
+        mockMvc.perform(post("/api/users/employees/")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
@@ -99,7 +85,7 @@ class EmployeeControllerTest {
 
         when(employeeService.updateEmployee(Mockito.eq(1L), any(UpdateEmployeeDto.class))).thenReturn(updatedEmployee);
 
-        mockMvc.perform(put("/api/users/employee/1")
+        mockMvc.perform(put("/api/users/employees/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
@@ -112,7 +98,7 @@ class EmployeeControllerTest {
         when(employeeService.existsById(1L)).thenReturn(true);
         doNothing().when(employeeService).deleteEmployee(1L);
 
-        mockMvc.perform(delete("/api/users/employee/1"))
+        mockMvc.perform(delete("/api/users/employees/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data").value("Korisnik uspešno obrisan"));
@@ -130,7 +116,7 @@ class EmployeeControllerTest {
         when(employeeService.existsById(1L)).thenReturn(true);
         when(employeeService.updatePermissions(Mockito.eq(1L), any(UpdatePermissionsDto.class))).thenReturn(updatedEmployee);
 
-        mockMvc.perform(put("/api/users/employee/1/permissions")
+        mockMvc.perform(put("/api/users/employees/1/permissions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())

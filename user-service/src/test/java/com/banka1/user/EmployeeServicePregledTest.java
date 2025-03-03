@@ -73,6 +73,7 @@ public class EmployeeServicePregledTest {
 
         entity.setFirstName("Petar");
         entity.setLastName("Petrovic");
+        entity.setUsername("ppetrovic");
         entity.setBirthDate("9999-09-09");
         entity.setGender(Gender.MALE);
         entity.setEmail("ppetrovic@banka.rs");

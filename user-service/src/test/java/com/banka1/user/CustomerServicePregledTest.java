@@ -53,6 +53,7 @@ public class CustomerServicePregledTest {
 
         entity.setFirstName("Petar");
         entity.setLastName("Petrovic");
+        entity.setUsername("ppetrovic");
         entity.setBirthDate(1234567890L);
         entity.setGender(Gender.MALE);
         entity.setEmail("ppetrovic@banka.rs");
@@ -68,6 +69,7 @@ public class CustomerServicePregledTest {
                 1L,
                 "Petar",
                 "Petrovic",
+                "ppetrovic",
                 1234567890L,
                 Gender.MALE,
                 "ppetrovic@banka.rs",
