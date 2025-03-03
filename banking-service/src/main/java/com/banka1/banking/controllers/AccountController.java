@@ -50,7 +50,7 @@ public class AccountController {
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         Map<String, Object> data = new HashMap<>();
-        data.put("id racuna", savedAccount.getId());
+        data.put("broj racuna", savedAccount.getAccountNumber());
         data.put("message", "Račun uspešno kreiran.\n");
         response.put("data", data);
 

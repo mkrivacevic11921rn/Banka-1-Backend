@@ -5,9 +5,10 @@ import com.banka1.banking.dto.request.UpdateAccountDTO;
 import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.helper.AccountSubtype;
+import com.banka1.banking.models.helper.AccountType;
 import com.banka1.banking.repository.AccountRepository;
 
-import com.banka1.user.repository.CustomerRepository;
+//import com.banka1.user.repository.CustomerRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jms.core.JmsTemplate;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 
 @Service
@@ -40,20 +42,25 @@ public class AccountService {
 //            create customer
 //        }
 //
-        if (accountRepository.existsByOwnerID((createAccountDTO.getOwnerID())) &&
-                accountRepository.existsByAccountNumber((createAccountDTO.getAccountNumber()))) {
-            throw new RuntimeException("Nalog sa ovim parametrima već postoji!");
-        }
-        System.out.println(createAccountDTO.getOwnerID());
+
         Account account = modelMapper.map(createAccountDTO, Account.class);
         account.setSubtype(AccountSubtype.STANDARD);
+
+        if (account.getBalance() != null) {
+            account.setBalance(account.getBalance());
+        } else {
+            account.setBalance(0.0);
+        }
         account.setReservedBalance(100.0);
         account.setCreatedDate(Instant.now().getEpochSecond());
         account.setExpirationDate(account.getCreatedDate() + 4 * 365 * 24 * 60 * 60);
         account.setDailySpent(0.0);
         account.setMonthlySpent(0.0);
         account.setMonthlyMaintenanceFee(0.0);
-        account.setEmployeeID(Long.valueOf(1));
+
+        account.setAccountNumber(generateAccountNumber(account));
+
+        account.setEmployeeID(Long.valueOf(1)); //preko auth
 
 //      obavestenje korisniku racuna na mejl da mu je kreiran racun
 //
@@ -88,6 +95,32 @@ public class AccountService {
         Optional.ofNullable(updateAccountDTO.getStatus()).ifPresent(account::setStatus);
 
         return accountRepository.save(account);
+    }
+
+    public static String generateAccountNumber(Account account){
+        StringBuilder sb = new StringBuilder();
+        sb.append("111");
+        sb.append("0001");
+
+        Random random = new Random();
+        for (int i = 0; i < 9; i++) {
+            sb.append(random.nextInt(10)); // Add a random digit between 0-9
+        }
+
+        if (account.getType().equals(AccountType.CURRENT)) sb.append("1");
+        else sb.append("2");
+
+        switch (account.getSubtype()) {
+            case PERSONAL -> sb.append("1");
+            case BUSINESS -> sb.append("2");
+            case SAVINGS -> sb.append("3");
+            case PENSION -> sb.append("4");
+            case YOUTH -> sb.append("5");
+            case STUDENT -> sb.append("6");
+            case STANDARD -> sb.append("7");
+        }
+
+        return sb.toString();
     }
 
 }
