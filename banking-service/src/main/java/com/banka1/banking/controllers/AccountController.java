@@ -121,5 +121,26 @@ public class AccountController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
     }
+/// ne znam da li sam ovo trebala ja da dodam ili onaj koji je radio transakcije al ajde svi smo nasi
+    @GetMapping("/{accountId}/transactions")
+    @Operation(summary = "Dohvatanje transakcija za izabrani račun",
+            description = "Vraća sve transakcije za izabrani račun, sortirane opadajuće po datumu.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Transakcije uspešno dohvaćene"),
+            @ApiResponse(responseCode = "404", description = "Račun nije pronađen ili nema transakcija")
+    })
+    public ResponseEntity<?> getTransactionsForAccount(@PathVariable Long accountId) {
+        List<Transaction> transactions = accountService.getTransactionsForAccount(accountId);
+
+        if (transactions.isEmpty()) {
+            return ResponseEntity.ok("prazno");
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", transactions);
+
+        return ResponseEntity.ok(response);
+    }
 
 }

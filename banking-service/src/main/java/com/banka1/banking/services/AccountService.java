@@ -4,11 +4,13 @@ import com.banka1.banking.dto.request.CreateAccountDTO;
 import com.banka1.banking.dto.request.UpdateAccountDTO;
 import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
+import com.banka1.banking.models.Transaction;
 import com.banka1.banking.models.helper.AccountSubtype;
 import com.banka1.banking.models.helper.AccountType;
 import com.banka1.banking.repository.AccountRepository;
 
 //import com.banka1.user.repository.CustomerRepository;
+import com.banka1.banking.repository.TransactionRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jms.core.JmsTemplate;
@@ -123,4 +125,9 @@ public class AccountService {
         return sb.toString();
     }
 
+    @Autowired
+    private TransactionRepository transactionRepository;
+    public List<Transaction> getTransactionsForAccount(Long accountId) {
+        return transactionRepository.findByFromAccountId(accountRepository.findById(accountId));
+    }
 }
