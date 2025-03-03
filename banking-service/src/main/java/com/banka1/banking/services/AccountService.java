@@ -7,6 +7,7 @@ import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Transaction;
 import com.banka1.banking.models.helper.AccountSubtype;
 import com.banka1.banking.models.helper.AccountType;
+import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.repository.AccountRepository;
 
 //import com.banka1.user.repository.CustomerRepository;
@@ -30,23 +31,27 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final JmsTemplate jmsTemplate;
     private final MessageHelper messageHelper;
+    private final ModelMapper modelMapper;
 //    private final CustomerRepository customerRepository;
 
-    public AccountService(AccountRepository accountRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper/*, CustomerRepository customerRepository*/) {
+    public AccountService(AccountRepository accountRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper/*, CustomerRepository customerRepository*/) {
         this.accountRepository = accountRepository;
         this.jmsTemplate = jmsTemplate;
         this.messageHelper = messageHelper;
+        this.modelMapper = modelMapper;
 //        this.customerRepository = customerRepository;
     }
-    @Autowired
-    private ModelMapper modelMapper;
 
     public Account createAccount(CreateAccountDTO createAccountDTO) {
 
 //        if (! customerRepository.existsById(createAccountDTO.getOwnerID())) {
 //            create customer
 //        }
-//
+
+        if ((createAccountDTO.getType().equals(AccountType.CURRENT) && !createAccountDTO.getCurrency().equals(CurrencyType.RSD)) ||
+                (createAccountDTO.getType().equals(AccountType.FOREIGN_CURRENCY) && createAccountDTO.getCurrency().equals(CurrencyType.RSD))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nevalidna kombinacija vrste racuna i valute");
+        }
 
         Account account = modelMapper.map(createAccountDTO, Account.class);
         account.setSubtype(AccountSubtype.STANDARD);
