@@ -40,11 +40,7 @@ public class AccountService {
     }
 
     public Account createAccount(CreateAccountDTO createAccountDTO) {
-
-//        if (! customerRepository.existsById(createAccountDTO.getOwnerID())) {
-//            create customer
-//        }
-
+//proveri da li korisnik postoji, ako ne napravi ga mada bi to mozda i trebalo ranije da se uradi da bi se sve info prosledile kako treba ali sta ja znam
         if ((createAccountDTO.getType().equals(AccountType.CURRENT) && !createAccountDTO.getCurrency().equals(CurrencyType.RSD)) ||
                 (createAccountDTO.getType().equals(AccountType.FOREIGN_CURRENCY) && createAccountDTO.getCurrency().equals(CurrencyType.RSD))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nevalidna kombinacija vrste racuna i valute");
@@ -58,6 +54,7 @@ public class AccountService {
         } else {
             account.setBalance(0.0);
         }
+
         account.setReservedBalance(100.0);
         account.setCreatedDate(Instant.now().getEpochSecond());
         account.setExpirationDate(account.getCreatedDate() + 4 * 365 * 24 * 60 * 60);
@@ -66,10 +63,10 @@ public class AccountService {
         account.setMonthlyMaintenanceFee(0.0);
 
         account.setAccountNumber(generateAccountNumber(account));
+//dohvatanje employeeId-a iz jwt tokena? idk tako su mi rekli srecno onome koji se bavi autorizacijom
+        account.setEmployeeID(Long.valueOf(1));
 
-        account.setEmployeeID(Long.valueOf(1)); //preko auth
-
-//      obavestenje korisniku racuna na mejl da mu je kreiran racun
+//obavestenje korisniku racuna na mejl da mu je kreiran racun ali za to treba dohbvatiti korisnika a nmg da pricam sa user-servisom trenutno
 //
 //        NotificationDTO emailDTO = new NotificationDTO();
 //        emailDTO.setSubject("Račun uspešno kreiran");
