@@ -45,10 +45,13 @@ public class AccountController {
         try {
             savedAccount = accountService.createAccount(createAccountDTO);
         } catch (RuntimeException e) {
-//            log.error("Greška prilikom kreiranja kartice: ", e);
+//            log.error("Greška prilikom kreiranja racuna: ", e);
             return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
 
+        if (savedAccount == null) {
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.SEE_OTHER), false, null, ResponseMessage.USER_NOT_FOUND.getMessage());
+        }
         Map<String, Object> response = new HashMap<>();
         response.put("broj racuna", savedAccount.getAccountNumber());
         response.put("message", "Račun uspešno kreiran.\n");

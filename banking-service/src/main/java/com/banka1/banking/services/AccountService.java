@@ -47,6 +47,11 @@ public class AccountService {
     }
 
     public Account createAccount(CreateAccountDTO createAccountDTO) {
+        CustomerDTO owner = userServiceCustomer.getCustomerById(createAccountDTO.getOwnerID());
+        if (owner == null) {
+            return null;
+        }
+
         if ((createAccountDTO.getType().equals(AccountType.CURRENT) && !createAccountDTO.getCurrency().equals(CurrencyType.RSD)) ||
                 (createAccountDTO.getType().equals(AccountType.FOREIGN_CURRENCY) && createAccountDTO.getCurrency().equals(CurrencyType.RSD))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nevalidna kombinacija vrste racuna i valute");
@@ -71,8 +76,6 @@ public class AccountService {
         account.setAccountNumber(generateAccountNumber(account));
 //dohvatanje employeeId-a iz jwt tokena? idk tako su mi rekli srecno onome koji se bavi autorizacijom
         account.setEmployeeID(Long.valueOf(1));
-
-        CustomerDTO owner = userServiceCustomer.getCustomerById(account.getOwnerID());
 
         NotificationDTO emailDTO = new NotificationDTO();
         emailDTO.setSubject("Račun uspešno kreiran");

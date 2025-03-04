@@ -12,7 +12,8 @@ public enum ResponseMessage {
     LOGOUT_SUCCESS("Korisnik odjavljen."),
     ACCOUNTS_NOT_FOUND("Korisnik nema otvorenih racuna"),
     TRANSACTIONS_NOT_FOUND("Nema transakcija za izabrani racun"),
-    UPDATED("Uspesno izmenjen sadrzaj");
+    UPDATED("Uspesno izmenjen sadrzaj"),
+    USER_NOT_FOUND("Prvo registruj korisnika");
     private final String message;
 
     ResponseMessage(String message) {
