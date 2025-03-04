@@ -1,8 +1,7 @@
-package com.banka1.user;
+package com.banka1.user.controllers;
 
 
 import com.banka1.user.DTO.request.LoginRequest;
-import com.banka1.user.controllers.AuthController;
 import com.banka1.user.model.helper.Permission;
 import com.banka1.user.model.helper.Position;
 import com.banka1.user.service.BlackListTokenService;
@@ -31,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
-public class AuthControllerTests {
+public class AuthControllerTest {
     @Mock
     private IAuthService authService;
     @Mock
@@ -118,9 +117,9 @@ public class AuthControllerTests {
         String newToken = "newValidToken";
 
         Claims claims = new DefaultClaims(Map.of(
-                "id", 1L,
-                "position", Position.NONE.toString(),
-                "permissions", List.of(Permission.READ_EMPLOYEE.toString())
+            "id", 1L,
+            "position", Position.NONE.toString(),
+            "permissions", List.of(Permission.READ_EMPLOYEE.toString())
         ));
 
         when(authService.getToken(anyString())).thenReturn(oldToken);

@@ -1,4 +1,4 @@
-package com.banka1.user.service;
+package com.banka1.user.services;
 
 import com.banka1.user.DTO.request.LoginRequest;
 import com.banka1.user.aspect.AuthAspect;
@@ -8,6 +8,8 @@ import com.banka1.user.model.helper.Permission;
 import com.banka1.user.model.helper.Position;
 import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.repository.EmployeeRepository;
+import com.banka1.user.service.BlackListTokenService;
+import com.banka1.user.service.IAuthService;
 import com.banka1.user.service.implementation.AuthService;
 import com.banka1.user.utils.ResponseMessage;
 import io.jsonwebtoken.Claims;
@@ -32,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class AuthServiceTests {
+public class AuthServiceTest {
     @Mock
     private CustomerRepository customerRepository;
     @Mock

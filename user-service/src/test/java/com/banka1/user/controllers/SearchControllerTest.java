@@ -1,10 +1,9 @@
-package com.banka1.user;
+package com.banka1.user.controllers;
 
 import com.banka1.user.DTO.response.CustomerPageResponse;
 import com.banka1.user.DTO.response.CustomerResponse;
 import com.banka1.user.DTO.response.EmployeeResponse;
 import com.banka1.user.DTO.response.EmployeesPageResponse;
-import com.banka1.user.controllers.SearchController;
 import com.banka1.user.model.helper.Department;
 import com.banka1.user.model.helper.Gender;
 import com.banka1.user.model.helper.Position;
