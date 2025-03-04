@@ -30,23 +30,14 @@ public class CardController {
         this.cardService = cardService;
     }
 
-    @GetMapping("/")
+    @GetMapping("/{account_id}")
     @Operation(summary = "Pregled svih kartica", description = "Pregled svih kartica korisnika za traženi račun")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista kartica korisnika za određeni račun."),
             @ApiResponse(responseCode = "404", description = "Nema kartica za traženi račun.")
     })
-    public ResponseEntity<?> getCardsByAccountID(@RequestParam int account_id) { //treba iz jwta?
-        try {
-            List<Card> cards = cardService.findAllByAccountId(account_id);
-            if (cards.isEmpty()) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, ResponseMessage.CARD_NOT_FOUND.toString());
-            }
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("cards", cards), null);
-        } catch (Exception e) {
-            log.error("Greška prilikom trazenja kartica: ", e);
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
-        }
+    public ResponseEntity<?> getCardsByAccountID(@PathVariable int account_id) {
+        return getCards(account_id);
     }
 
     @PostMapping("/")
@@ -82,16 +73,7 @@ public class CardController {
             @ApiResponse(responseCode = "404", description = "Nema kartica za traženi račun.")
     })
     public ResponseEntity<?> getAdminCardsByAccountID(@PathVariable int account_id) {
-        try {
-            List<Card> cards = cardService.findAllByAccountId(account_id);
-            if (cards.isEmpty()) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, ResponseMessage.CARD_NOT_FOUND.toString());
-            }
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("cards", cards), null);
-        } catch (Exception e) {
-            log.error("Greška prilikom trazenja kartica: ", e);
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
-        }
+        return getCards(account_id);
     }
 
     @PatchMapping("/admin/{card_id}")
@@ -102,6 +84,19 @@ public class CardController {
     })
     public ResponseEntity<?> activateCard(@PathVariable int card_id, @RequestBody UpdateCardDTO updateCardDTO) {
         return updateCardStatus(card_id, updateCardDTO);
+    }
+
+    private ResponseEntity<?> getCards(int account_id) {
+        try {
+            List<Card> cards = cardService.findAllByAccountId(account_id);
+            if (cards.isEmpty()) {
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, ResponseMessage.CARD_NOT_FOUND.toString());
+            }
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("cards", cards), null);
+        } catch (Exception e) {
+            log.error("Greška prilikom trazenja kartica: ", e);
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
     }
 
     private ResponseEntity<?> updateCardStatus(int card_id, UpdateCardDTO updateCardDTO) {
