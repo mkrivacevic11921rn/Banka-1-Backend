@@ -53,7 +53,7 @@ public class CardServiceTest {
         AuthorizedPersonDTO personDTO = new AuthorizedPersonDTO();
         personDTO.setFirstName("Milica");
         personDTO.setLastName("Grujic");
-        personDTO.setPhoneNumber("0614646110");
+        personDTO.setPhoneNumber("123456789");
         createCardDTO.setAuthorizedPerson(personDTO);
 
         Card card = new Card();

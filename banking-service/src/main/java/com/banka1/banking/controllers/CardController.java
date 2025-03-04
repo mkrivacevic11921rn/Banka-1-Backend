@@ -12,12 +12,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -39,7 +36,7 @@ public class CardController {
             @ApiResponse(responseCode = "200", description = "Lista kartica korisnika za određeni račun."),
             @ApiResponse(responseCode = "404", description = "Nema kartica za traženi račun.")
     })
-    public ResponseEntity<?> getCardsByAccountID(@RequestParam int account_id) { //treba iz jwta????
+    public ResponseEntity<?> getCardsByAccountID(@RequestParam int account_id) { //treba iz jwta?
         try {
             List<Card> cards = cardService.findAllByAccountId(account_id);
             if (cards.isEmpty()) {
