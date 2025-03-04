@@ -14,6 +14,11 @@ public enum ResponseMessage {
     TRANSACTIONS_NOT_FOUND("Nema transakcija za izabrani racun"),
     UPDATED("Uspesno izmenjen sadrzaj"),
     USER_NOT_FOUND("Prvo registruj korisnika");
+    CARD_NOT_FOUND("Nema kartica za traženi račun."),
+    CARD_CREATED_SUCCESS("Kartica uspešno kreirana."),
+    CARD_UPDATED_SUCCESS("Kartica uspešno ažurirana."),
+    INVALID_REQUEST("Nevalidni podaci.");
+
     private final String message;
 
     ResponseMessage(String message) {
