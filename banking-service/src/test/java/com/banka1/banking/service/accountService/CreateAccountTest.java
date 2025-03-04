@@ -8,7 +8,6 @@ import com.banka1.banking.models.helper.AccountType;
 import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.services.AccountService;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,7 +19,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 @ExtendWith(MockitoExtension.class)
 public class CreateAccountTest {
