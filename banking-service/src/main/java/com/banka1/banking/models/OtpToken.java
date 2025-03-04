@@ -4,27 +4,28 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Setter
-public class Receiver {
+public class OtpToken {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private Long ownerAccountId;
+    private String otpCode;
 
     @Column(nullable = false)
-    private String accountNumber;
+    private Long transferId;
 
-    @Column(nullable = true)
-    private String firstName;
+    @Column(nullable = false)
+    private Long expirationTime;
 
-    @Column(nullable = true)
-    private String lastName;
+    @Column(nullable = false)
+    private boolean used = false;
 
-    @Column(nullable = true)
-    private String address;
+
 }

@@ -4,8 +4,12 @@ import lombok.Data;
 import lombok.NonNull;
 
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 
 @Data
+@Setter
+@Getter
 public class CustomerDTO {
     @NonNull
     private Long id;
@@ -27,5 +31,7 @@ public class CustomerDTO {
 
     @NonNull
     private String address;
+  
+    private List<String> permissions;
 
 }
