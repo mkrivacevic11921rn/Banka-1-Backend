@@ -26,6 +26,7 @@ import java.util.Map;
 public class AccountController {
     @Autowired
     private AccountService accountService;
+
     /// pristup imaju samo zaposleni
     /// Da bi zaposleni mogao da kreira novi račun, potrebno je da se prijavi u aplikaciju.
     /// Pored čuvanja podataka o vlasniku (klijentu), čuvaju se i podaci o zaposlenima koji su napravili račune.
@@ -37,7 +38,6 @@ public class AccountController {
             @ApiResponse(responseCode = "200", description = "Račun uspešno kreiran.\n"),
             @ApiResponse(responseCode = "403", description = "Nevalidni podaci")
     })
-
     public ResponseEntity<?> createAccount(@Valid @RequestBody CreateAccountDTO createAccountDTO) {
         Account savedAccount = null;
         try {
@@ -56,6 +56,7 @@ public class AccountController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
     /// pristup imaju samo zaposleni
     @GetMapping("/")
     @Operation(summary = "Dohvatanje svih računa",
@@ -64,12 +65,11 @@ public class AccountController {
             @ApiResponse(responseCode = "200", description = "Lista računa uspešno dohvaćena"),
             @ApiResponse(responseCode = "404", description = "Nema dostupnih računa")
     })
-
     public ResponseEntity<?> getAllAccounts() {
         List<Account> accounts = accountService.getAllAccounts();
 
         if (accounts.isEmpty()) {
-            return ResponseEntity.ok("prazno");
+            return ResponseEntity.ok("Ne postoje računi u sistemu.");
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -78,6 +78,7 @@ public class AccountController {
 
         return ResponseEntity.ok(response);
     }
+
     /// pristup imaju zaposleni i vlasnici racuna
     @GetMapping("/user/{userId}")
     @Operation(summary = "Dohvatanje računa specificnog korisnika",
@@ -86,12 +87,11 @@ public class AccountController {
             @ApiResponse(responseCode = "200", description = "Računi uspešno dohvaćeni"),
             @ApiResponse(responseCode = "404", description = "Nema računa za datog korisnika")
     })
-
     public ResponseEntity<?> getAccountsByOwner(@PathVariable Long userId) {
         List<Account> accounts = accountService.getAccountsByOwnerId(userId);
 
         if (accounts.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Ovaj korisnik nema račun.");
+            return ResponseEntity.ok("Ovaj korisnik nema otvorenih računa.");
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -121,10 +121,10 @@ public class AccountController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
     }
-/// ne znam da li sam ovo trebala ja da dodam ili onaj koji je radio transakcije al ajde svi smo nasi
+
     @GetMapping("/{accountId}/transactions")
     @Operation(summary = "Dohvatanje transakcija za izabrani račun",
-            description = "Vraća sve transakcije za izabrani račun, sortirane opadajuće po datumu.")
+            description = "Vraća sve transakcije za izabrani račun.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Transakcije uspešno dohvaćene"),
             @ApiResponse(responseCode = "404", description = "Račun nije pronađen ili nema transakcija")
@@ -133,7 +133,7 @@ public class AccountController {
         List<Transaction> transactions = accountService.getTransactionsForAccount(accountId);
 
         if (transactions.isEmpty()) {
-            return ResponseEntity.ok("prazno");
+            return ResponseEntity.ok("Nisu pronadjene transakcije vezane za ovaj račun");
         }
 
         Map<String, Object> response = new HashMap<>();

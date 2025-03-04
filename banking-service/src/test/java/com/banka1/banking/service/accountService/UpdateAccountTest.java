@@ -21,8 +21,6 @@ import static org.mockito.Mockito.*;
 public class UpdateAccountTest {
     @Mock
     private AccountRepository accountRepository;
-    @Mock
-    private ModelMapper modelMapper;
     @InjectMocks
     private AccountService accountService;
 
