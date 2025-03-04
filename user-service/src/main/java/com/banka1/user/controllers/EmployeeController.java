@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -25,6 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/users/employees")
 @Tag(name = "Employee API", description = "API za upravljanje zaposlenima")
@@ -44,19 +46,11 @@ public class EmployeeController {
         try {
             var employee = employeeService.findById(id);
             if (employee == null)
-                return ResponseEntity.status(HttpStatusCode.valueOf(404)).body(Map.of(
-                        "success", false,
-                        "error", "Korisnik nije pronadjen."
-                ));
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "data", employee
-            ));
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatusCode.valueOf(404)),
+                        false, null, "Korisnik nije pronadjen.");
+            return ResponseTemplate.create(ResponseEntity.ok(), true, employee, null);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "error", e.getMessage()
-            ));
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
     }
 
@@ -72,18 +66,15 @@ public class EmployeeController {
         try {
             savedEmployee = employeeService.createEmployee(createEmployeeRequest);
         } catch (RuntimeException e) {
-            System.err.println(e);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+            log.error("createEmployee: ", e);
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
         Map<String, Object> data = new HashMap<>();
         data.put("id", savedEmployee.getId());
         data.put("message", "Zaposleni uspešno kreiran");
-        response.put("data", data);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseTemplate.create(ResponseEntity.status(HttpStatus.CREATED), true, data, null);
     }
 
     @PutMapping("/set-password")
@@ -111,18 +102,13 @@ public class EmployeeController {
             @ApiResponse(responseCode = "403", description = "Nemaš permisije za ovu akciju")
     })
     public ResponseEntity<?> updateEmployee(@PathVariable Long id, @RequestBody UpdateEmployeeRequest updateEmployeeRequest) {
-        Employee updatedEmployee = null;
         try {
-            updatedEmployee = employeeService.updateEmployee(id, updateEmployeeRequest);
+            employeeService.updateEmployee(id, updateEmployeeRequest);
         } catch (RuntimeException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), e);
         }
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("data", "Podaci korisnika ažurirani");
-
-        return ResponseEntity.ok(response);
+        return ResponseTemplate.create(ResponseEntity.ok(), true, "Podaci korisnika ažurirani", null);
     }
 
     @DeleteMapping("/{id}")
@@ -135,15 +121,15 @@ public class EmployeeController {
     })
     public ResponseEntity<?> deleteEmployee(@PathVariable Long id) {
         if (!employeeService.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Zaposleni sa ID-em " + id + " nije pronađen.");
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, "Zaposleni sa ID-em " + id + " nije pronađen.");
         }
-        employeeService.deleteEmployee(id);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("data", "Korisnik uspešno obrisan");
-
-        return ResponseEntity.ok(response);
+        try {
+            employeeService.deleteEmployee(id);
+            return ResponseTemplate.create(ResponseEntity.ok(), true, "Korisnik uspešno obrisan", null);
+        } catch (Exception e) {
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
     }
 
     @PutMapping("/{id}/permissions")
@@ -160,12 +146,11 @@ public class EmployeeController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Zaposleni sa ID-em " + id + " nije pronađen.");
         }
 
-        Employee updatedEmployee = employeeService.updatePermissions(id, updatePermissionsRequest);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("data", "Permisije korisnika ažurirane");
-
-        return ResponseEntity.ok(response);
+        try {
+            employeeService.updatePermissions(id, updatePermissionsRequest);
+            return ResponseTemplate.create(ResponseEntity.ok(), true, "Permisije korisnika ažurirane", null);
+        } catch (Exception e) {
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
     }
 }

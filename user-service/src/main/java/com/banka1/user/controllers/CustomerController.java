@@ -46,19 +46,11 @@ public class CustomerController {
         try {
             var customer = customerService.findById(id);
             if (customer == null)
-                return ResponseEntity.status(HttpStatusCode.valueOf(404)).body(Map.of(
-                        "success", false,
-                        "error", "Korisnik nije pronadjen."
-                ));
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "data", customer
-            ));
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatusCode.valueOf(404)),
+                        false, null, "Korisnik nije pronadjen.");
+            return ResponseTemplate.create(ResponseEntity.ok(), true, customer, null);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "error", e.getMessage()
-            ));
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
     }
 
