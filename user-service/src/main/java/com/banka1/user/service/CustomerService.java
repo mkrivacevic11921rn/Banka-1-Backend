@@ -1,5 +1,6 @@
 package com.banka1.user.service;
 
+import com.banka1.user.DTO.banking.CreateAccountDTO;
 import com.banka1.user.DTO.request.NotificationRequest;
 import com.banka1.user.DTO.request.CreateCustomerRequest;
 import com.banka1.user.DTO.request.SetPasswordRequest;
@@ -49,6 +50,8 @@ public class CustomerService {
 
     @Value("${destination.email}")
     private String destinationEmail;
+    @Value("${destination.account}")
+    private String destinationAccount;
     @Value("${frontend.url}")
     private String frontendUrl;
 
@@ -142,6 +145,8 @@ public class CustomerService {
 
         // Saving the customer in the database gives it an ID, which can be used to generate the set-password token
         customer = customerRepository.save(customer);
+
+        jmsTemplate.convertAndSend(destinationAccount, messageHelper.createTextMessage(new CreateAccountDTO(customerDTO.getAccountInfo(), customer.getId())));
 
         setPasswordService.saveSetPasswordRequest(verificationCode, customer.getId());
 

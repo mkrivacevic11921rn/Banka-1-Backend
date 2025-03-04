@@ -1,5 +1,10 @@
 package com.banka1.user.services;
 
+import com.banka1.user.DTO.banking.CreateAccountWithoutOwnerIdDTO;
+import com.banka1.user.DTO.banking.helper.AccountStatus;
+import com.banka1.user.DTO.banking.helper.AccountSubtype;
+import com.banka1.user.DTO.banking.helper.AccountType;
+import com.banka1.user.DTO.banking.helper.CurrencyType;
 import com.banka1.user.DTO.request.CreateCustomerRequest;
 import com.banka1.user.DTO.request.UpdateCustomerRequest;
 import com.banka1.user.DTO.response.CustomerPageResponse;
@@ -56,6 +61,14 @@ public class CustomerServiceTest {
 
     @Test
     void testCreateCustomer() {
+        var createAccountDTO = new CreateAccountWithoutOwnerIdDTO();
+        createAccountDTO.setCurrency(CurrencyType.RSD);
+        createAccountDTO.setType(AccountType.CURRENT);
+        createAccountDTO.setSubtype(AccountSubtype.PERSONAL);
+        createAccountDTO.setDailyLimit(0.0);
+        createAccountDTO.setMonthlyLimit(0.0);
+        createAccountDTO.setStatus(AccountStatus.ACTIVE);
+
         var customerDTO = new CreateCustomerRequest();
         customerDTO.setFirstName("Petar");
         customerDTO.setLastName("Petrovic");
@@ -66,6 +79,7 @@ public class CustomerServiceTest {
         customerDTO.setGender(Gender.MALE);
         customerDTO.setBirthDate(90012002L);
         customerDTO.setPhoneNumber("555333");
+        customerDTO.setAccountInfo(createAccountDTO);
 
         when(passwordEncoder.encode(any(CharSequence.class))).thenReturn("####");
         when(customerRepository.save(any(Customer.class)))

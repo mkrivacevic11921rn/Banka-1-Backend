@@ -1,6 +1,11 @@
 package com.banka1.user.controllers;
 
 
+import com.banka1.user.DTO.banking.CreateAccountWithoutOwnerIdDTO;
+import com.banka1.user.DTO.banking.helper.AccountStatus;
+import com.banka1.user.DTO.banking.helper.AccountSubtype;
+import com.banka1.user.DTO.banking.helper.AccountType;
+import com.banka1.user.DTO.banking.helper.CurrencyType;
 import com.banka1.user.DTO.request.CreateCustomerRequest;
 import com.banka1.user.DTO.request.UpdateCustomerRequest;
 import com.banka1.user.DTO.response.CustomerResponse;
@@ -56,6 +61,13 @@ class CustomerControllerTest {
 
     @Test
     void testCreateCustomer() throws Exception {
+        var createAccountDTO = new CreateAccountWithoutOwnerIdDTO();
+        createAccountDTO.setCurrency(CurrencyType.RSD);
+        createAccountDTO.setType(AccountType.CURRENT);
+        createAccountDTO.setSubtype(AccountSubtype.PERSONAL);
+        createAccountDTO.setDailyLimit(0.0);
+        createAccountDTO.setMonthlyLimit(0.0);
+        createAccountDTO.setStatus(AccountStatus.ACTIVE);
         var customerDTO = new CreateCustomerRequest(
                 "Petar",
                 "Petrovic",
@@ -65,7 +77,8 @@ class CustomerControllerTest {
                 Gender.MALE,
                 "ppetrovic@banka.rs",
                 "99999999",
-                "Ulica");
+                "Ulica",
+                createAccountDTO);
 
         Customer customer = CustomerMapper.dtoToCustomer(customerDTO);
         customer.setId(1L);

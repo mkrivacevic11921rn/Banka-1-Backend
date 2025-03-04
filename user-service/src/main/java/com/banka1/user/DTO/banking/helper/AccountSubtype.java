@@ -6,4 +6,7 @@ public enum AccountSubtype {
     PENSION,
     STUDENT,
     YOUTH,
+    PERSONAL,
+    BUSINESS
+
 }
