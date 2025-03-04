@@ -35,8 +35,8 @@ public class UserServiceCustomer {
 
         CustomerDTO customer = new CustomerDTO();
         customer.setId(Long.parseLong(customerData.get("id").toString()));
-        customer.setFirstName((String) customerData.get("ime"));
-        customer.setLastName((String) customerData.get("prezime"));
+        customer.setFirstName((String) customerData.get("firstName"));
+        customer.setLastName((String) customerData.get("lastName"));
         customer.setBirthDate((String) customerData.get("birthDate"));
         customer.setGender((String) customerData.get("gender"));
         customer.setEmail((String) customerData.get("email"));

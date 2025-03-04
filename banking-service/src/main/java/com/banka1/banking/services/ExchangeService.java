@@ -78,54 +78,56 @@ public class ExchangeService {
         Optional<Account> fromAccountDTO = accountRepository.findById(exchangeMoneyTransferDTO.getAccountFrom());
         Optional<Account> toAccountDTO = accountRepository.findById(exchangeMoneyTransferDTO.getAccountTo());
 
+        if (fromAccountDTO.isPresent() && toAccountDTO.isPresent()){
 
-        Account fromAccount = fromAccountDTO.get();
-        Account toAccount = toAccountDTO.get();
+            Account fromAccount = fromAccountDTO.get();
+            Account toAccount = toAccountDTO.get();
 
-        // PROVERITI DA LI SE VALUTE SALJU U DTO
-        Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrency())
-                .orElseThrow(() -> new IllegalArgumentException("Greska"));
+            // PROVERITI DA LI SE VALUTE SALJU U DTO
+            Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrency())
+                    .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
-        Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrency())
-                .orElseThrow(() -> new IllegalArgumentException("Greska"));
+            Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrency())
+                    .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
-        Long customerId = fromAccount.getOwnerID();
-        CustomerDTO customerData = userServiceCustomer.getCustomerById(customerId);
+            Long customerId = fromAccount.getOwnerID();
+            CustomerDTO customerData = userServiceCustomer.getCustomerById(customerId);
 
-        if (customerData == null ) {
-            throw new IllegalArgumentException("Korisnik nije pronađen");
+            if (customerData == null ) {
+                throw new IllegalArgumentException("Korisnik nije pronađen");
+            }
+
+            String email = customerData.getEmail();
+            String firstName = customerData.getFirstName();
+            String lastName = customerData.getLastName();
+
+            Transfer transfer = new Transfer();
+            transfer.setFromAccountId(fromAccount);
+            transfer.setToAccountId(toAccount);
+            transfer.setAmount(exchangeMoneyTransferDTO.getAmount());
+            transfer.setStatus(TransferStatus.PENDING);
+            transfer.setType(TransferType.EXCHANGE);
+            transfer.setFromCurrency(fromCurrency);
+            transfer.setToCurrency(toCurrency);
+            transfer.setCreatedAt(System.currentTimeMillis());
+
+            transferRepository.save(transfer);
+
+            String otpCode = otpTokenService.generateOtp(transfer.getId());
+            transfer.setOtp(otpCode);
+
+            transferRepository.save(transfer);
+
+            NotificationDTO emailDto = new NotificationDTO();
+            emailDto.setSubject("Verifikacija");
+            emailDto.setEmail(email);
+            emailDto.setMessage("Vaš verifikacioni kod je: " + otpCode);
+            emailDto.setFirstName(firstName);
+            emailDto.setLastName(lastName);
+            emailDto.setType("email");
+
+            jmsTemplate.convertAndSend(destinationEmail,messageHelper.createTextMessage(emailDto));
         }
-
-        String email = customerData.getEmail();
-        String firstName = customerData.getFirstName();
-        String lastName = customerData.getLastName();
-
-        Transfer transfer = new Transfer();
-        transfer.setFromAccountId(fromAccount);
-        transfer.setToAccountId(toAccount);
-        transfer.setAmount(exchangeMoneyTransferDTO.getAmount());
-        transfer.setStatus(TransferStatus.PENDING);
-        transfer.setType(TransferType.EXCHANGE);
-        transfer.setFromCurrency(fromCurrency);
-        transfer.setToCurrency(toCurrency);
-        transfer.setCreatedAt(System.currentTimeMillis());
-
-        transferRepository.save(transfer);
-
-        String otpCode = otpTokenService.generateOtp(transfer.getId());
-        transfer.setOtp(otpCode);
-
-        transferRepository.save(transfer);
-
-        NotificationDTO emailDto = new NotificationDTO();
-        emailDto.setSubject("Verifikacija");
-        emailDto.setEmail(email);
-        emailDto.setMessage("Vaš verifikacioni kod je: " + otpCode);
-        emailDto.setFirstName(firstName);
-        emailDto.setLastName(lastName);
-        emailDto.setType("email");
-
-        jmsTemplate.convertAndSend(destinationEmail,messageHelper.createTextMessage(emailDto));
 
     }
 

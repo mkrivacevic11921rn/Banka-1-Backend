@@ -21,10 +21,10 @@ public class ReceiverController {
 
     private final ReceiverService receiverService;
 
-    @GetMapping("/{customerId}")
-    public ResponseEntity<?> getReceivers(@PathVariable Long customerId){
+    @GetMapping("/{accountId}")
+    public ResponseEntity<?> getReceivers(@PathVariable Long accountId){
         try {
-            List<Receiver> receivers = receiverService.getReceiverByCustomer(customerId);
+            List<Receiver> receivers = receiverService.getReceiverByCustomer(accountId);
             return ResponseTemplate.create(ResponseEntity.ok(),true,Map.of("receivers",receivers),null);
         } catch (Exception e){
             return ResponseTemplate.create(ResponseEntity.badRequest(),e);

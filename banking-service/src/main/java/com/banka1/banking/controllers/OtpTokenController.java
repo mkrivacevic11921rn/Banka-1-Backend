@@ -97,7 +97,7 @@ public class OtpTokenController {
                 // transfer.get().setStatus(TransferStatus.COMPLETED);
 
                 // TRANSFER OBELEZEN KAO NEUSPEO AKO TRANSAKCIJE NISU USPELE
-                transfer.setStatus(TransferStatus.FAILED);
+                // transfer.setStatus(TransferStatus.FAILED);
 
                 transferRepository.save(transfer);
             }

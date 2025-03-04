@@ -96,51 +96,54 @@ public class TransferService {
         Optional<Account> fromAccountOtp = accountRepository.findById(internalTransferDTO.getFromAccountId());
         Optional<Account> toAccountOtp = accountRepository.findById(internalTransferDTO.getToAccountId());
 
-        Account fromAccount = fromAccountOtp.get();
-        Account toAccount = toAccountOtp.get();
+        if (fromAccountOtp.isPresent() && toAccountOtp.isPresent()){
 
-        Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrency())
-                .orElseThrow(() -> new IllegalArgumentException("Greska"));
+            Account fromAccount = fromAccountOtp.get();
+            Account toAccount = toAccountOtp.get();
 
-        Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrency())
-                .orElseThrow(() -> new IllegalArgumentException("Greska"));
+            Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrency())
+                    .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
-        Long customerId = fromAccount.getOwnerID();
-        CustomerDTO customerData = userServiceCustomer.getCustomerById(customerId);
+            Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrency())
+                    .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
-        if (customerData == null ) {
-            throw new IllegalArgumentException("Korisnik nije pronađen");
+            Long customerId = fromAccount.getOwnerID();
+            CustomerDTO customerData = userServiceCustomer.getCustomerById(customerId);
+
+            if (customerData == null ) {
+                throw new IllegalArgumentException("Korisnik nije pronađen");
+            }
+
+            String email = customerData.getEmail();
+            String firstName = customerData.getFirstName();
+            String lastName = customerData.getLastName();
+
+            Transfer transfer = new Transfer();
+            transfer.setFromAccountId(fromAccount);
+            transfer.setToAccountId(toAccount);
+            transfer.setAmount(internalTransferDTO.getAmount());
+            transfer.setStatus(TransferStatus.PENDING);
+            transfer.setType(TransferType.INTERNAL);
+            transfer.setFromCurrency(fromCurrency);
+            transfer.setToCurrency(toCurrency);
+            transfer.setCreatedAt(System.currentTimeMillis());
+
+            transferRepository.save(transfer);
+
+            String otpCode = otpTokenService.generateOtp(transfer.getId());
+            transfer.setOtp(otpCode);
+            transferRepository.save(transfer);
+
+            NotificationDTO emailDto = new NotificationDTO();
+            emailDto.setSubject("Verifikacija");
+            emailDto.setEmail(email);
+            emailDto.setMessage("Vaš verifikacioni kod je: " + otpCode);
+            emailDto.setFirstName(firstName);
+            emailDto.setLastName(lastName);
+            emailDto.setType("email");
+
+            jmsTemplate.convertAndSend(destinationEmail,messageHelper.createTextMessage(emailDto));
         }
-
-        String email = customerData.getEmail();
-        String firstName = customerData.getFirstName();
-        String lastName = customerData.getLastName();
-
-        Transfer transfer = new Transfer();
-        transfer.setFromAccountId(fromAccount);
-        transfer.setToAccountId(toAccount);
-        transfer.setAmount(internalTransferDTO.getAmount());
-        transfer.setStatus(TransferStatus.PENDING);
-        transfer.setType(TransferType.INTERNAL);
-        transfer.setFromCurrency(fromCurrency);
-        transfer.setToCurrency(toCurrency);
-        transfer.setCreatedAt(System.currentTimeMillis());
-
-        transferRepository.save(transfer);
-
-        String otpCode = otpTokenService.generateOtp(transfer.getId());
-        transfer.setOtp(otpCode);
-        transferRepository.save(transfer);
-
-        NotificationDTO emailDto = new NotificationDTO();
-        emailDto.setSubject("Verifikacija");
-        emailDto.setEmail(email);
-        emailDto.setMessage("Vaš verifikacioni kod je: " + otpCode);
-        emailDto.setFirstName(firstName);
-        emailDto.setLastName(lastName);
-        emailDto.setType("email");
-
-        jmsTemplate.convertAndSend(destinationEmail,messageHelper.createTextMessage(emailDto));
 
     }
 
@@ -149,56 +152,59 @@ public class TransferService {
         Optional<Account> fromAccountOtp = accountRepository.findById(moneyTransferDTO.getFromAccountId());
         Optional<Account> toAccountOtp = accountRepository.findById(moneyTransferDTO.getToAccountId());
 
-        Account fromAccount = fromAccountOtp.get();
-        Account toAccount = toAccountOtp.get();
+        if (fromAccountOtp.isPresent() && toAccountOtp.isPresent()){
 
-        Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrency())
-                .orElseThrow(() -> new IllegalArgumentException("Greska"));
+            Account fromAccount = fromAccountOtp.get();
+            Account toAccount = toAccountOtp.get();
 
-        Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrency())
-                .orElseThrow(() -> new IllegalArgumentException("Greska"));
+            Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrency())
+                    .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
-        Long customerId = fromAccount.getOwnerID();
-        CustomerDTO customerData = userServiceCustomer.getCustomerById(customerId);
+            Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrency())
+                    .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
-        if (customerData == null ) {
-            throw new IllegalArgumentException("Korisnik nije pronađen");
+            Long customerId = fromAccount.getOwnerID();
+            CustomerDTO customerData = userServiceCustomer.getCustomerById(customerId);
+
+            if (customerData == null ) {
+                throw new IllegalArgumentException("Korisnik nije pronađen");
+            }
+
+            String email = customerData.getEmail();
+            String firstName = customerData.getFirstName();
+            String lastName = customerData.getLastName();
+
+            Transfer transfer = new Transfer();
+            transfer.setFromAccountId(fromAccount);
+            transfer.setToAccountId(toAccount);
+            transfer.setAmount(moneyTransferDTO.getAmount());
+            transfer.setReceiver(moneyTransferDTO.getReceiver());
+            transfer.setAdress(moneyTransferDTO.getAdress() != null ? moneyTransferDTO.getAdress() : "N/A");
+            transfer.setStatus(TransferStatus.PENDING);
+            transfer.setType(fromCurrency.equals(toCurrency) ? TransferType.FOREIGN : TransferType.EXTERNAL);
+            transfer.setFromCurrency(fromCurrency);
+            transfer.setToCurrency(toCurrency);
+            transfer.setPaymentCode(moneyTransferDTO.getPayementCode());
+            transfer.setPaymentReference(moneyTransferDTO.getPayementReference() != null ? moneyTransferDTO.getPayementReference() : "N/A");
+            transfer.setPaymentDescription(moneyTransferDTO.getPayementDescription());
+            transfer.setCreatedAt(System.currentTimeMillis());
+
+            transferRepository.save(transfer);
+
+            String otpCode = otpTokenService.generateOtp(transfer.getId());
+            transfer.setOtp(otpCode);
+            transferRepository.save(transfer);
+
+            NotificationDTO emailDto = new NotificationDTO();
+            emailDto.setSubject("Verifikacija");
+            emailDto.setEmail(email);
+            emailDto.setMessage("Vaš verifikacioni kod je: " + otpCode);
+            emailDto.setFirstName(firstName);
+            emailDto.setLastName(lastName);
+            emailDto.setType("email");
+
+            jmsTemplate.convertAndSend(destinationEmail,messageHelper.createTextMessage(emailDto));
         }
-
-        String email = customerData.getEmail();
-        String firstName = customerData.getFirstName();
-        String lastName = customerData.getLastName();
-
-        Transfer transfer = new Transfer();
-        transfer.setFromAccountId(fromAccount);
-        transfer.setToAccountId(toAccount);
-        transfer.setAmount(moneyTransferDTO.getAmount());
-        transfer.setReceiver(moneyTransferDTO.getReceiver());
-        transfer.setAdress(moneyTransferDTO.getAdress() != null ? moneyTransferDTO.getAdress() : "N/A");
-        transfer.setStatus(TransferStatus.PENDING);
-        transfer.setType(fromCurrency.equals(toCurrency) ? TransferType.FOREIGN : TransferType.EXTERNAL);
-        transfer.setFromCurrency(fromCurrency);
-        transfer.setToCurrency(toCurrency);
-        transfer.setPaymentCode(moneyTransferDTO.getPayementCode());
-        transfer.setPaymentReference(moneyTransferDTO.getPayementReference() != null ? moneyTransferDTO.getPayementReference() : "N/A");
-        transfer.setPaymentDescription(moneyTransferDTO.getPayementDescription());
-        transfer.setCreatedAt(System.currentTimeMillis());
-
-        transferRepository.save(transfer);
-
-        String otpCode = otpTokenService.generateOtp(transfer.getId());
-        transfer.setOtp(otpCode);
-        transferRepository.save(transfer);
-
-        NotificationDTO emailDto = new NotificationDTO();
-        emailDto.setSubject("Verifikacija");
-        emailDto.setEmail(email);
-        emailDto.setMessage("Vaš verifikacioni kod je: " + otpCode);
-        emailDto.setFirstName(firstName);
-        emailDto.setLastName(lastName);
-        emailDto.setType("email");
-
-        jmsTemplate.convertAndSend(destinationEmail,messageHelper.createTextMessage(emailDto));
 
     }
 
