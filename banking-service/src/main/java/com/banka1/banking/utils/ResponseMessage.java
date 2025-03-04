@@ -13,7 +13,7 @@ public enum ResponseMessage {
     ACCOUNTS_NOT_FOUND("Korisnik nema otvorenih racuna"),
     TRANSACTIONS_NOT_FOUND("Nema transakcija za izabrani racun"),
     UPDATED("Uspesno izmenjen sadrzaj"),
-    USER_NOT_FOUND("Prvo registruj korisnika");
+    USER_NOT_FOUND("Prvo registruj korisnika"),
     CARD_NOT_FOUND("Nema kartica za traženi račun."),
     CARD_CREATED_SUCCESS("Kartica uspešno kreirana."),
     CARD_UPDATED_SUCCESS("Kartica uspešno ažurirana."),
