@@ -66,7 +66,7 @@ public class TransferService {
         Account fromAccount = fromAccountInternal.get();
         Account toAccount = toAccountInternal.get();
 
-        if(!fromAccount.getCurrency().equals(toAccount.getCurrency())){
+        if(!fromAccount.getCurrencyType().equals(toAccount.getCurrencyType())){
             return false;
         }
 
@@ -99,10 +99,10 @@ public class TransferService {
             Account fromAccount = fromAccountOtp.get();
             Account toAccount = toAccountOtp.get();
 
-            Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrency())
+            Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrencyType())
                     .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
-            Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrency())
+            Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrencyType())
                     .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
             Long customerId = fromAccount.getOwnerID();
@@ -156,10 +156,10 @@ public class TransferService {
             Account fromAccount = fromAccountOtp.get();
             Account toAccount = toAccountOtp.get();
 
-            Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrency())
+            Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrencyType())
                     .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
-            Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrency())
+            Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrencyType())
                     .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
             Long customerId = fromAccount.getOwnerID();

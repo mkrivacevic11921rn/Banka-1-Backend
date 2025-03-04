@@ -65,12 +65,12 @@ public class ExchangeServiceTest {
         fromAccount = new Account();
         fromAccount.setId(1L);
         fromAccount.setOwnerID(10L);
-        fromAccount.setCurrency(CurrencyType.EUR);
+        fromAccount.setCurrencyType(CurrencyType.EUR);
 
         toAccount = new Account();
         toAccount.setId(2L);
         toAccount.setOwnerID(10L);
-        toAccount.setCurrency(CurrencyType.USD);
+        toAccount.setCurrencyType(CurrencyType.USD);
 
         currencyEUR = new Currency();
         currencyEUR.setCode(CurrencyType.EUR);
@@ -83,11 +83,8 @@ public class ExchangeServiceTest {
         exchangeMoneyTransferDTO.setAccountTo(2L);
         exchangeMoneyTransferDTO.setAmount(500.0);
 
-        customerDTO = new CustomerDTO();
-        customerDTO.setId(10L);
-        customerDTO.setEmail("test@example.com");
-        customerDTO.setFirstName("Test");
-        customerDTO.setLastName("User");
+        customerDTO = new CustomerDTO(10L,"Marko","Markovic",0101L,"test@test.com","0101010101","MARSALA TULBUHINA");
+
 
         ReflectionTestUtils.setField(exchangeService, "destinationEmail", "test-destination");
     }
@@ -103,7 +100,7 @@ public class ExchangeServiceTest {
 
     @Test
     void validateExchangeTransferSameCurrencyReturnsFalse() {
-        toAccount.setCurrency(CurrencyType.EUR);
+        toAccount.setCurrencyType(CurrencyType.EUR);
         when(accountRepository.findById(1L)).thenReturn(Optional.of(fromAccount));
         when(accountRepository.findById(2L)).thenReturn(Optional.of(toAccount));
 
