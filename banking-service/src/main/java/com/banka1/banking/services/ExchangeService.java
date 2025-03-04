@@ -73,12 +73,12 @@ public class ExchangeService {
         return true;
     }
 
-    public void createExchangeTransfer(ExchangeMoneyTransferDTO exchangeMoneyTransferDTO){
+    public Long createExchangeTransfer(ExchangeMoneyTransferDTO exchangeMoneyTransferDTO) {
 
         Optional<Account> fromAccountDTO = accountRepository.findById(exchangeMoneyTransferDTO.getAccountFrom());
         Optional<Account> toAccountDTO = accountRepository.findById(exchangeMoneyTransferDTO.getAccountTo());
 
-        if (fromAccountDTO.isPresent() && toAccountDTO.isPresent()){
+        if (fromAccountDTO.isPresent() && toAccountDTO.isPresent()) {
 
             Account fromAccount = fromAccountDTO.get();
             Account toAccount = toAccountDTO.get();
@@ -93,7 +93,7 @@ public class ExchangeService {
             Long customerId = fromAccount.getOwnerID();
             CustomerDTO customerData = userServiceCustomer.getCustomerById(customerId);
 
-            if (customerData == null ) {
+            if (customerData == null) {
                 throw new IllegalArgumentException("Korisnik nije pronađen");
             }
 
@@ -111,7 +111,7 @@ public class ExchangeService {
             transfer.setToCurrency(toCurrency);
             transfer.setCreatedAt(System.currentTimeMillis());
 
-            transferRepository.save(transfer);
+            transferRepository.saveAndFlush(transfer);
 
             String otpCode = otpTokenService.generateOtp(transfer.getId());
             transfer.setOtp(otpCode);
@@ -126,9 +126,11 @@ public class ExchangeService {
             emailDto.setLastName(lastName);
             emailDto.setType("email");
 
-            jmsTemplate.convertAndSend(destinationEmail,messageHelper.createTextMessage(emailDto));
+            jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDto));
+            return transfer.getId();
         }
 
+        return null;
     }
 
 }

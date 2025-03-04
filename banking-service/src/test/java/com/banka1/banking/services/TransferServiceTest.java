@@ -3,11 +3,13 @@ package com.banka1.banking.services;
 import com.banka1.banking.dto.CustomerDTO;
 import com.banka1.banking.dto.InternalTransferDTO;
 import com.banka1.banking.dto.MoneyTransferDTO;
+import com.banka1.banking.dto.NotificationDTO;
 import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Currency;
 import com.banka1.banking.models.Transfer;
 import com.banka1.banking.models.helper.CurrencyType;
+import com.banka1.banking.models.helper.TransferStatus;
 import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.repository.CurrencyRepository;
 import com.banka1.banking.repository.TransferRepository;
@@ -18,15 +20,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.client.ExpectedCount.times;
+import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 public class TransferServiceTest {
@@ -92,10 +94,13 @@ public class TransferServiceTest {
         customerDTO.setEmail("test@example.com");
         customerDTO.setFirstName("Test");
         customerDTO.setLastName("User");
+
+        ReflectionTestUtils.setField(transferService, "destinationEmail", "test-destination");
     }
 
+
     @Test
-    void validateInternalTransfer_ValidCase_ReturnsTrue() {
+    void validateInternalTransferValidCaseReturnsTrue() {
         when(accountRepository.findById(1L)).thenReturn(Optional.of(fromAccount));
         when(accountRepository.findById(2L)).thenReturn(Optional.of(toAccount));
 
@@ -104,7 +109,7 @@ public class TransferServiceTest {
         assertTrue(result);
     }
     @Test
-    void validateInternalTransfer_InvalidCurrency_ReturnsFalse() {
+    void validateInternalTransferInvalidCurrencyReturnsFalse() {
         toAccount.setCurrency(CurrencyType.USD);
         when(accountRepository.findById(1L)).thenReturn(Optional.of(fromAccount));
         when(accountRepository.findById(2L)).thenReturn(Optional.of(toAccount));
@@ -114,7 +119,7 @@ public class TransferServiceTest {
         assertFalse(result);
     }
     @Test
-    void validateMoneyTransfer_ValidCase_ReturnsTrue() {
+    void validateMoneyTransferValidCaseReturnsTrue() {
         toAccount.setOwnerID(20L);
         when(accountRepository.findById(1L)).thenReturn(Optional.of(fromAccount));
         when(accountRepository.findById(3L)).thenReturn(Optional.of(toAccount));
@@ -125,13 +130,88 @@ public class TransferServiceTest {
     }
 
     @Test
-    void validateMoneyTransfer_SameOwner_ReturnsFalse() {
+    void validateMoneyTransferSameOwnerReturnsFalse() {
         when(accountRepository.findById(1L)).thenReturn(Optional.of(fromAccount));
         when(accountRepository.findById(3L)).thenReturn(Optional.of(toAccount));
 
         boolean result = transferService.validateMoneyTransfer(moneyTransferDTO);
 
         assertFalse(result);
+    }
+
+    @Test
+    void createInternalTransferSuccess() {
+        when(accountRepository.findById(1L)).thenReturn(Optional.of(fromAccount));
+        when(accountRepository.findById(2L)).thenReturn(Optional.of(toAccount));
+        when(currencyRepository.findByCode(CurrencyType.EUR)).thenReturn(Optional.of(currency));
+        when(userServiceCustomer.getCustomerById(10L)).thenReturn(customerDTO);
+        doReturn("123456").when(otpTokenService).generateOtp(anyLong());
+
+        when(transferRepository.saveAndFlush(any(Transfer.class))).thenAnswer(invocation -> {
+            Transfer savedTransfer = invocation.getArgument(0);
+            savedTransfer.setId(100L);
+            return savedTransfer;
+        });
+
+        when(transferRepository.save(any(Transfer.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        doReturn("Simulirana poruka").when(messageHelper).createTextMessage(any(NotificationDTO.class));
+
+        transferService.createInternalTransfer(internalTransferDTO);
+
+        verify(transferRepository, times(1)).saveAndFlush(any(Transfer.class));
+
+        verify(transferRepository, times(1)).save(any(Transfer.class));
+
+        verify(jmsTemplate, times(1)).convertAndSend(eq("test-destination"), eq("Simulirana poruka"));
+    }
+
+
+    @Test
+    void createMoneyTransferSuccess() {
+        toAccount.setOwnerID(20L);
+        when(accountRepository.findById(1L)).thenReturn(Optional.of(fromAccount));
+        when(accountRepository.findById(3L)).thenReturn(Optional.of(toAccount));
+        when(currencyRepository.findByCode(CurrencyType.EUR)).thenReturn(Optional.of(currency));
+        when(userServiceCustomer.getCustomerById(10L)).thenReturn(customerDTO);
+        doReturn("123456").when(otpTokenService).generateOtp(anyLong());
+
+        when(transferRepository.saveAndFlush(any(Transfer.class))).thenAnswer(invocation -> {
+            Transfer savedTransfer = invocation.getArgument(0);
+            savedTransfer.setId(101L);
+            return savedTransfer;
+        });
+
+        when(transferRepository.save(any(Transfer.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        doReturn("Simulirana poruka").when(messageHelper).createTextMessage(any(NotificationDTO.class));
+
+        transferService.createMoneyTransfer(moneyTransferDTO);
+
+        verify(transferRepository, times(1)).saveAndFlush(any(Transfer.class));
+
+        verify(transferRepository, times(1)).save(any(Transfer.class));
+
+        verify(jmsTemplate, times(1)).convertAndSend(eq("test-destination"), eq("Simulirana poruka"));
+    }
+
+
+    @Test
+    void cancelExpiredTransfersSuccess() {
+        Transfer expiredTransfer = new Transfer();
+        expiredTransfer.setId(1L);
+        expiredTransfer.setStatus(TransferStatus.PENDING);
+        expiredTransfer.setCreatedAt(System.currentTimeMillis() - (5 * 6 * 1000));
+
+        when(transferRepository.findAllByStatusAndCreatedAtBefore(eq(TransferStatus.PENDING), anyLong()))
+                .thenReturn(List.of(expiredTransfer));
+
+        when(transferRepository.save(any(Transfer.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        transferService.cancelExpiredTransfers();
+
+        verify(transferRepository, times(1)).save(any(Transfer.class));
+        assertEquals(TransferStatus.CANCELLED, expiredTransfer.getStatus());
     }
 
 
