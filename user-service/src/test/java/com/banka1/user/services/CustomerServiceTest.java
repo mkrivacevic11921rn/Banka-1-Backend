@@ -73,7 +73,6 @@ public class CustomerServiceTest {
         customerDTO.setFirstName("Petar");
         customerDTO.setLastName("Petrovic");
         customerDTO.setUsername("ppetrovic");
-        customerDTO.setPassword("1234");
         customerDTO.setAddress("Ulica");
         customerDTO.setEmail("ppetrovic@example.com");
         customerDTO.setGender(Gender.MALE);
@@ -81,7 +80,6 @@ public class CustomerServiceTest {
         customerDTO.setPhoneNumber("555333");
         customerDTO.setAccountInfo(createAccountDTO);
 
-        when(passwordEncoder.encode(any(CharSequence.class))).thenReturn("####");
         when(customerRepository.save(any(Customer.class)))
                 .then(invocation -> {
                     var savedCustomer = (Customer) invocation.getArguments()[0];
@@ -92,7 +90,7 @@ public class CustomerServiceTest {
         Customer createdCustomer = customerService.createCustomer(customerDTO);
 
         assertNotNull(createdCustomer);
-        assertEquals("####", createdCustomer.getPassword());
+        assertNull(createdCustomer.getPassword());
         verify(customerRepository, times(1)).save(any(Customer.class));
     }
 

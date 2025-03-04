@@ -72,7 +72,6 @@ class CustomerControllerTest {
                 "Petar",
                 "Petrovic",
                 "ppetrovic",
-                "1234",
                 1234567890L,
                 Gender.MALE,
                 "ppetrovic@banka.rs",

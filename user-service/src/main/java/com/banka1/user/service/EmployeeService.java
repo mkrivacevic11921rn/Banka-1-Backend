@@ -1,10 +1,6 @@
 package com.banka1.user.service;
 
-import com.banka1.user.DTO.request.NotificationRequest;
-import com.banka1.user.DTO.request.CreateEmployeeRequest;
-import com.banka1.user.DTO.request.SetPasswordRequest;
-import com.banka1.user.DTO.request.UpdateEmployeeRequest;
-import com.banka1.user.DTO.request.UpdatePermissionsRequest;
+import com.banka1.user.DTO.request.*;
 import com.banka1.user.DTO.response.EmployeeResponse;
 import com.banka1.user.DTO.response.EmployeesPageResponse;
 import com.banka1.user.listener.MessageHelper;
@@ -84,7 +80,7 @@ public class EmployeeService {
     }
 
     public void setPassword(SetPasswordRequest setPasswordRequest) {
-        Employee employee = employeeRepository.findByVerificationCode(setPasswordRequest.getCode())
+        Employee employee = employeeRepository.findByVerificationCode(setPasswordRequest.getToken())
                 .orElseThrow(() -> new RuntimeException("Korisnik nije pronađen"));
 
         var salt = generateSalt();

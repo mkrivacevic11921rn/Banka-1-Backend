@@ -45,7 +45,7 @@ public class SetPasswordService {
 	public void setPassword(SetPasswordRequest dto) {
 		log.debug("SetPassword called");
 
-		var setRequest = setPasswordRepository.findByToken(dto.getCode());
+		var setRequest = setPasswordRepository.findByToken(dto.getToken());
 		if (setRequest.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Token nije pronađen.");
 		log.debug("Token valid");
 		var setPassword = setRequest.get();

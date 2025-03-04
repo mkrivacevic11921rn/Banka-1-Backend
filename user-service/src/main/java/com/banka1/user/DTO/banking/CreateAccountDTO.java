@@ -6,7 +6,6 @@ import com.banka1.user.DTO.banking.helper.AccountType;
 import com.banka1.user.DTO.banking.helper.CurrencyType;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 @Data
 public class CreateAccountDTO {

@@ -3,7 +3,6 @@ package com.banka1.user.DTO.request;
 import com.banka1.user.model.helper.Gender;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 
 @Data
 @NoArgsConstructor

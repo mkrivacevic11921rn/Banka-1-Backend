@@ -1,8 +1,8 @@
 package com.banka1.user.service;
 
 import com.banka1.user.DTO.banking.CreateAccountDTO;
-import com.banka1.user.DTO.request.NotificationRequest;
 import com.banka1.user.DTO.request.CreateCustomerRequest;
+import com.banka1.user.DTO.request.NotificationRequest;
 import com.banka1.user.DTO.request.SetPasswordRequest;
 import com.banka1.user.DTO.request.UpdateCustomerRequest;
 import com.banka1.user.DTO.response.CustomerPageResponse;
@@ -122,14 +122,6 @@ public class CustomerService {
     public Customer createCustomer(CreateCustomerRequest customerDTO) {
         Customer customer = CustomerMapper.dtoToCustomer(customerDTO);
 
-        // Generate salt and hash password
-        String salt = generateSalt();
-        String saltedPassword = salt + customerDTO.getPassword();
-        String hashedPassword = passwordEncoder.encode(saltedPassword);
-
-        customer.setPassword(hashedPassword);
-        customer.setSaltPassword(salt);
-
         String verificationCode = UUID.randomUUID().toString();
         customer.setVerificationCode(verificationCode);
 
@@ -199,15 +191,16 @@ public class CustomerService {
     }
 
     public void setPassword(SetPasswordRequest setPasswordRequest) {
-        var customer = customerRepository.findByVerificationCode(setPasswordRequest.getCode());
-        if (customer.isEmpty())
+        var customerOptional = customerRepository.findByVerificationCode(setPasswordRequest.getToken());
+        if (customerOptional.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Korisnik nije pronađen.");
+        var customer = customerOptional.get();
         var salt = generateSalt();
         var hashed = passwordEncoder.encode(setPasswordRequest.getPassword() + salt);
-        customer.get().setPassword(hashed);
-        customer.get().setSaltPassword(salt);
-        customer.get().setVerificationCode(null);
-        customerRepository.save(customer.get());
+        customer.setPassword(hashed);
+        customer.setSaltPassword(salt);
+        customer.setVerificationCode(null);
+        customerRepository.save(customer);
     }
 
     /**

@@ -1,13 +1,12 @@
 package com.banka1.user.DTO.request;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 @Data
-@Getter
-@Setter
 public class SetPasswordRequest {
-    private String code;
+    @NotBlank
+    private String token;
+    @NotBlank
     private String password;
 }

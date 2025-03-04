@@ -2,42 +2,45 @@ package com.banka1.user.DTO.request;
 
 import com.banka1.user.DTO.banking.CreateAccountWithoutOwnerIdDTO;
 import com.banka1.user.model.helper.Gender;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class CreateCustomerRequest {
-    @NonNull
+    @NotBlank(message = "Ime ne može biti prazno")
+    @Size(min = 2, max = 50, message = "Ime mora imati između 2 i 50 karaktera")
     private String firstName;
 
-    @NonNull
+    @NotBlank(message = "Prezime ne može biti prazno")
+    @Size(min = 2, max = 50, message = "Prezime mora imati između 2 i 50 karaktera")
     private String lastName;
 
-    @NonNull
+    @NotBlank(message = "Username je obavezan")
+    @Size(min = 2, max = 50, message = "Username mora imati između 2 i 50 karaktera")
     private String username;
 
-    @NonNull
-    private String password;
-
-    @NonNull
+    @NotNull(message = "Datum rođenja je obavezan")
     private Long birthDate;
 
-    @NonNull
+    @NotNull(message = "Pol je obavezan")
     private Gender gender;
 
-    @NonNull
+    @NotBlank(message = "Email je obavezan")
+    @Size(min = 2, max = 50, message = "Email mora imati između 2 i 50 karaktera")
     private String email;
 
-    @NonNull
+    @NotBlank(message = "Broj telefona je obavezan")
     private String phoneNumber;
 
-    @NonNull
+    @NotBlank(message = "Adresa je obavezan")
     private String address;
 
-    @NonNull
+    @NotNull(message = "Informacije o nalogu su obavezne")
     private CreateAccountWithoutOwnerIdDTO accountInfo;
 }

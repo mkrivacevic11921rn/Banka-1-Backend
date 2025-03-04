@@ -1,6 +1,7 @@
 package com.banka1.user.DTO.request;
 
 import com.banka1.user.model.helper.Department;
+import com.banka1.user.model.helper.Gender;
 import com.banka1.user.model.helper.Permission;
 import com.banka1.user.model.helper.Position;
 import jakarta.validation.constraints.Email;
@@ -26,8 +27,8 @@ public class CreateEmployeeRequest {
     @NotNull(message = "Datum rođenja je obavezan")
     private LocalDate birthDate;
 
-    @NotBlank(message = "Pol je obavezan")
-    private String gender;
+    @NotNull(message = "Pol je obavezan")
+    private Gender gender;
 
     @NotBlank(message = "Email je obavezan")
     @Email(message = "Email mora biti validan")
@@ -40,6 +41,7 @@ public class CreateEmployeeRequest {
     private String address;
 
     @NotBlank(message = "Username je obavezan")
+    @Size(min = 2, max = 50, message = "Username mora imati između 2 i 50 karaktera")
     private String username;
 
     @NotBlank(message = "Pozicija je obavezna")
@@ -52,5 +54,6 @@ public class CreateEmployeeRequest {
 
     private Boolean isAdmin = false; // default vrednost
 
+    @NotNull(message = "Lista permisija je obavezna (moze biti prazna)")
     private List<Permission> permissions;
 }
