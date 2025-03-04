@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -27,17 +28,65 @@ public class BootstrapData implements CommandLineRunner {
         System.out.println("============== Loading Data ==============");
 
         if (currencyRepository.count() == 0) {
-            List<Currency> currencies = List.of(
-                    new Currency(CurrencyType.RSD, "Serbian Dinar", "Serbia", "дин."),
-                    new Currency(CurrencyType.EUR, "Euro", "European Union", "€"),
-                    new Currency(CurrencyType.USD, "US Dollar", "United States", "$"),
-                    new Currency(CurrencyType.GBP, "British Pound", "United Kingdom", "£"),
-                    new Currency(CurrencyType.CHF, "Swiss Franc", "Switzerland", "Fr"),
-                    new Currency(CurrencyType.JPY, "Japanese Yen", "Japan", "¥"),
-                    new Currency(CurrencyType.CAD, "Canadian Dollar", "Canada", "C$"),
-                    new Currency(CurrencyType.AUD, "Australian Dollar", "Australia", "A$")
-            );
+            List<Currency> currencies = new ArrayList<>();
 
+            Currency rsd = new Currency();
+            rsd.setCode(CurrencyType.RSD);
+            rsd.setName("Serbian Dinar");
+            rsd.setCountry("Serbia");
+            rsd.setSymbol("дин.");
+            currencies.add(rsd);
+
+            Currency eur = new Currency();
+            eur.setCode(CurrencyType.EUR);
+            eur.setName("Euro");
+            eur.setCountry("European Union");
+            eur.setSymbol("€");
+            currencies.add(eur);
+
+            Currency usd = new Currency();
+            usd.setCode(CurrencyType.USD);
+            usd.setName("US Dollar");
+            usd.setCountry("United States");
+            usd.setSymbol("$");
+            currencies.add(usd);
+
+            Currency gbp = new Currency();
+            gbp.setCode(CurrencyType.GBP);
+            gbp.setName("British Pound");
+            gbp.setCountry("United Kingdom");
+            gbp.setSymbol("£");
+            currencies.add(gbp);
+
+            Currency chf = new Currency();
+            chf.setCode(CurrencyType.CHF);
+            chf.setName("Swiss Franc");
+            chf.setCountry("Switzerland");
+            chf.setSymbol("Fr");
+            currencies.add(chf);
+
+            Currency jpy = new Currency();
+            jpy.setCode(CurrencyType.JPY);
+            jpy.setName("Japanese Yen");
+            jpy.setCountry("Japan");
+            jpy.setSymbol("¥");
+            currencies.add(jpy);
+
+            Currency cad = new Currency();
+            cad.setCode(CurrencyType.CAD);
+            cad.setName("Canadian Dollar");
+            cad.setCountry("Canada");
+            cad.setSymbol("C$");
+            currencies.add(cad);
+
+            Currency aud = new Currency();
+            aud.setCode(CurrencyType.AUD);
+            aud.setName("Australian Dollar");
+            aud.setCountry("Australia");
+            aud.setSymbol("A$");
+            currencies.add(aud);
+
+            // Čuvanje u bazi
             currencyRepository.saveAll(currencies);
             currencyService.fetchExchangeRates();
             System.out.println("Currencies have been initialized in the database.");

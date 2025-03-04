@@ -10,8 +10,6 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class Currency {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)  // Automatski generisan ID
@@ -29,11 +27,4 @@ public class Currency {
 
     @Column(nullable = false)
     private String symbol;
-
-    public Currency(CurrencyType code, String name, String country, String symbol) {
-        this.code = code;
-        this.name = name;
-        this.country = country;
-        this.symbol = symbol;
-    }
 }

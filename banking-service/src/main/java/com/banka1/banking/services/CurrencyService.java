@@ -40,6 +40,9 @@ public class CurrencyService {
         Map<String, Double> rates = getExchangeRatesFromApi();
 
         if (rates != null && !rates.isEmpty()) {
+
+            exchangePairRepository.deleteAll();
+
             for (CurrencyType currencyType : SUPPORTED_CURRENCIES) {
                 String currencyCode = currencyType.name(); // Dobijamo "EUR", "USD" itd.
 

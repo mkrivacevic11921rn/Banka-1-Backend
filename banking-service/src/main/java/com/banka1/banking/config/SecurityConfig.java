@@ -14,26 +14,15 @@ import java.util.List;
 
 @Configuration
 public class SecurityConfig {
-//    @Bean
-//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-//        http.authorizeHttpRequests(authorizeRequests -> authorizeRequests.anyRequest()
-//                        .permitAll())
-//                .csrf(csrf -> csrf.disable())
-//                .cors(cors -> {
-//                    cors.configurationSource(cors());
-//                });
-//        ;
-//
-//        return http.build();
-//    }
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/h2-console/**").permitAll() // ✅ Dozvoljava pristup H2 konzoli
-                        .anyRequest().permitAll())
-                .csrf(csrf -> csrf.disable()) // ✅ H2 koristi frame-ove, pa CSRF mora biti isključen
-                .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)); // ✅ Omogućava prikaz H2 u frame-ovima
+        http.authorizeHttpRequests(authorizeRequests -> authorizeRequests.anyRequest()
+                        .permitAll())
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> {
+                    cors.configurationSource(cors());
+                });
+        ;
 
         return http.build();
     }
