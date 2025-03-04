@@ -50,11 +50,8 @@ public class AccountController {
         }
 
         Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        Map<String, Object> data = new HashMap<>();
-        data.put("broj racuna", savedAccount.getAccountNumber());
-        data.put("message", "Račun uspešno kreiran.\n");
-        response.put("data", data);
+        response.put("broj racuna", savedAccount.getAccountNumber());
+        response.put("message", "Račun uspešno kreiran.\n");
 
         return ResponseTemplate.create(ResponseEntity.status(HttpStatus.CREATED), true, response, null);
     }
@@ -76,8 +73,7 @@ public class AccountController {
         }
 
         Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("data", accounts);
+        response.put("accounts", accounts);
 
         return ResponseTemplate.create(ResponseEntity.ok(), true, response, null);
     }
@@ -99,8 +95,7 @@ public class AccountController {
         }
 
         Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("data", accounts);
+        response.put("accounts", accounts);
 
         return ResponseTemplate.create(ResponseEntity.ok(), true, response, null);
     }
@@ -143,8 +138,7 @@ public class AccountController {
         }
 
         Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("data", transactions);
+        response.put("transactions", transactions);
         return ResponseTemplate.create(ResponseEntity.ok(), true, response, null);
     }
 
