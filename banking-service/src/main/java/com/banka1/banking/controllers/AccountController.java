@@ -5,6 +5,8 @@ import com.banka1.banking.dto.request.UpdateAccountDTO;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Transaction;
 import com.banka1.banking.services.AccountService;
+import com.banka1.banking.utils.ResponseTemplate;
+import com.banka1.banking.utils.ResponseMessage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -35,16 +37,16 @@ public class AccountController {
     @Operation(summary = "Kreiranje računa",
             description = "Dodaje novi račun u sistem.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Račun uspešno kreiran.\n"),
+            @ApiResponse(responseCode = "201", description = "Račun uspešno kreiran.\n"),
             @ApiResponse(responseCode = "403", description = "Nevalidni podaci")
     })
     public ResponseEntity<?> createAccount(@Valid @RequestBody CreateAccountDTO createAccountDTO) {
         Account savedAccount = null;
         try {
             savedAccount = accountService.createAccount(createAccountDTO);
-        } catch (Exception e) {
-            System.err.println(e);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (RuntimeException e) {
+//            log.error("Greška prilikom kreiranja kartice: ", e);
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -54,7 +56,7 @@ public class AccountController {
         data.put("message", "Račun uspešno kreiran.\n");
         response.put("data", data);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseTemplate.create(ResponseEntity.status(HttpStatus.CREATED), true, response, null);
     }
 
     /// pristup imaju samo zaposleni
@@ -69,14 +71,15 @@ public class AccountController {
         List<Account> accounts = accountService.getAllAccounts();
 
         if (accounts == null || accounts.isEmpty()) {
-            return ResponseEntity.ok("Ne postoje računi u sistemu.");
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND),
+                        false, null, ResponseMessage.ACCOUNTS_NOT_FOUND.toString());
         }
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("data", accounts);
 
-        return ResponseEntity.ok(response);
+        return ResponseTemplate.create(ResponseEntity.ok(), true, response, null);
     }
 
     /// pristup imaju zaposleni i vlasnici racuna
@@ -91,14 +94,15 @@ public class AccountController {
         List<Account> accounts = accountService.getAccountsByOwnerId(userId);
 
         if (accounts == null || accounts.isEmpty()) {
-            return ResponseEntity.ok("Ovaj korisnik nema otvorenih računa.");
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND),
+                    false, null, ResponseMessage.ACCOUNTS_NOT_FOUND.toString());
         }
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("data", accounts);
 
-        return ResponseEntity.ok(response);
+        return ResponseTemplate.create(ResponseEntity.ok(), true, response, null);
     }
 
     /// pristup imaju samo zaposleni
@@ -116,9 +120,10 @@ public class AccountController {
 
         try {
             Account updatedAccount = accountService.updateAccount(accountId, updateAccountDTO);
-            return ResponseEntity.ok(updatedAccount);
+            return ResponseTemplate.create(ResponseEntity.ok(), true,
+                    Map.of( "message", ResponseMessage.UPDATED, "data", updatedAccount), null);
         } catch (RuntimeException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
     }
 
@@ -133,14 +138,14 @@ public class AccountController {
         List<Transaction> transactions = accountService.getTransactionsForAccount(accountId);
 
         if (transactions.isEmpty()) {
-            return ResponseEntity.ok("Nisu pronadjene transakcije vezane za ovaj račun");
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND),
+                    false, null, ResponseMessage.TRANSACTIONS_NOT_FOUND.toString());
         }
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("data", transactions);
-
-        return ResponseEntity.ok(response);
+        return ResponseTemplate.create(ResponseEntity.ok(), true, response, null);
     }
 
 }
