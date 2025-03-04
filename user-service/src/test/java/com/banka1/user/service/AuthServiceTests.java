@@ -4,8 +4,8 @@ import com.banka1.user.DTO.request.LoginRequest;
 import com.banka1.user.aspect.AuthAspect;
 import com.banka1.user.aspect.Authorization;
 import com.banka1.user.model.Customer;
-import com.banka1.user.model.helper.Permission;
-import com.banka1.user.model.helper.Position;
+import com.banka1.common.model.Permission;
+import com.banka1.common.model.Position;
 import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.repository.EmployeeRepository;
 import com.banka1.user.service.implementation.AuthService;
@@ -38,7 +38,7 @@ public class AuthServiceTests {
     @Mock
     private EmployeeRepository employeeRepository;
     @Mock
-    private IAuthService mockAuthService;
+    private AuthService mockAuthService;
     @InjectMocks
     private AuthService authService;
     @Mock

@@ -1,7 +1,7 @@
 package com.banka1.user.aspect;
 
-import com.banka1.user.model.helper.Permission;
-import com.banka1.user.model.helper.Position;
+import com.banka1.common.model.Permission;
+import com.banka1.common.model.Position;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

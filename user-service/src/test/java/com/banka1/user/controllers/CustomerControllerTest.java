@@ -3,7 +3,7 @@ package com.banka1.user.controllers;
 
 import com.banka1.user.DTO.CustomerDTO.CustomerDTO;
 import com.banka1.user.model.Customer;
-import com.banka1.user.model.helper.Permission;
+import com.banka1.common.model.Permission;
 import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.service.CustomerService;
 import com.fasterxml.jackson.databind.ObjectMapper;

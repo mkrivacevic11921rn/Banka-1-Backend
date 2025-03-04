@@ -3,10 +3,10 @@ package com.banka1.user;
 
 import com.banka1.user.DTO.request.LoginRequest;
 import com.banka1.user.controllers.AuthController;
-import com.banka1.user.model.helper.Permission;
-import com.banka1.user.model.helper.Position;
+import com.banka1.common.model.Permission;
+import com.banka1.common.model.Position;
 import com.banka1.user.service.BlackListTokenService;
-import com.banka1.user.service.IAuthService;
+import com.banka1.user.service.implementation.AuthService;
 import com.banka1.user.utils.ResponseMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 public class AuthControllerTests {
     @Mock
-    private IAuthService authService;
+    private AuthService authService;
     @Mock
     private BlackListTokenService blackListTokenService;
     @InjectMocks

@@ -1,8 +1,7 @@
-package com.banka1.user.service;
+package com.banka1.common.service;
 
-import com.banka1.user.DTO.request.LoginRequest;
-import com.banka1.user.model.helper.Permission;
-import com.banka1.user.model.helper.Position;
+import com.banka1.common.model.Permission;
+import com.banka1.common.model.Position;
 import io.jsonwebtoken.Claims;
 
 import java.util.List;
@@ -38,8 +37,4 @@ public interface IAuthService {
 
     // Kreira jwt sa korisnickim ID-em, rolom i permisijama.
     String generateToken(Long userId, Position position, List<Permission> permissions, Boolean isAdmin);
-
-    // Login metoda omogucava korisnicima da se prijave koristeci email i lozinku.
-    // Prvo trazi korisnika kao customer, ako nije pronadjen trazi korisnika kao employee, u suprotnom baca izuzetak.
-    String login(LoginRequest loginRequest) throws IllegalArgumentException;
 }

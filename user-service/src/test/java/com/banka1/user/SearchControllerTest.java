@@ -7,7 +7,7 @@ import com.banka1.user.DTO.response.EmployeesPageResponse;
 import com.banka1.user.controllers.SearchController;
 import com.banka1.user.model.helper.Department;
 import com.banka1.user.model.helper.Gender;
-import com.banka1.user.model.helper.Position;
+import com.banka1.common.model.Position;
 import com.banka1.user.service.CustomerService;
 import com.banka1.user.service.EmployeeService;
 import com.fasterxml.jackson.databind.ObjectMapper;

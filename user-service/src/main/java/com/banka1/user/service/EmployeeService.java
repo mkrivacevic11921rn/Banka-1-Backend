@@ -11,7 +11,7 @@ import com.banka1.user.listener.MessageHelper;
 import com.banka1.user.model.Employee;
 import com.banka1.user.model.helper.Department;
 import com.banka1.user.model.helper.Gender;
-import com.banka1.user.model.helper.Position;
+import com.banka1.common.model.Position;
 import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;

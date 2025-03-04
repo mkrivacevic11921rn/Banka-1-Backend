@@ -4,7 +4,7 @@ import com.banka1.user.DTO.response.EmployeeResponse;
 import com.banka1.user.controllers.EmployeeController;
 import com.banka1.user.model.helper.Department;
 import com.banka1.user.model.helper.Gender;
-import com.banka1.user.model.helper.Position;
+import com.banka1.common.model.Position;
 import com.banka1.user.service.EmployeeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;

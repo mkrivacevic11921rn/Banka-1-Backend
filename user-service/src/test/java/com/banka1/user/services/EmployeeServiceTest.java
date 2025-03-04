@@ -4,7 +4,7 @@ import com.banka1.user.DTO.request.CreateEmployeeDto;
 import com.banka1.user.DTO.request.UpdateEmployeeDto;
 import com.banka1.user.DTO.request.UpdatePermissionsDto;
 import com.banka1.user.model.Employee;
-import com.banka1.user.model.helper.Permission;
+import com.banka1.common.model.Permission;
 import com.banka1.user.repository.EmployeeRepository;
 import com.banka1.user.service.EmployeeService;
 import org.junit.jupiter.api.BeforeEach;

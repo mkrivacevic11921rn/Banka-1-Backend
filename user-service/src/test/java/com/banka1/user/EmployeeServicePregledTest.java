@@ -5,7 +5,7 @@ import com.banka1.user.DTO.response.EmployeesPageResponse;
 import com.banka1.user.model.Employee;
 import com.banka1.user.model.helper.Department;
 import com.banka1.user.model.helper.Gender;
-import com.banka1.user.model.helper.Position;
+import com.banka1.common.model.Position;
 import com.banka1.user.repository.EmployeeRepository;
 import com.banka1.user.service.EmployeeService;
 import org.junit.jupiter.api.BeforeEach;

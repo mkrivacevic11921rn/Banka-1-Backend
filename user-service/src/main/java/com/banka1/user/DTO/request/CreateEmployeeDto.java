@@ -1,8 +1,8 @@
 package com.banka1.user.DTO.request;
 
 import com.banka1.user.model.helper.Department;
-import com.banka1.user.model.helper.Permission;
-import com.banka1.user.model.helper.Position;
+import com.banka1.common.model.Permission;
+import com.banka1.common.model.Position;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import java.time.LocalDate;

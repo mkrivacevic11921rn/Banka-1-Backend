@@ -9,7 +9,7 @@ import com.banka1.user.listener.MessageHelper;
 import com.banka1.user.mapper.CustomerMapper;
 import com.banka1.user.model.Customer;
 import com.banka1.user.model.helper.Gender;
-import com.banka1.user.model.helper.Permission;
+import com.banka1.common.model.Permission;
 import com.banka1.user.repository.CustomerRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

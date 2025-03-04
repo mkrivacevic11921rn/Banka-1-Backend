@@ -21,6 +21,7 @@ configurations {
 
 repositories {
 	mavenCentral()
+	mavenLocal()
 }
 
 dependencies {
@@ -37,6 +38,8 @@ dependencies {
 	implementation 'javax.jms:javax.jms-api:2.0.1'
 	implementation 'javax.validation:validation-api:2.0.1.Final'
 	implementation 'org.springframework.boot:spring-boot-starter-activemq'
+
+	implementation 'com.banka1:common:1.0-SNAPSHOT'
 
 	runtimeOnly 'org.aspectj:aspectjweaver'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
