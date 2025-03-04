@@ -10,7 +10,6 @@ import com.banka1.banking.models.helper.AccountType;
 import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.repository.AccountRepository;
 
-//import com.banka1.user.repository.CustomerRepository;
 import com.banka1.banking.repository.TransactionRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,14 +31,12 @@ public class AccountService {
     private final JmsTemplate jmsTemplate;
     private final MessageHelper messageHelper;
     private final ModelMapper modelMapper;
-//    private final CustomerRepository customerRepository;
 
-    public AccountService(AccountRepository accountRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper/*, CustomerRepository customerRepository*/) {
+    public AccountService(AccountRepository accountRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper) {
         this.accountRepository = accountRepository;
         this.jmsTemplate = jmsTemplate;
         this.messageHelper = messageHelper;
         this.modelMapper = modelMapper;
-//        this.customerRepository = customerRepository;
     }
 
     public Account createAccount(CreateAccountDTO createAccountDTO) {
@@ -99,12 +96,27 @@ public class AccountService {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new RuntimeException("Račun sa ID-jem " + accountId + " nije pronađen"));
 
-
         Optional.ofNullable(updateAccountDTO.getDailyLimit()).ifPresent(account::setDailyLimit);
         Optional.ofNullable(updateAccountDTO.getMonthlyLimit()).ifPresent(account::setMonthlyLimit);
         Optional.ofNullable(updateAccountDTO.getStatus()).ifPresent(account::setStatus);
 
         return accountRepository.save(account);
+    }
+
+    @Autowired
+    private TransactionRepository transactionRepository;
+    public List<Transaction> getTransactionsForAccount(Long accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Račun sa ID-jem " + accountId + " nije pronađen"));
+
+        List<Transaction> transactionsFrom = transactionRepository.findByFromAccountId(account);
+        List<Transaction> transactionsTo = transactionRepository.findByToAccountId(account);
+
+        List<Transaction> allTransactions = new ArrayList<>();
+        allTransactions.addAll(transactionsFrom);
+        allTransactions.addAll(transactionsTo);
+
+        return allTransactions;
     }
 
     public static String generateAccountNumber(Account account){
@@ -131,21 +143,5 @@ public class AccountService {
         }
 
         return sb.toString();
-    }
-
-    @Autowired
-    private TransactionRepository transactionRepository;
-    public List<Transaction> getTransactionsForAccount(Long accountId) {
-        Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
-
-        List<Transaction> transactionsFrom = transactionRepository.findByFromAccountId(account);
-        List<Transaction> transactionsTo = transactionRepository.findByToAccountId(account);
-
-        List<Transaction> allTransactions = new ArrayList<>();
-        allTransactions.addAll(transactionsFrom);
-        allTransactions.addAll(transactionsTo);
-
-        return allTransactions;
     }
 }

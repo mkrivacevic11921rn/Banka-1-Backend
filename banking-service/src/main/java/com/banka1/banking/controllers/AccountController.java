@@ -68,7 +68,7 @@ public class AccountController {
     public ResponseEntity<?> getAllAccounts() {
         List<Account> accounts = accountService.getAllAccounts();
 
-        if (accounts.isEmpty()) {
+        if (accounts == null || accounts.isEmpty()) {
             return ResponseEntity.ok("Ne postoje računi u sistemu.");
         }
 
@@ -90,7 +90,7 @@ public class AccountController {
     public ResponseEntity<?> getAccountsByOwner(@PathVariable Long userId) {
         List<Account> accounts = accountService.getAccountsByOwnerId(userId);
 
-        if (accounts.isEmpty()) {
+        if (accounts == null || accounts.isEmpty()) {
             return ResponseEntity.ok("Ovaj korisnik nema otvorenih računa.");
         }
 
