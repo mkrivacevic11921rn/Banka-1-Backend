@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.Column;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -29,6 +30,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/otp")
 @RequiredArgsConstructor
+@Tag(name = "OTP verifikacija", description = "Ruta za validaciju kreiranog transfera")
 public class OtpTokenController {
 
     private final OtpTokenService otpTokenService;
@@ -90,7 +92,7 @@ public class OtpTokenController {
                 Account accountFrom = transfer.getFromAccountId();
                 Currency currencyTo = transfer.getToCurrency();
                 Currency currencyFrom = transfer.getFromCurrency();
-                Double amont = transfer.getAmount();
+                Double amount = transfer.getAmount();
 
 
                 // TRANSFER OBELEZEN KAO USPESNO ZAVRSEN

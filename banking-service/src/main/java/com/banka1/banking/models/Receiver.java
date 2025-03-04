@@ -14,7 +14,7 @@ public class Receiver {
     private Long id;
 
     @Column(nullable = false)
-    private Long customerId;
+    private Long ownerAccountId;
 
     @Column(nullable = false)
     private String accountNumber;
