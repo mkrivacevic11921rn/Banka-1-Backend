@@ -6,5 +6,7 @@ public enum CurrencyType {
     USD,
     CHF,
     GBP,
-    JPY
+    JPY,
+    CAD,
+    AUD
 }

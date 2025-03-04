@@ -19,6 +19,4 @@ public class Company {
     private String vatNumber;
 
     private String companyNumber; // matični broj
-
-
 }
