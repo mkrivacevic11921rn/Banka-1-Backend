@@ -1,23 +1,19 @@
 package com.banka1.user.controllers;
 
 
-import com.banka1.user.DTO.CustomerDTO.CustomerDTO;
+import com.banka1.user.DTO.request.CreateCustomerRequest;
+import com.banka1.user.DTO.request.UpdateCustomerRequest;
+import com.banka1.user.mapper.CustomerMapper;
 import com.banka1.user.model.Customer;
+import com.banka1.user.model.helper.Gender;
 import com.banka1.user.model.helper.Permission;
-import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.service.CustomerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -28,9 +24,11 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
 class CustomerControllerTest {
@@ -53,16 +51,21 @@ class CustomerControllerTest {
 
     @Test
     void testCreateCustomer() throws Exception {
-        CustomerDTO customerDTO = new CustomerDTO();
-        customerDTO.setIme("Petar");
-        customerDTO.setPrezime("Petrovic");
+        var customerDTO = new CreateCustomerRequest(
+                "Petar",
+                "Petrovic",
+                "ppetrovic",
+                "1234",
+                1234567890L,
+                Gender.MALE,
+                "ppetrovic@banka.rs",
+                "99999999",
+                "Ulica");
 
-        Customer customer = new Customer();
+        Customer customer = CustomerMapper.dtoToCustomer(customerDTO);
         customer.setId(1L);
-        customer.setFirstName("Petar");
-        customer.setLastName("Petrovic");
 
-        when(customerService.createCustomer(any(CustomerDTO.class))).thenReturn(customer);
+        when(customerService.createCustomer(any(CreateCustomerRequest.class))).thenReturn(customer);
 
         mockMvc.perform(post("/api/customer")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -73,16 +76,16 @@ class CustomerControllerTest {
 
     @Test
     void testUpdateCustomer() throws Exception {
-        CustomerDTO customerDTO = new CustomerDTO();
-        customerDTO.setIme("Petar");
-        customerDTO.setPrezime("Petrovic");
+        var customerDTO = new UpdateCustomerRequest();
+        customerDTO.setFirstName("Petar");
+        customerDTO.setLastName("Petrovic");
 
         Customer customer = new Customer();
         customer.setId(1L);
         customer.setFirstName("Petar");
         customer.setLastName("Petrovic");
 
-        when(customerService.updateCustomer(eq(1L), any(CustomerDTO.class))).thenReturn(Optional.of(customer));
+        when(customerService.updateCustomer(eq(1L), any(UpdateCustomerRequest.class))).thenReturn(Optional.of(customer));
 
         mockMvc.perform(put("/api/customer/1")
                         .contentType(MediaType.APPLICATION_JSON)

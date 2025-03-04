@@ -1,9 +1,10 @@
 package com.banka1.user.services;
 
-import com.banka1.user.DTO.CustomerDTO.CustomerDTO;
+import com.banka1.user.DTO.request.CreateCustomerRequest;
+import com.banka1.user.DTO.request.UpdateCustomerRequest;
 import com.banka1.user.listener.MessageHelper;
-import com.banka1.user.mapper.CustomerMapper;
 import com.banka1.user.model.Customer;
+import com.banka1.user.model.helper.Gender;
 import com.banka1.user.model.helper.Permission;
 import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.service.CustomerService;
@@ -14,7 +15,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,7 +24,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,16 +49,16 @@ public class CustomerServiceTest {
 
     @Test
     void testCreateCustomer() {
-        CustomerDTO customerDTO = new CustomerDTO();
-        customerDTO.setIme("Petar");
-        customerDTO.setPrezime("Petrovic");
+        var customerDTO = new CreateCustomerRequest();
+        customerDTO.setFirstName("Petar");
+        customerDTO.setLastName("Petrovic");
         customerDTO.setUsername("ppetrovic");
         customerDTO.setPassword("1234");
-        customerDTO.setAdresa("Ulica");
+        customerDTO.setAddress("Ulica");
         customerDTO.setEmail("ppetrovic@example.com");
-        customerDTO.setPol("M");
-        customerDTO.setDatum_rodjenja("90012002");
-        customerDTO.setBroj_telefona("555333");
+        customerDTO.setGender(Gender.MALE);
+        customerDTO.setBirthDate(90012002L);
+        customerDTO.setPhoneNumber("555333");
 
         when(passwordEncoder.encode(any(CharSequence.class))).thenReturn("####");
         when(customerRepository.save(any(Customer.class)))
@@ -78,8 +77,8 @@ public class CustomerServiceTest {
 
     @Test
     void testUpdateCustomer() {
-        CustomerDTO customerDTO = new CustomerDTO();
-        customerDTO.setIme("Petar");
+        var customerDTO = new UpdateCustomerRequest();
+        customerDTO.setFirstName("Petar");
 
         Customer customer = new Customer();
         customer.setId(1L);
@@ -96,8 +95,8 @@ public class CustomerServiceTest {
 
     @Test
     void testUpdateCustomerNotFound() {
-        CustomerDTO customerDTO = new CustomerDTO();
-        customerDTO.setIme("Petar");
+        var customerDTO = new UpdateCustomerRequest();
+        customerDTO.setFirstName("Petar");
 
         //when(customerRepository.findById(1L)).thenReturn(Optional.empty());
 

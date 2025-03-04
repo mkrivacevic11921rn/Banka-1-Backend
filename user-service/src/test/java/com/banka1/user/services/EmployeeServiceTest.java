@@ -1,8 +1,8 @@
 package com.banka1.user.services;
 
-import com.banka1.user.DTO.request.CreateEmployeeDto;
-import com.banka1.user.DTO.request.UpdateEmployeeDto;
-import com.banka1.user.DTO.request.UpdatePermissionsDto;
+import com.banka1.user.DTO.request.CreateEmployeeRequest;
+import com.banka1.user.DTO.request.UpdateEmployeeRequest;
+import com.banka1.user.DTO.request.UpdatePermissionsRequest;
 import com.banka1.user.listener.MessageHelper;
 import com.banka1.user.model.Employee;
 import com.banka1.user.model.helper.Gender;
@@ -60,11 +60,11 @@ class EmployeeServiceTest {
 
     @Test
     void testCreateEmployee() {
-        CreateEmployeeDto dto = new CreateEmployeeDto();
+        CreateEmployeeRequest dto = new CreateEmployeeRequest();
         dto.setFirstName("Marko");
         dto.setLastName("Markovic");
 
-        when(modelMapper.map(any(CreateEmployeeDto.class), eq(Employee.class))).thenReturn(employee);
+        when(modelMapper.map(any(CreateEmployeeRequest.class), eq(Employee.class))).thenReturn(employee);
         when(employeeRepository.save(any(Employee.class))).thenReturn(employee);
 
         Employee result = employeeService.createEmployee(dto);
@@ -77,7 +77,7 @@ class EmployeeServiceTest {
 
     @Test
     void testUpdateEmployee() {
-        UpdateEmployeeDto dto = new UpdateEmployeeDto();
+        UpdateEmployeeRequest dto = new UpdateEmployeeRequest();
         dto.setFirstName("Marko");
         dto.setLastName("Markovic");
 
@@ -96,7 +96,7 @@ class EmployeeServiceTest {
 
     @Test
     void testUpdatePermissions() {
-        UpdatePermissionsDto dto = new UpdatePermissionsDto();
+        UpdatePermissionsRequest dto = new UpdatePermissionsRequest();
         dto.setPermissions(List.of(Permission.READ_EMPLOYEE, Permission.CREATE_EMPLOYEE));
 
         when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
@@ -138,7 +138,7 @@ class EmployeeServiceTest {
 
     @Test
     void testUpdateEmployee_NotFound() {
-        UpdateEmployeeDto dto = new UpdateEmployeeDto();
+        UpdateEmployeeRequest dto = new UpdateEmployeeRequest();
         dto.setFirstName("Novi");
         dto.setLastName("Naziv");
 

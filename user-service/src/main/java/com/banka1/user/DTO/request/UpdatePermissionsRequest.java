@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class UpdatePermissionsDto {
+public class UpdatePermissionsRequest {
 
     private List<Permission> permissions;
 

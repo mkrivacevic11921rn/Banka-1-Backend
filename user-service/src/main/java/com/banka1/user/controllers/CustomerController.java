@@ -1,7 +1,8 @@
 package com.banka1.user.controllers;
 
-import com.banka1.user.DTO.CustomerDTO.CustomerDTO;
-import com.banka1.user.DTO.request.SetPasswordDTO;
+import com.banka1.user.DTO.request.CreateCustomerRequest;
+import com.banka1.user.DTO.request.SetPasswordRequest;
+import com.banka1.user.DTO.request.UpdateCustomerRequest;
 import com.banka1.user.aspect.Authorization;
 import com.banka1.user.model.Customer;
 import com.banka1.user.model.helper.Permission;
@@ -12,7 +13,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -40,8 +40,6 @@ public class CustomerController {
     @GetMapping("/{id}")
     @Authorization(permissions = { Permission.READ_CUSTOMER }, allowIdFallback = true )
     public ResponseEntity<?> getById(
-            @RequestHeader(value = "Authorization", required = false)
-            String authorization,
             @Parameter(required = true, example = "1")
             @PathVariable String id
     ) {
@@ -72,7 +70,7 @@ public class CustomerController {
             @ApiResponse(responseCode = "403", description = "Nemaš permisije za ovu akciju")
     })
     public ResponseEntity<?> createCustomer(
-            @RequestBody @Parameter(description = "Customer data for creation") CustomerDTO customerDTO) {
+            @RequestBody @Parameter(description = "Customer data for creation") CreateCustomerRequest customerDTO) {
         Customer savedCustomer = customerService.createCustomer(customerDTO);
         return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("id", savedCustomer.getId()), null);
     }
@@ -86,7 +84,7 @@ public class CustomerController {
     })
     public ResponseEntity<?> updateCustomer(
             @PathVariable @Parameter(description = "Customer ID to update") Long id,
-            @RequestBody @Parameter(description = "Updated customer data") CustomerDTO customerDTO) {
+            @RequestBody @Parameter(description = "Updated customer data") UpdateCustomerRequest customerDTO) {
         Optional<Customer> updatedCustomer = customerService.updateCustomer(id, customerDTO);
 
         if (updatedCustomer.isPresent()) {
@@ -145,9 +143,9 @@ public class CustomerController {
             @ApiResponse(responseCode = "200", description = "Password set successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid request - missing required fields")
     })
-    public ResponseEntity<?> setPassword(@RequestBody SetPasswordDTO setPasswordDTO) {
+    public ResponseEntity<?> setPassword(@RequestBody SetPasswordRequest setPasswordRequest) {
         try {
-            customerService.setPassword(setPasswordDTO);
+            customerService.setPassword(setPasswordRequest);
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Lozinka uspešno postavljena"), null);
         } catch (Exception e) {
             return ResponseTemplate.create(ResponseEntity.badRequest(), e);

@@ -3,13 +3,17 @@ package com.banka1.user.DTO.request;
 import com.banka1.user.model.helper.Department;
 import com.banka1.user.model.helper.Permission;
 import com.banka1.user.model.helper.Position;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
+
 import java.time.LocalDate;
 import java.util.List;
 
 @Data
-public class CreateEmployeeDto {
+public class CreateEmployeeRequest {
 
     @NotBlank(message = "Ime ne može biti prazno")
     @Size(min = 2, max = 50, message = "Ime mora imati između 2 i 50 karaktera")

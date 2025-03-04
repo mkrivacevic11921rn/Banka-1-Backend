@@ -1,23 +1,19 @@
 package com.banka1.user.controllers;
 
-import com.banka1.user.DTO.request.CreateEmployeeDto;
-import com.banka1.user.DTO.request.LoginRequest;
-import com.banka1.user.DTO.request.UpdateEmployeeDto;
-import com.banka1.user.DTO.request.UpdatePermissionsDto;
+import com.banka1.user.DTO.request.CreateEmployeeRequest;
+import com.banka1.user.DTO.request.UpdateEmployeeRequest;
+import com.banka1.user.DTO.request.UpdatePermissionsRequest;
 import com.banka1.user.model.Employee;
 import com.banka1.user.model.helper.Permission;
 import com.banka1.user.service.EmployeeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -53,7 +49,7 @@ class EmployeeControllerTest {
 
     @Test
     void testCreateEmployee() throws Exception {
-        CreateEmployeeDto dto = new CreateEmployeeDto();
+        CreateEmployeeRequest dto = new CreateEmployeeRequest();
         dto.setFirstName("Marko");
         dto.setLastName("Markovic");
 
@@ -62,7 +58,7 @@ class EmployeeControllerTest {
         employee.setFirstName("Marko");
         employee.setLastName("Markovic");
 
-        when(employeeService.createEmployee(any(CreateEmployeeDto.class))).thenReturn(employee);
+        when(employeeService.createEmployee(any(CreateEmployeeRequest.class))).thenReturn(employee);
 
         mockMvc.perform(post("/api/users/employees/")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -74,7 +70,7 @@ class EmployeeControllerTest {
 
     @Test
     void testUpdateEmployee() throws Exception {
-        UpdateEmployeeDto dto = new UpdateEmployeeDto();
+        UpdateEmployeeRequest dto = new UpdateEmployeeRequest();
         dto.setFirstName("Petar");
         dto.setLastName("Petrovic");
 
@@ -83,7 +79,7 @@ class EmployeeControllerTest {
         updatedEmployee.setFirstName("Petar");
         updatedEmployee.setLastName("Petrovic");
 
-        when(employeeService.updateEmployee(Mockito.eq(1L), any(UpdateEmployeeDto.class))).thenReturn(updatedEmployee);
+        when(employeeService.updateEmployee(Mockito.eq(1L), any(UpdateEmployeeRequest.class))).thenReturn(updatedEmployee);
 
         mockMvc.perform(put("/api/users/employees/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -106,7 +102,7 @@ class EmployeeControllerTest {
 
     @Test
     void testUpdatePermissions() throws Exception {
-        UpdatePermissionsDto dto = new UpdatePermissionsDto();
+        UpdatePermissionsRequest dto = new UpdatePermissionsRequest();
         dto.setPermissions(List.of(Permission.READ_EMPLOYEE));
 
         Employee updatedEmployee = new Employee();
@@ -114,7 +110,7 @@ class EmployeeControllerTest {
         updatedEmployee.setPermissions(List.of(Permission.CREATE_EMPLOYEE));
 
         when(employeeService.existsById(1L)).thenReturn(true);
-        when(employeeService.updatePermissions(Mockito.eq(1L), any(UpdatePermissionsDto.class))).thenReturn(updatedEmployee);
+        when(employeeService.updatePermissions(Mockito.eq(1L), any(UpdatePermissionsRequest.class))).thenReturn(updatedEmployee);
 
         mockMvc.perform(put("/api/users/employees/1/permissions")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -1,6 +1,5 @@
 package com.banka1.user.model.helper;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 
 @Getter
