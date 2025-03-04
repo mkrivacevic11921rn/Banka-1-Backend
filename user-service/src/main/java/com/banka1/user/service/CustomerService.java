@@ -62,7 +62,11 @@ public class CustomerService {
     }
 
     public CustomerResponse findById(String id) {
-        var customerOptional = customerRepository.findById(Long.parseLong(id));
+        return findById(Long.parseLong(id));
+    }
+
+    public CustomerResponse findById(long id) {
+        var customerOptional = customerRepository.findById(id);
         if (customerOptional.isEmpty())
             return null;
         var customer = customerOptional.get();
