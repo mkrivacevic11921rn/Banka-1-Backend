@@ -24,7 +24,7 @@ public class ResetPasswordController {
     private ResetPasswordService resetPasswordService;
 
     @PutMapping("/")
-    @Operation(summary = "Zahtev za resetovanje lozinke")
+    @Operation(summary = "Podnosenje zahteva za resetovanje lozinke")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Zahtev za resetovanje lozinke je uspešno poslat"),
             @ApiResponse(responseCode = "400", description = "Došlo je do greške prilikom slanja zahteva za resetovanje lozinke")
@@ -40,7 +40,7 @@ public class ResetPasswordController {
     }
 
     @PostMapping("/")
-    @Operation(summary = "Resetovanje lozinke")
+    @Operation(summary = "Resetovanje lozinke (verifikacija mejla i postavljanje nove lozinke)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lozinka je uspešno resetovana"),
             @ApiResponse(responseCode = "400", description = "Došlo je do greške prilikom resetovanja lozinke")

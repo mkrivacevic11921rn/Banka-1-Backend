@@ -3,6 +3,7 @@ package com.banka1.user.controllers;
 import com.banka1.user.DTO.request.CreateCustomerRequest;
 import com.banka1.user.DTO.request.SetPasswordRequest;
 import com.banka1.user.DTO.request.UpdateCustomerRequest;
+import com.banka1.user.DTO.request.UpdatePermissionsRequest;
 import com.banka1.user.aspect.Authorization;
 import com.banka1.user.model.Customer;
 import com.banka1.user.model.helper.Permission;
@@ -10,13 +11,14 @@ import com.banka1.user.service.CustomerService;
 import com.banka1.user.utils.ResponseTemplate;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -56,9 +58,9 @@ public class CustomerController {
 
     @PostMapping
     @Authorization(permissions = { Permission.CREATE_CUSTOMER }, allowIdFallback = true )
-    @Operation(summary = "Create a new customer", description = "Creates a new customer and returns the created customer ID.")
+    @Operation(summary = "Kreiranje musterije", description = "Kreira musteriju i vraca ID kreirane musterije")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Zaposleni uspešno kreiran"),
+            @ApiResponse(responseCode = "201", description = "Zaposleni uspešno kreiran", content = @Content(examples = {@ExampleObject(description = "{sucess: true, data: 1}")}) ),
             @ApiResponse(responseCode = "403", description = "Nemaš permisije za ovu akciju")
     })
     public ResponseEntity<?> createCustomer(
@@ -68,15 +70,15 @@ public class CustomerController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('user.customer.edit')")
     @Authorization(permissions = { Permission.EDIT_CUSTOMER }, allowIdFallback = true )
+    @Operation(summary = "Promena musterije")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Customer updated successfully"),
-            @ApiResponse(responseCode = "404", description = "Customer not found")
+            @ApiResponse(responseCode = "200", description = "Uspesna promena"),
+            @ApiResponse(responseCode = "404", description = "Korisnik nije pronadjen")
     })
     public ResponseEntity<?> updateCustomer(
-            @PathVariable @Parameter(description = "Customer ID to update") Long id,
-            @RequestBody @Parameter(description = "Updated customer data") UpdateCustomerRequest customerDTO) {
+            @PathVariable @Parameter(description = "ID musterije") Long id,
+            @RequestBody UpdateCustomerRequest customerDTO) {
         Optional<Customer> updatedCustomer = customerService.updateCustomer(id, customerDTO);
 
         if (updatedCustomer.isPresent()) {
@@ -89,13 +91,13 @@ public class CustomerController {
 
     @DeleteMapping("/{id}")
     @Authorization(permissions = { Permission.DELETE_CUSTOMER }, allowIdFallback = true )
-    @Operation(summary = "Delete customer", description = "Deletes a customer by ID.")
+    @Operation(summary = "Brisanje musterije")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Customer deleted successfully"),
-            @ApiResponse(responseCode = "404", description = "Customer not found")
+            @ApiResponse(responseCode = "200", description = "Uspesno brisanje"),
+            @ApiResponse(responseCode = "404", description = "Korisnik nije pronadjen")
     })
     public ResponseEntity<?> deleteCustomer(
-            @PathVariable @Parameter(description = "Customer ID to delete") Long id) {
+            @PathVariable @Parameter(description = "ID musterije") Long id) {
         boolean deleted = customerService.deleteCustomer(id);
 
         if (deleted) {
@@ -108,18 +110,15 @@ public class CustomerController {
 
     @PutMapping("/{id}/permissions")
     @Authorization(permissions = { Permission.SET_CUSTOMER_PERMISSION }, allowIdFallback = true )
-    @Operation(summary = "Update customer permissions", description = "Updates the permissions of a specific customer.")
+    @Operation(summary = "Promena permisija musterije")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Permissions updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid request - empty permissions list"),
-            @ApiResponse(responseCode = "404", description = "Customer not found")
+            @ApiResponse(responseCode = "200", description = "Uspeh"),
+            @ApiResponse(responseCode = "404", description = "Korisnik nije pronadjen")
     })
     public ResponseEntity<?> updateCustomerPermissions(
-            @PathVariable @Parameter(description = "Customer ID") Long id,
-            @RequestBody @Parameter(description = "Permissions list") Map<String, List<Permission>> permissionsMap) {
-        List<Permission> permissions = permissionsMap.get("permissions");
-
-        Optional<Customer> updatedCustomer = customerService.updateCustomerPermissions(id, permissions);
+            @PathVariable @Parameter(description = "ID musterije") Long id,
+            @RequestBody UpdatePermissionsRequest permissionsDto) {
+        Optional<Customer> updatedCustomer = customerService.updateCustomerPermissions(id, permissionsDto.getPermissions());
 
         if (updatedCustomer.isPresent()) {
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Permisije ažurirane"), null);
@@ -130,10 +129,9 @@ public class CustomerController {
     }
 
     @PutMapping("/set-password")
-    @Operation(summary = "Set customer password", description = "Sets the password for a specific customer.")
+    @Operation(summary = "Postavljanje lozinke", description = "Postavljanje lozinke i validacija mejla nakon kreiranja musterije")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Password set successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid request - missing required fields")
+            @ApiResponse(responseCode = "200", description = "Uspeh"),
     })
     public ResponseEntity<?> setPassword(@RequestBody SetPasswordRequest setPasswordRequest) {
         try {

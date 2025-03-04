@@ -29,6 +29,7 @@ import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatc
 @Service
 @RequiredArgsConstructor
 public class EmployeeService {
+    private final SetPasswordService setPasswordService;
     private final EmployeeRepository employeeRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final JmsTemplate jmsTemplate;
@@ -73,6 +74,8 @@ public class EmployeeService {
         emailDTO.setFirstName(employee.getFirstName());
         emailDTO.setLastName(employee.getLastName());
         emailDTO.setType("email");
+
+        setPasswordService.saveSetPasswordRequest(verificationCode, employee.getId());
 
         jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
 

@@ -2,6 +2,7 @@ package com.banka1.user.DTO.request;
 
 import com.banka1.user.DTO.banking.CreateAccountWithoutOwnerIdDTO;
 import com.banka1.user.model.helper.Gender;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -41,6 +42,7 @@ public class CreateCustomerRequest {
     @NotBlank(message = "Adresa je obavezan")
     private String address;
 
-    @NotNull(message = "Informacije o nalogu su obavezne")
+    @NotNull(message = "Informacije o racunu su obavezne")
+    @Schema(description = "Informacije o racunu koji ce biti automatski kreiran")
     private CreateAccountWithoutOwnerIdDTO accountInfo;
 }

@@ -19,15 +19,15 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/set-password")
-@Tag(name = "Set Password API", description = "API za setovanje lozinke")
+@Tag(name = "Set Password API", description = "API za postavljanje prve lozinke")
 public class SetPasswordController {
     private final SetPasswordService setPasswordService;
 
     public SetPasswordController(SetPasswordService setPasswordService) {this.setPasswordService = setPasswordService;}
 
 
-    @PostMapping("")
-    @Operation(summary = "Resetovanje lozinke")
+    @PostMapping
+    @Operation(summary = "Postavljanje lozinke/verfikacija mejla")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lozinka je uspešno resetovana"),
             @ApiResponse(responseCode = "400", description = "Došlo je do greške prilikom resetovanja lozinke")

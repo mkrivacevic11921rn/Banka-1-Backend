@@ -78,10 +78,9 @@ public class EmployeeController {
     }
 
     @PutMapping("/set-password")
-    @Operation(summary = "Set password", description = "Sets password for the user")
+    @Operation(summary = "Postavljanje lozinke", description = "Postavljanje lozinke i validacija mejla nakon kreiranja musterije")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Password set successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid request - missing required fields")
+            @ApiResponse(responseCode = "200", description = "Uspeh"),
     })
     public ResponseEntity<?> setPassword(@RequestBody SetPasswordRequest setPasswordRequest) {
         System.out.println(setPasswordRequest);

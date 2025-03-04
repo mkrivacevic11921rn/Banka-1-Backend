@@ -13,6 +13,7 @@ import com.banka1.user.model.helper.Permission;
 import com.banka1.user.model.helper.Position;
 import com.banka1.user.repository.EmployeeRepository;
 import com.banka1.user.service.EmployeeService;
+import com.banka1.user.service.SetPasswordService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,6 +44,9 @@ class EmployeeServiceTest {
 
     @Mock
     private EmployeeRepository employeeRepository;
+
+    @Mock
+    private SetPasswordService setPasswordService;
 
     @Mock
     private ModelMapper modelMapper;
