@@ -55,21 +55,6 @@ public class BootstrapData implements CommandLineRunner {
 
         employeeRepository.save(admin);
 
-        var musterija = new Customer();
-
-        musterija.setFirstName("musterija");
-        musterija.setLastName("musterija");
-        musterija.setEmail("musterija@musterija.com");
-        musterija.setPassword("musterija");
-        musterija.setPhoneNumber("1234567890");
-        musterija.setBirthDate(20000101L);
-        musterija.setGender(Gender.MALE);
-        musterija.setAddress("musterija Address");
-        musterija.setSaltPassword("salt");
-        musterija.setUsername("musterija123");
-
-        //customerRepository.save(musterija);
-
         Employee employee1 = new Employee();
         String rawPassword1 = "Per@12345";
         String salt1 = "salt1";
@@ -121,6 +106,7 @@ public class BootstrapData implements CommandLineRunner {
         String salt3 = "salt3";
         String hashedPassword3 = BCrypt.hashpw(rawPassword3 + salt3, BCrypt.gensalt());
 
+        customer1.setId(1L);
         customer1.setFirstName("Marko");
         customer1.setLastName("Marković");
         customer1.setEmail("marko.markovic@banka.com");
