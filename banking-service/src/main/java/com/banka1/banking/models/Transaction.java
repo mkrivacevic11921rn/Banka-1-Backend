@@ -9,6 +9,7 @@ import lombok.Setter;
 @Setter
 public class Transaction {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne

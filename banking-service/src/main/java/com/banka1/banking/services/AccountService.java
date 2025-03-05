@@ -58,7 +58,6 @@ public class AccountService {
         }
 
         Account account = modelMapper.map(createAccountDTO, Account.class);
-        account.setSubtype(AccountSubtype.STANDARD);
 
         if (account.getBalance() != null) {
             account.setBalance(account.getBalance());
