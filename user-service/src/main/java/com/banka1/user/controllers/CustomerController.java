@@ -66,7 +66,7 @@ public class CustomerController {
     public ResponseEntity<?> createCustomer(
             @RequestBody @Parameter(description = "Customer data for creation") CreateCustomerRequest customerDTO) {
         Customer savedCustomer = customerService.createCustomer(customerDTO);
-        return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("id", savedCustomer.getId()), null);
+        return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("customer", savedCustomer), null);
     }
 
     @PutMapping("/{id}")
