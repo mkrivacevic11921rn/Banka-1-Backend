@@ -12,6 +12,8 @@ import java.lang.annotation.Target;
  * <p></p>
  * Ako je <code>customerOnlyOperation</code> postavljeno kao <code>true</code>, zaposleni neće imati pristup ovoj metodi.
  * <p></p>
+ * Ako je <code>employeeOnlyOperation</code> postavljeno kao <code>true</code>, mušterije neće imati pristup ovoj metodi.
+ * <p></p>
  * Ako je <code>disallowAdminFallback</code> postavljeno kao <code>true</code>, administratori neće imati pristup ovoj metodi.
  * <p></p>
  * Primer korišćenja:
@@ -29,5 +31,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface AccountAuthorization {
     boolean customerOnlyOperation() default false;
+    boolean employeeOnlyOperation() default false;
     boolean disallowAdminFallback() default false;
 }

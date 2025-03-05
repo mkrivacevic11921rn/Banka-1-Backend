@@ -1,11 +1,11 @@
 package com.banka1.banking.aspect;
 
-import com.banka1.banking.dto.response.AccountResponse;
-import com.banka1.banking.dto.response.CardResponse;
-import com.banka1.banking.dto.response.LoanResponse;
-import com.banka1.banking.services.AccountService;
-import com.banka1.banking.services.CardService;
-import com.banka1.banking.services.LoanService;
+import com.banka1.banking.dto.*;
+import com.banka1.banking.dto.request.CreateAccountDTO;
+import com.banka1.banking.models.Account;
+import com.banka1.banking.models.Card;
+import com.banka1.banking.models.Receiver;
+import com.banka1.banking.services.*;
 import com.banka1.banking.services.implementation.AuthService;
 import com.banka1.banking.utils.ResponseMessage;
 import com.banka1.banking.utils.ResponseTemplate;
@@ -13,6 +13,7 @@ import com.banka1.banking.utils.ThrowingFunction;
 import com.banka1.common.model.Position;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -37,12 +38,16 @@ public class AuthAspect {
     private final AccountService accountService;
     private final LoanService loanService;
     private final CardService cardService;
+    private final TransferService transferService;
+    private final ReceiverService receiverService;
 
-    public AuthAspect(AuthService authService, AccountService accountService, LoanService loanService, CardService cardService) {
+    public AuthAspect(AuthService authService, AccountService accountService, LoanService loanService, CardService cardService, TransferService transferService, ReceiverService receiverService) {
         this.authService = authService;
         this.accountService = accountService;
         this.loanService = loanService;
         this.cardService = cardService;
+        this.transferService = transferService;
+        this.receiverService = receiverService;
     }
 
     // Izvlači token iz prosledjenog autorizacionog parametra
@@ -64,8 +69,6 @@ public class AuthAspect {
         }
         return null;
     }
-
-
 
     private Object doAuth(MethodSignature methodSignature, ProceedingJoinPoint joinPoint, ThrowingFunction<Claims, Object> callback) throws Throwable {
         String token = parseAuthToken(methodSignature.getParameterNames(), joinPoint.getArgs());
@@ -89,6 +92,51 @@ public class AuthAspect {
         return callback.apply(claims);
     }
 
+    private boolean accountDataOk(MethodSignature methodSignature, JoinPoint joinPoint, Long userId) {
+        OptionalInt maybeAccountIdIndex = IntStream.range(0, methodSignature.getParameterNames().length).filter(i -> methodSignature.getParameterNames()[i].compareTo("accountId") == 0).findFirst();
+        if (maybeAccountIdIndex.isPresent()) {
+            Account account = accountService.findById(Long.valueOf(joinPoint.getArgs()[maybeAccountIdIndex.getAsInt()].toString()));
+            if (account != null) {
+                return Objects.equals(userId, account.getOwnerID());
+            }
+        } else {
+            Class<?>[] types = methodSignature.getParameterTypes();
+            Object[] values = joinPoint.getArgs();
+
+            if(types.length == 0)
+                return false;
+
+            for (int i = 0; i < types.length; i++) {
+                if(types[i] == CreateAccountDTO.class) {
+                    if(!Objects.equals(((CreateAccountDTO) values[i]).getOwnerID(), userId))
+                        return false;
+                } else if(types[i] == ExchangeMoneyTransferDTO.class) {
+                    if(!Objects.equals(accountService.findById(((ExchangeMoneyTransferDTO) values[i]).getAccountFrom()).getOwnerID(), userId))
+                        return false;
+                } else if(types[i] == OtpTokenDTO.class) {
+                    if(!Objects.equals(transferService.findById(((OtpTokenDTO) values[i]).getTransferId()).getFromAccountId().getOwnerID(), userId))
+                        return false;
+                } else if(types[i] == ReceiverDTO.class) {
+                    if(!Objects.equals(accountService.findById(((ReceiverDTO) values[i]).getOwnerAccountId()).getOwnerID(), userId))
+                        return false;
+                } else if(types[i] == InternalTransferDTO.class) {
+                    if(!Objects.equals(accountService.findById(((InternalTransferDTO) values[i]).getFromAccountId()).getOwnerID(), userId))
+                        return false;
+                } else if(types[i] == MoneyTransferDTO.class) {
+                    if(!Objects.equals(accountService.findById(((MoneyTransferDTO) values[i]).getFromAccountId()).getOwnerID(), userId))
+                        return false;
+                } else if(types[i] == CreateCardDTO.class) {
+                    if(!Objects.equals(accountService.findById(((CreateCardDTO) values[i]).getAccountID()).getOwnerID(), userId))
+                        return false;
+                } else {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
     @Around("@annotation(com.banka1.banking.aspect.AccountAuthorization)")
     public Object authorizeAccountAction(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
@@ -104,20 +152,16 @@ public class AuthAspect {
                 }
             }
 
-            OptionalInt maybeUserIdIndex = IntStream.range(0, methodSignature.getParameterNames().length).filter(i -> methodSignature.getParameterNames()[i].compareTo("userId") == 0).findFirst();
-            if(maybeUserIdIndex.isPresent()) {
-                Long givenId = Long.parseLong(joinPoint.getArgs()[maybeUserIdIndex.getAsInt()].toString());
-                if (Objects.equals(claims.get("id", Long.class), givenId))
-                    return joinPoint.proceed();
-            }
-
-            OptionalInt maybeAccountIdIndex = IntStream.range(0, methodSignature.getParameterNames().length).filter(i -> methodSignature.getParameterNames()[i].compareTo("accountId") == 0).findFirst();
-            if(maybeAccountIdIndex.isPresent()) {
-                AccountResponse account = accountService.findById(joinPoint.getArgs()[maybeAccountIdIndex.getAsInt()].toString());
-                if(account != null) {
-                    if (Objects.equals(claims.get("id", Long.class), account.getOwnerID()))
+            if(!authorization.employeeOnlyOperation()) {
+                OptionalInt maybeUserIdIndex = IntStream.range(0, methodSignature.getParameterNames().length).filter(i -> methodSignature.getParameterNames()[i].compareTo("userId") == 0).findFirst();
+                if (maybeUserIdIndex.isPresent()) {
+                    Long givenId = Long.parseLong(joinPoint.getArgs()[maybeUserIdIndex.getAsInt()].toString());
+                    if (Objects.equals(claims.get("id", Long.class), givenId))
                         return joinPoint.proceed();
                 }
+
+                if(accountDataOk(methodSignature, joinPoint, claims.get("id", Long.class)))
+                    return joinPoint.proceed();
             }
 
             // ako je admin
@@ -144,21 +188,14 @@ public class AuthAspect {
                 }
             }
 
-            OptionalInt maybeAccountIdIndex = IntStream.range(0, methodSignature.getParameterNames().length).filter(i -> methodSignature.getParameterNames()[i].compareTo("accountId") == 0).findFirst();
-            if(maybeAccountIdIndex.isPresent()) {
-                AccountResponse account = accountService.findById(joinPoint.getArgs()[maybeAccountIdIndex.getAsInt()].toString());
-                if(account != null) {
-                    if (Objects.equals(claims.get("id", Long.class), account.getOwnerID()))
-                        return joinPoint.proceed();
-                }
-            }
+            if(!authorization.employeeOnlyOperation()) {
+                if(accountDataOk(methodSignature, joinPoint, claims.get("id", Long.class)))
+                    return joinPoint.proceed();
 
-            OptionalInt maybeCardIdIndex = IntStream.range(0, methodSignature.getParameterNames().length).filter(i -> methodSignature.getParameterNames()[i].compareTo("cardId") == 0).findFirst();
-            if(maybeCardIdIndex.isPresent()) {
-                CardResponse card = cardService.findById(joinPoint.getArgs()[maybeCardIdIndex.getAsInt()].toString());
-                if(card != null) {
-                    AccountResponse account = card.getAccount();
-                    if (Objects.equals(claims.get("id", Long.class), account.getOwnerID()))
+                OptionalInt maybeCardIdIndex = IntStream.range(0, methodSignature.getParameterNames().length).filter(i -> methodSignature.getParameterNames()[i].compareTo("cardId") == 0).findFirst();
+                if (maybeCardIdIndex.isPresent()) {
+                    Card card = cardService.findById(Long.valueOf(joinPoint.getArgs()[maybeCardIdIndex.getAsInt()].toString()));
+                    if (Objects.equals(claims.get("id", Long.class), card.getAccount().getOwnerID()))
                         return joinPoint.proceed();
                 }
             }
@@ -187,20 +224,55 @@ public class AuthAspect {
                 }
             }
 
-            OptionalInt maybeAccountIdIndex = IntStream.range(0, methodSignature.getParameterNames().length).filter(i -> methodSignature.getParameterNames()[i].compareTo("accountId") == 0).findFirst();
-            if(maybeAccountIdIndex.isPresent()) {
-                AccountResponse account = accountService.findById(joinPoint.getArgs()[maybeAccountIdIndex.getAsInt()].toString());
-                if(account != null) {
-                    if (Objects.equals(claims.get("id", Long.class), account.getOwnerID()))
-                        return joinPoint.proceed();
+            if(!authorization.employeeOnlyOperation()) {
+                if(accountDataOk(methodSignature, joinPoint, claims.get("id", Long.class)))
+                    return joinPoint.proceed();
+
+                // krediti ne postoje trenutno?
+                /*
+                OptionalInt maybeLoanIdIndex = IntStream.range(0, methodSignature.getParameterNames().length).filter(i -> methodSignature.getParameterNames()[i].compareTo("loanId") == 0).findFirst();
+                if(maybeLoanIdIndex.isPresent()) {
+                    Loan loan = loanService.findById(Long.valueOf(joinPoint.getArgs()[maybeLoanIdIndex.getAsInt()].toString()));
+                    if(loan != null) {
+                        if (Objects.equals(claims.get("id", Long.class), loan.getAccount().getOwnerID()))
+                            return joinPoint.proceed();
+                    }
+                }
+                 */
+            }
+
+            // ako je admin
+            if(!authorization.disallowAdminFallback() && Objects.equals(claims.get("isAdmin", Boolean.class), true)) {
+                return joinPoint.proceed();
+            }
+
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.FORBIDDEN), false, null, ResponseMessage.FORBIDDEN.toString());
+        });
+    }
+
+    @Around("@annotation(com.banka1.banking.aspect.ReceiverAuthorization)")
+    public Object authorizeReceiverAction(ProceedingJoinPoint joinPoint) throws Throwable {
+        MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+        Method method = methodSignature.getMethod();
+
+        return doAuth(methodSignature, joinPoint, (claims) -> {
+            ReceiverAuthorization authorization = method.getAnnotation(ReceiverAuthorization.class);
+
+            if(!authorization.customerOnlyOperation()) {
+                if(!claims.get("position", String.class).equals(Position.NONE.toString())) {
+                    // Zaposleni
+                    return joinPoint.proceed();
                 }
             }
 
-            OptionalInt maybeLoanIdIndex = IntStream.range(0, methodSignature.getParameterNames().length).filter(i -> methodSignature.getParameterNames()[i].compareTo("loanId") == 0).findFirst();
-            if(maybeLoanIdIndex.isPresent()) {
-                LoanResponse loan = loanService.findById(joinPoint.getArgs()[maybeLoanIdIndex.getAsInt()].toString());
-                if(loan != null) {
-                    if (Objects.equals(claims.get("id", Long.class), loan.getAccount().getOwnerID()))
+            if(!authorization.employeeOnlyOperation()) {
+                if(accountDataOk(methodSignature, joinPoint, claims.get("id", Long.class)))
+                    return joinPoint.proceed();
+
+                OptionalInt maybeReceiverIdIndex = IntStream.range(0, methodSignature.getParameterNames().length).filter(i -> methodSignature.getParameterNames()[i].compareTo("receiverId") == 0).findFirst();
+                if (maybeReceiverIdIndex.isPresent()) {
+                    Receiver receiver = receiverService.findById(Long.valueOf(joinPoint.getArgs()[maybeReceiverIdIndex.getAsInt()].toString()));
+                    if (Objects.equals(claims.get("id", Long.class), accountService.findById(receiver.getOwnerAccountId()).getOwnerID()))
                         return joinPoint.proceed();
                 }
             }

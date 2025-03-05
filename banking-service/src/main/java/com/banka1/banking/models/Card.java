@@ -11,6 +11,7 @@ import lombok.Setter;
 @Setter
 public class Card {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)

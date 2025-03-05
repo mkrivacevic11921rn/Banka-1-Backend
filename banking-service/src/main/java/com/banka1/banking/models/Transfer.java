@@ -12,6 +12,7 @@ import lombok.Setter;
 public class Transfer {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
@@ -25,9 +26,11 @@ public class Transfer {
     @Column(nullable = false)
     private Double amount;
 
-    @JoinColumn(nullable = true)
-    @ManyToOne
-    private Receiver receiver;
+    @Column(nullable = false)
+    private String receiver;
+
+    @Column(nullable = true)
+    private String adress;
 
     @Column(nullable = false)
     private String paymentCode; // sifra placanja

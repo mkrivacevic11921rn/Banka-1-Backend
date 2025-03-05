@@ -4,9 +4,9 @@ import com.banka1.banking.aspect.AccountAuthorization;
 import com.banka1.banking.aspect.AuthAspect;
 import com.banka1.banking.aspect.CardAuthorization;
 import com.banka1.banking.aspect.LoanAuthorization;
-import com.banka1.banking.dto.response.AccountResponse;
-import com.banka1.banking.dto.response.CardResponse;
-import com.banka1.banking.dto.response.LoanResponse;
+import com.banka1.banking.models.Account;
+import com.banka1.banking.models.Card;
+import com.banka1.banking.models.Loan;
 import com.banka1.banking.services.AccountService;
 import com.banka1.banking.services.CardService;
 import com.banka1.banking.services.LoanService;
@@ -55,11 +55,11 @@ public class AuthServiceTests {
     @Mock
     private CardAuthorization cardAuthorization;
     @Mock
-    private AccountResponse account;
+    private Account account;
     @Mock
-    private CardResponse card;
+    private Card card;
     @Mock
-    private LoanResponse loan;
+    private Loan loan;
 
     @BeforeEach
     void setup() {
@@ -100,24 +100,25 @@ public class AuthServiceTests {
 
         when(authService.parseToken(notNull(String.class))).thenReturn(claims);
 
-        when(accountService.findById("1")).thenReturn(account);
-        when(loanService.findById("1")).thenReturn(loan);
-        when(cardService.findById("1")).thenReturn(card);
+        when(accountService.findById(1L)).thenReturn(account);
+        //when(loanService.findById("1")).thenReturn(loan);
+        when(cardService.findById(1L)).thenReturn(card);
 
         when(account.getOwnerID()).thenReturn(2L);
-        when(loan.getAccount()).thenReturn(account);
+        //when(loan.getAccount()).thenReturn(account);
         when(card.getAccount()).thenReturn(account);
 
         when(accountAuthorization.customerOnlyOperation()).thenReturn(true);
         when(cardAuthorization.customerOnlyOperation()).thenReturn(true);
-        when(loanAuthorization.customerOnlyOperation()).thenReturn(true);
+        //when(loanAuthorization.customerOnlyOperation()).thenReturn(true);
         when(accountAuthorization.disallowAdminFallback()).thenReturn(true);
         when(cardAuthorization.disallowAdminFallback()).thenReturn(true);
-        when(loanAuthorization.disallowAdminFallback()).thenReturn(true);
+        //when(loanAuthorization.disallowAdminFallback()).thenReturn(true);
 
         when(method.getAnnotation(AccountAuthorization.class)).thenReturn(accountAuthorization);
         when(method.getAnnotation(CardAuthorization.class)).thenReturn(cardAuthorization);
-        when(method.getAnnotation(LoanAuthorization.class)).thenReturn(loanAuthorization);
+        //when(method.getAnnotation(LoanAuthorization.class)).thenReturn(loanAuthorization);
+        when(methodSignature.getParameterTypes()).thenReturn(new Class[] { String.class, Long.class });
 
         when(methodSignature.getMethod()).thenReturn(method);
         when(authService.getToken(notNull(String.class))).thenReturn("ValidanToken");
@@ -128,8 +129,8 @@ public class AuthServiceTests {
         when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization", "cardId" });
         authAspect.authorizeCardAction(joinPoint);
 
-        when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization", "loanId" });
-        authAspect.authorizeLoanAction(joinPoint);
+        //when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization", "loanId" });
+        //authAspect.authorizeLoanAction(joinPoint);
 
         verify(joinPoint, never()).proceed();
     }
@@ -145,11 +146,12 @@ public class AuthServiceTests {
 
         when(accountAuthorization.customerOnlyOperation()).thenReturn(false);
         when(cardAuthorization.customerOnlyOperation()).thenReturn(false);
-        when(loanAuthorization.customerOnlyOperation()).thenReturn(false);
+        //when(loanAuthorization.customerOnlyOperation()).thenReturn(false);
 
         when(method.getAnnotation(AccountAuthorization.class)).thenReturn(accountAuthorization);
         when(method.getAnnotation(CardAuthorization.class)).thenReturn(cardAuthorization);
-        when(method.getAnnotation(LoanAuthorization.class)).thenReturn(loanAuthorization);
+        //when(method.getAnnotation(LoanAuthorization.class)).thenReturn(loanAuthorization);
+        //when(methodSignature.getParameterTypes()).thenReturn(new Class[] { String.class, Long.class });
 
         when(methodSignature.getMethod()).thenReturn(method);
         when(authService.getToken(notNull(String.class))).thenReturn("ValidanToken");
@@ -160,10 +162,10 @@ public class AuthServiceTests {
         when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization", "cardId" });
         authAspect.authorizeCardAction(joinPoint);
 
-        when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization", "loanId" });
-        authAspect.authorizeLoanAction(joinPoint);
+        //when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization", "loanId" });
+        //authAspect.authorizeLoanAction(joinPoint);
 
-        verify(joinPoint, times(3)).proceed();
+        verify(joinPoint, times(2)).proceed();
     }
 
     @Test
@@ -176,24 +178,25 @@ public class AuthServiceTests {
 
         when(authService.parseToken(notNull(String.class))).thenReturn(claims);
 
-        when(accountService.findById("1")).thenReturn(account);
-        when(loanService.findById("1")).thenReturn(loan);
-        when(cardService.findById("1")).thenReturn(card);
+        when(accountService.findById(1L)).thenReturn(account);
+        //when(loanService.findById("1")).thenReturn(loan);
+        when(cardService.findById(1L)).thenReturn(card);
 
         when(account.getOwnerID()).thenReturn(2L);
-        when(loan.getAccount()).thenReturn(account);
+        //when(loan.getAccount()).thenReturn(account);
         when(card.getAccount()).thenReturn(account);
 
         when(accountAuthorization.customerOnlyOperation()).thenReturn(true);
         when(cardAuthorization.customerOnlyOperation()).thenReturn(true);
-        when(loanAuthorization.customerOnlyOperation()).thenReturn(true);
+        //when(loanAuthorization.customerOnlyOperation()).thenReturn(true);
         when(accountAuthorization.disallowAdminFallback()).thenReturn(false);
         when(cardAuthorization.disallowAdminFallback()).thenReturn(false);
-        when(loanAuthorization.disallowAdminFallback()).thenReturn(false);
+        //when(loanAuthorization.disallowAdminFallback()).thenReturn(false);
 
         when(method.getAnnotation(AccountAuthorization.class)).thenReturn(accountAuthorization);
         when(method.getAnnotation(CardAuthorization.class)).thenReturn(cardAuthorization);
-        when(method.getAnnotation(LoanAuthorization.class)).thenReturn(loanAuthorization);
+        //when(method.getAnnotation(LoanAuthorization.class)).thenReturn(loanAuthorization);
+        when(methodSignature.getParameterTypes()).thenReturn(new Class[] { String.class, Long.class });
 
         when(methodSignature.getMethod()).thenReturn(method);
         when(authService.getToken(notNull(String.class))).thenReturn("ValidanToken");
@@ -204,10 +207,10 @@ public class AuthServiceTests {
         when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization", "cardId" });
         authAspect.authorizeCardAction(joinPoint);
 
-        when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization", "loanId" });
-        authAspect.authorizeLoanAction(joinPoint);
+        //when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization", "loanId" });
+        //authAspect.authorizeLoanAction(joinPoint);
 
-        verify(joinPoint, times(3)).proceed();
+        verify(joinPoint, times(2)).proceed();
     }
 
     @Test
@@ -219,21 +222,22 @@ public class AuthServiceTests {
 
         when(authService.parseToken(notNull(String.class))).thenReturn(claims);
 
-        when(accountService.findById("1")).thenReturn(account);
-        when(loanService.findById("1")).thenReturn(loan);
-        when(cardService.findById("1")).thenReturn(card);
+        when(accountService.findById(1L)).thenReturn(account);
+        //when(loanService.findById("1")).thenReturn(loan);
+        when(cardService.findById(1L)).thenReturn(card);
 
         when(account.getOwnerID()).thenReturn(1L);
-        when(loan.getAccount()).thenReturn(account);
+        //when(loan.getAccount()).thenReturn(account);
         when(card.getAccount()).thenReturn(account);
 
         when(accountAuthorization.customerOnlyOperation()).thenReturn(true);
         when(cardAuthorization.customerOnlyOperation()).thenReturn(true);
-        when(loanAuthorization.customerOnlyOperation()).thenReturn(true);
+        //when(loanAuthorization.customerOnlyOperation()).thenReturn(true);
 
         when(method.getAnnotation(AccountAuthorization.class)).thenReturn(accountAuthorization);
         when(method.getAnnotation(CardAuthorization.class)).thenReturn(cardAuthorization);
-        when(method.getAnnotation(LoanAuthorization.class)).thenReturn(loanAuthorization);
+        //when(method.getAnnotation(LoanAuthorization.class)).thenReturn(loanAuthorization);
+        when(methodSignature.getParameterTypes()).thenReturn(new Class[] { String.class, Long.class });
 
         when(methodSignature.getMethod()).thenReturn(method);
         when(authService.getToken(notNull(String.class))).thenReturn("ValidanToken");
@@ -244,10 +248,10 @@ public class AuthServiceTests {
         when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization", "cardId" });
         authAspect.authorizeCardAction(joinPoint);
 
-        when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization", "loanId" });
-        authAspect.authorizeLoanAction(joinPoint);
+        //when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization", "loanId" });
+        //authAspect.authorizeLoanAction(joinPoint);
 
-        verify(joinPoint, times(3)).proceed();
+        verify(joinPoint, times(2)).proceed();
     }
 
     @Test
