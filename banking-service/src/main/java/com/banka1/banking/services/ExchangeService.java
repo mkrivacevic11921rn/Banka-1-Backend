@@ -62,7 +62,7 @@ public class ExchangeService {
         Account fromAccount = fromAccountOtp.get();
         Account toAccount = toAccountOtp.get();
 
-        if (fromAccount.getCurrency().equals(toAccount.getCurrency())){
+        if (fromAccount.getCurrencyType().equals(toAccount.getCurrencyType())){
             return false;
         }
 
@@ -84,10 +84,10 @@ public class ExchangeService {
             Account toAccount = toAccountDTO.get();
 
             // PROVERITI DA LI SE VALUTE SALJU U DTO
-            Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrency())
+            Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrencyType())
                     .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
-            Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrency())
+            Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrencyType())
                     .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
             Long customerId = fromAccount.getOwnerID();
