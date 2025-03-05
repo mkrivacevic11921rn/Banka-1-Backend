@@ -46,9 +46,9 @@ public class AccountService {
         this.userServiceCustomer = userServiceCustomer;
     }
 
-    public Account createAccount(CreateAccountDTO createAccountDTO) {
+    public Account createAccount(CreateAccountDTO createAccountDTO, Long employeeId) {
         CustomerDTO owner = userServiceCustomer.getCustomerById(createAccountDTO.getOwnerID());
-        if (owner == null) {
+        if (owner == null || employeeId == null) {
             return null;
         }
 
@@ -75,7 +75,10 @@ public class AccountService {
 
         account.setAccountNumber(generateAccountNumber(account));
 //dohvatanje employeeId-a iz jwt tokena? idk tako su mi rekli srecno onome koji se bavi autorizacijom
-        account.setEmployeeID(Long.valueOf(1));
+
+        // ne brini se radi :)
+
+        account.setEmployeeID(employeeId);
 
         NotificationDTO emailDTO = new NotificationDTO();
         emailDTO.setSubject("Račun uspešno kreiran");
@@ -96,6 +99,11 @@ public class AccountService {
 
     public List<Account> getAccountsByOwnerId(Long ownerId) {
         return accountRepository.findByOwnerID(ownerId);
+    }
+
+    public Account findById(Long accountId) {
+        return accountRepository.findById(accountId)
+                .orElseThrow(() -> new RuntimeException("Račun sa ID-jem " + accountId + " nije pronađen"));
     }
 
     public Account updateAccount(Long accountId, UpdateAccountDTO updateAccountDTO) {

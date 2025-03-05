@@ -1,5 +1,6 @@
 package com.banka1.banking.controllers;
 
+import com.banka1.banking.aspect.AccountAuthorization;
 import com.banka1.banking.dto.OtpTokenDTO;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Currency;
@@ -58,6 +59,7 @@ public class OtpTokenController {
             )
     })
     @PostMapping("/verification")
+    @AccountAuthorization(customerOnlyOperation = true)
     public ResponseEntity<?> verifyOtp(@RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody(
             description = "Podaci za verifikaciju OTP koda",
             required = true,

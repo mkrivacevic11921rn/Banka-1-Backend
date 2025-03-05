@@ -1,5 +1,6 @@
 package com.banka1.banking.controllers;
 
+import com.banka1.banking.aspect.AccountAuthorization;
 import com.banka1.banking.models.Transfer;
 import com.banka1.banking.models.helper.TransferType;
 import com.banka1.banking.services.TransferService;
@@ -63,6 +64,7 @@ public class TransferController {
             )
     })
     @PostMapping("/internal-transfer")
+    @AccountAuthorization(customerOnlyOperation = true)
     public ResponseEntity<?> internalTransfer(
             @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Podaci za interni transfer",
@@ -105,6 +107,7 @@ public class TransferController {
             )
     })
     @PostMapping("/money-transfer")
+    @AccountAuthorization(customerOnlyOperation = true)
     public ResponseEntity<?> moneyTransfer(
             @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Podaci za prenos novca",

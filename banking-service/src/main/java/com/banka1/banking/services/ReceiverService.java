@@ -16,6 +16,10 @@ public class ReceiverService {
 
     private final ReceiverRepository receiverRepository;
 
+    public Receiver findById(Long receiverId) {
+        return receiverRepository.findById(receiverId)
+                .orElseThrow(() -> new RuntimeException("Primalac sa ID-jem " + receiverId + " nije pronađen"));
+    }
 
     public Receiver createReceiver(ReceiverDTO receiverDTO){
 

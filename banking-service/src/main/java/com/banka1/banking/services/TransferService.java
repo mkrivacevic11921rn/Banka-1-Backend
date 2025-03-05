@@ -371,5 +371,9 @@ public class TransferService {
 
     }
 
+    public Transfer findById(Long transferId) {
+        return transferRepository.findById(transferId)
+                .orElseThrow(() -> new RuntimeException("Transfer sa ID-jem " + transferId + " nije pronađen"));
+    }
 }
 

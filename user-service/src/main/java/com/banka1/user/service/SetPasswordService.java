@@ -4,7 +4,9 @@ package com.banka1.user.service;
 import com.banka1.user.DTO.request.SetPasswordRequest;
 import com.banka1.user.model.SetPassword;
 import com.banka1.user.repository.CustomerRepository;
+import com.banka1.user.repository.EmployeeRepository;
 import com.banka1.user.repository.SetPasswordRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCrypt;
@@ -19,16 +21,13 @@ import java.util.Base64;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class SetPasswordService {
 	private final SetPasswordRepository setPasswordRepository;
 	private final CustomerRepository customerRepository;
+	private final EmployeeRepository employeeRepository;
 
-	public SetPasswordService(SetPasswordRepository setPasswordRepository, CustomerRepository customerRepository) {
-		this.setPasswordRepository = setPasswordRepository;
-		this.customerRepository = customerRepository;
-	}
-
-	public void saveSetPasswordRequest(String token, long userId) {
+	public void saveSetPasswordRequest(String token, long userId, boolean customer) {
 		var now = Instant.now();
 		var setPassword = SetPassword.builder()
 				.token(token)
@@ -37,6 +36,7 @@ public class SetPasswordService {
 				.createdDate(now)
 				.expirationDate(Instant.now()
 						.plus(Duration.ofDays(1)))
+				.customer(customer)
 				.build();
 		setPasswordRepository.save(setPassword);
 	}
@@ -57,14 +57,25 @@ public class SetPasswordService {
 		if (setPassword.getUsed()) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token je već korišćen.");
 		}
-		var customerOptional = customerRepository.findById(setPassword.getUserId());
-		if (customerOptional.isEmpty())
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Korisnik nije pronađen.");
-		var customer = customerOptional.get();
 		var salt = generateSalt();
-		customer.setPassword(BCrypt.hashpw(dto.getPassword() + salt, BCrypt.gensalt()));
-		customer.setSaltPassword(salt);
-		customerRepository.save(customer);
+		var password = BCrypt.hashpw(dto.getPassword() + salt, BCrypt.gensalt());
+		if (setPassword.getCustomer()) {
+			var customerOptional = customerRepository.findById(setPassword.getUserId());
+			if (customerOptional.isEmpty())
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Korisnik nije pronađen.");
+			var customer = customerOptional.get();
+			customer.setPassword(password);
+			customer.setSaltPassword(salt);
+			customerRepository.save(customer);
+		} else {
+			var employeeOptional = employeeRepository.findById(setPassword.getUserId());
+			if (employeeOptional.isEmpty())
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Korisnik nije pronađen.");
+			var employee = employeeOptional.get();
+			employee.setPassword(password);
+			employee.setSaltPassword(salt);
+			employeeRepository.save(employee);
+		}
 		setPassword.setUsed(true);
 		setPasswordRepository.save(setPassword);
 		log.debug("Password set");
