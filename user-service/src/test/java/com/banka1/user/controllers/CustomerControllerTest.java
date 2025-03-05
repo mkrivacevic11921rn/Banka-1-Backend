@@ -1,6 +1,7 @@
 package com.banka1.user.controllers;
 
 
+import com.banka1.common.model.Permission;
 import com.banka1.user.DTO.banking.CreateAccountWithoutOwnerIdDTO;
 import com.banka1.user.DTO.banking.helper.AccountStatus;
 import com.banka1.user.DTO.banking.helper.AccountSubtype;
@@ -12,7 +13,6 @@ import com.banka1.user.DTO.response.CustomerResponse;
 import com.banka1.user.mapper.CustomerMapper;
 import com.banka1.user.model.Customer;
 import com.banka1.user.model.helper.Gender;
-import com.banka1.common.model.Permission;
 import com.banka1.user.service.CustomerService;
 import com.banka1.user.service.implementation.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,14 +34,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.anyList;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 
 class CustomerControllerTest {
 
@@ -89,8 +87,7 @@ class CustomerControllerTest {
         Customer customer = CustomerMapper.dtoToCustomer(customerDTO);
         customer.setId(1L);
 
-
-        when(customerService.createCustomer(any(CreateCustomerRequest.class))).thenReturn(customer);
+        when(customerService.createCustomer(any(CreateCustomerRequest.class), anyLong())).thenReturn(customer);
 
         mockMvc.perform(post("/api/customer")
                         .contentType(MediaType.APPLICATION_JSON)

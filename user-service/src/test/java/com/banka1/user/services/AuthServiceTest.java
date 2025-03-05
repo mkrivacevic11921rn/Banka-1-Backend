@@ -9,10 +9,6 @@ import com.banka1.common.model.Position;
 import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.repository.EmployeeRepository;
 import com.banka1.user.service.BlackListTokenService;
-<<<<<<<< HEAD:user-service/src/test/java/com/banka1/user/services/AuthServiceTests.java
-========
-import com.banka1.user.service.IAuthService;
->>>>>>>> upstream/main:user-service/src/test/java/com/banka1/user/services/AuthServiceTest.java
 import com.banka1.user.service.implementation.AuthService;
 import com.banka1.user.utils.ResponseMessage;
 import io.jsonwebtoken.Claims;

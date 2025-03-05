@@ -1,5 +1,7 @@
 package com.banka1.user.controllers;
 
+import com.banka1.common.model.Permission;
+import com.banka1.common.model.Position;
 import com.banka1.user.DTO.request.CreateEmployeeRequest;
 import com.banka1.user.DTO.request.UpdateEmployeeRequest;
 import com.banka1.user.DTO.request.UpdatePermissionsRequest;
@@ -7,13 +9,6 @@ import com.banka1.user.DTO.response.EmployeeResponse;
 import com.banka1.user.model.Employee;
 import com.banka1.user.model.helper.Department;
 import com.banka1.user.model.helper.Gender;
-<<<<<<< HEAD
-import com.banka1.common.model.Permission;
-import com.banka1.common.model.Position;
-=======
-import com.banka1.user.model.helper.Permission;
-import com.banka1.user.model.helper.Position;
->>>>>>> upstream/main
 import com.banka1.user.service.EmployeeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +17,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.AssertionErrors;
 import org.springframework.test.web.servlet.MockMvc;
@@ -42,7 +36,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class EmployeeControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
     @Mock
