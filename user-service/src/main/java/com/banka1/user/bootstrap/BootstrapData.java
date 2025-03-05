@@ -106,7 +106,6 @@ public class BootstrapData implements CommandLineRunner {
         String salt3 = "salt3";
         String hashedPassword3 = BCrypt.hashpw(rawPassword3 + salt3, BCrypt.gensalt());
 
-        customer1.setId(1L);
         customer1.setFirstName("Marko");
         customer1.setLastName("Marković");
         customer1.setEmail("marko.markovic@banka.com");
