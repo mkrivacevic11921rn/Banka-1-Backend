@@ -32,10 +32,6 @@ public class TransferController {
 
     private final TransferService transferService;
 
-//     public TransferController(TransferService transferService) {
-//         this.transferService = transferService;
-//     }
-
 //     @PostMapping("/internal-transfer")
 //     public ResponseEntity<String> processInternalTransfer(@RequestBody Transfer transfer) {
 
@@ -83,10 +79,6 @@ public class TransferController {
             }
 
             Long transferId = transferService.createInternalTransfer(transferDTO);
-
-//            Long fromAccountId = transferDTO.getFromAccountId();
-//            Long toAccountId = transferDTO.getToAccountId();
-//            Double amount = transferDTO.getAmount();
 
             return ResponseTemplate.create(ResponseEntity.ok(),true, Map.of("message","Interni prenos uspešno kreiran.","transferId",transferId),null);
 
