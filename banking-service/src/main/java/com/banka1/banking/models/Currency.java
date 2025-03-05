@@ -2,7 +2,9 @@ package com.banka1.banking.models;
 
 import com.banka1.banking.models.helper.CurrencyType;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
@@ -10,13 +12,14 @@ import lombok.Setter;
 @Setter
 public class Currency {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)  // Automatski generisan ID
     private Long id;
 
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, unique = true)  // Valutni kod mora biti jedinstven
     private CurrencyType code;
 
     @Column(nullable = false)

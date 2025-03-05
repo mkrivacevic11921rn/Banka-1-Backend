@@ -29,11 +29,11 @@ public class Account {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private CurrencyType currency;
+    private AccountType type;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private AccountType type;
+    private CurrencyType currency;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
