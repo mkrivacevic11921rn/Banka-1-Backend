@@ -71,7 +71,7 @@ public class CreateAccountTest {
 
         when(modelMapper.map(createAccountDTO, Account.class)).thenReturn(acc);
 
-        when(accountRepository.save(acc)).thenReturn(acc);dd
+        when(accountRepository.save(acc)).thenReturn(acc);
 
         Account result = accountService.createAccount(createAccountDTO, 1L);
 
