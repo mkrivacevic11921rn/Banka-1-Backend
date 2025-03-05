@@ -175,7 +175,7 @@ public class BootstrapData implements CommandLineRunner {
         jovanTekuci.setMonthlySpent(0.0);
         jovanTekuci.setCurrencyType(CurrencyType.RSD);
         jovanTekuci.setExpirationDate(1630454400000L);
-        jovanTekuci.setCreatedDate(1627776000000L);
+        jovanTekuci.setCreatedDate(2025030500000L);
         jovanTekuci.setEmployeeID(1L);
         jovanTekuci.setMonthlyMaintenanceFee(0.0);
         jovanTekuci.setReservedBalance(0.0);
@@ -186,6 +186,26 @@ public class BootstrapData implements CommandLineRunner {
 
         accountRepository.save(jovanTekuci);
 
+        Account jovanTekuci2 = new Account();
+        jovanTekuci2.setAccountNumber("111000100011000110");
+        jovanTekuci2.setBalance(1000000.0);
+        jovanTekuci2.setCompany(null);
+        jovanTekuci2.setDailyLimit(0.0);
+        jovanTekuci2.setMonthlyLimit(0.0);
+        jovanTekuci2.setDailySpent(0.0);
+        jovanTekuci2.setMonthlySpent(0.0);
+        jovanTekuci2.setCurrencyType(CurrencyType.RSD);
+        jovanTekuci2.setExpirationDate(1630454400000L);
+        jovanTekuci2.setCreatedDate(2025030500000L);
+        jovanTekuci2.setEmployeeID(2L);
+        jovanTekuci2.setMonthlyMaintenanceFee(0.0);
+        jovanTekuci2.setReservedBalance(0.0);
+        jovanTekuci2.setOwnerID(3L);
+        jovanTekuci2.setStatus(AccountStatus.ACTIVE);
+        jovanTekuci2.setType(AccountType.CURRENT);
+        jovanTekuci2.setSubtype(AccountSubtype.SAVINGS);
+
+        accountRepository.save(jovanTekuci2);
 
         Account jovanEUR = new Account();
         jovanEUR.setAccountNumber("111000100000000120");
@@ -197,7 +217,7 @@ public class BootstrapData implements CommandLineRunner {
         jovanEUR.setMonthlySpent(0.0);
         jovanEUR.setCurrencyType(CurrencyType.EUR);
         jovanEUR.setExpirationDate(1630454400000L);
-        jovanEUR.setCreatedDate(1627776000000L);
+        jovanEUR.setCreatedDate(2025030500000L);
         jovanEUR.setEmployeeID(1L);
         jovanEUR.setMonthlyMaintenanceFee(0.0);
         jovanEUR.setReservedBalance(0.0);
@@ -207,6 +227,27 @@ public class BootstrapData implements CommandLineRunner {
         jovanEUR.setSubtype(AccountSubtype.STANDARD);
 
         accountRepository.save(jovanEUR);
+
+        Account jovanEUR2= new Account();
+        jovanEUR2.setAccountNumber("111000100220000120");
+        jovanEUR2.setBalance(1000.0);
+        jovanEUR2.setCompany(null);
+        jovanEUR2.setDailyLimit(100.0);
+        jovanEUR2.setMonthlyLimit(1000.0);
+        jovanEUR2.setDailySpent(0.0);
+        jovanEUR2.setMonthlySpent(0.0);
+        jovanEUR2.setCurrencyType(CurrencyType.EUR);
+        jovanEUR2.setExpirationDate(1630454400000L);
+        jovanEUR2.setCreatedDate(2025030500000L);
+        jovanEUR2.setEmployeeID(1L);
+        jovanEUR2.setMonthlyMaintenanceFee(0.0);
+        jovanEUR2.setReservedBalance(0.0);
+        jovanEUR2.setOwnerID(3L);
+        jovanEUR2.setStatus(AccountStatus.ACTIVE);
+        jovanEUR2.setType(AccountType.FOREIGN_CURRENCY);
+        jovanEUR2.setSubtype(AccountSubtype.PENSION);
+
+        accountRepository.save(jovanEUR2);
 
         Account jovanUSD = new Account();
         jovanUSD.setAccountNumber("111000100000000320");
@@ -218,7 +259,7 @@ public class BootstrapData implements CommandLineRunner {
         jovanUSD.setMonthlySpent(0.0);
         jovanUSD.setCurrencyType(CurrencyType.USD);
         jovanUSD.setExpirationDate(1630454400000L);
-        jovanUSD.setCreatedDate(1627776000000L);
+        jovanUSD.setCreatedDate(2025030500000L);
         jovanUSD.setEmployeeID(1L);
         jovanUSD.setMonthlyMaintenanceFee(0.0);
         jovanUSD.setReservedBalance(0.0);
@@ -239,7 +280,7 @@ public class BootstrapData implements CommandLineRunner {
         nemanjaTekuci.setMonthlySpent(0.0);
         nemanjaTekuci.setCurrencyType(CurrencyType.RSD);
         nemanjaTekuci.setExpirationDate(1630454400000L);
-        nemanjaTekuci.setCreatedDate(1627776000000L);
+        nemanjaTekuci.setCreatedDate(2025030500000L);
         nemanjaTekuci.setEmployeeID(1L);
         nemanjaTekuci.setMonthlyMaintenanceFee(0.0);
         nemanjaTekuci.setReservedBalance(0.0);
@@ -249,6 +290,27 @@ public class BootstrapData implements CommandLineRunner {
         nemanjaTekuci.setSubtype(AccountSubtype.STANDARD);
 
         accountRepository.save(nemanjaTekuci);
+
+        Account nemanjaTekuci2 = new Account();
+        nemanjaTekuci2.setAccountNumber("111000100000222210");
+        nemanjaTekuci2.setBalance(300000.0);
+        nemanjaTekuci2.setCompany(null);
+        nemanjaTekuci2.setDailyLimit(10000.0);
+        nemanjaTekuci2.setMonthlyLimit(100000.0);
+        nemanjaTekuci2.setDailySpent(0.0);
+        nemanjaTekuci2.setMonthlySpent(0.0);
+        nemanjaTekuci2.setCurrencyType(CurrencyType.RSD);
+        nemanjaTekuci2.setExpirationDate(1630454400000L);
+        nemanjaTekuci2.setCreatedDate(2025030500000L);
+        nemanjaTekuci2.setEmployeeID(1L);
+        nemanjaTekuci2.setMonthlyMaintenanceFee(0.0);
+        nemanjaTekuci2.setReservedBalance(0.0);
+        nemanjaTekuci2.setOwnerID(4L);
+        nemanjaTekuci2.setStatus(AccountStatus.ACTIVE);
+        nemanjaTekuci2.setType(AccountType.CURRENT);
+        nemanjaTekuci2.setSubtype(AccountSubtype.SAVINGS);
+
+        accountRepository.save(nemanjaTekuci2);
 
         Account nemanjaEur = new Account();
         nemanjaEur.setAccountNumber("111000100000000220");
@@ -260,7 +322,7 @@ public class BootstrapData implements CommandLineRunner {
         nemanjaEur.setMonthlySpent(0.0);
         nemanjaEur.setCurrencyType(CurrencyType.EUR);
         nemanjaEur.setExpirationDate(1630454400000L);
-        nemanjaEur.setCreatedDate(1627776000000L);
+        nemanjaEur.setCreatedDate(2025030500000L);
         nemanjaEur.setEmployeeID(1L);
         nemanjaEur.setMonthlyMaintenanceFee(0.0);
         nemanjaEur.setReservedBalance(0.0);
@@ -281,7 +343,7 @@ public class BootstrapData implements CommandLineRunner {
         nemanjaGBP.setMonthlySpent(0.0);
         nemanjaGBP.setCurrencyType(CurrencyType.GBP);
         nemanjaGBP.setExpirationDate(1630454400000L);
-        nemanjaGBP.setCreatedDate(1627776000000L);
+        nemanjaGBP.setCreatedDate(2025030500000L);
         nemanjaGBP.setEmployeeID(1L);
         nemanjaGBP.setMonthlyMaintenanceFee(0.0);
         nemanjaGBP.setReservedBalance(0.0);
@@ -291,6 +353,27 @@ public class BootstrapData implements CommandLineRunner {
         nemanjaGBP.setSubtype(AccountSubtype.STANDARD);
 
         accountRepository.save(nemanjaGBP);
+
+        Account nemanjaEur2 = new Account();
+        nemanjaEur2.setAccountNumber("111000100222220220");
+        nemanjaEur2.setBalance(5000.0);
+        nemanjaEur2.setCompany(null);
+        nemanjaEur2.setDailyLimit(200.0);
+        nemanjaEur2.setMonthlyLimit(10000.0);
+        nemanjaEur2.setDailySpent(0.0);
+        nemanjaEur2.setMonthlySpent(0.0);
+        nemanjaEur2.setCurrencyType(CurrencyType.EUR);
+        nemanjaEur2.setExpirationDate(2029030500000L);
+        nemanjaEur2.setCreatedDate(2025030500000L);
+        nemanjaEur2.setEmployeeID(1L);
+        nemanjaEur2.setMonthlyMaintenanceFee(0.0);
+        nemanjaEur2.setReservedBalance(0.0);
+        nemanjaEur2.setOwnerID(4L);
+        nemanjaEur2.setStatus(AccountStatus.ACTIVE);
+        nemanjaEur2.setType(AccountType.FOREIGN_CURRENCY);
+        nemanjaEur2.setSubtype(AccountSubtype.STANDARD);
+
+        accountRepository.save(nemanjaEur2);
 
         System.out.println("============== Data Loaded ==============");
     }

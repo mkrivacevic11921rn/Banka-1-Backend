@@ -26,19 +26,19 @@ public class Transfer {
     @Column(nullable = false)
     private Double amount;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String receiver;
 
     @Column(nullable = true)
     private String adress;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String paymentCode; // sifra placanja
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String paymentReference; // poziv na broj
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String paymentDescription; // svrha placanja
 
     @ManyToOne
