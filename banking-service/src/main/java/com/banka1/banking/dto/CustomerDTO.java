@@ -1,15 +1,11 @@
 package com.banka1.banking.dto;
 
-import lombok.Data;
-import lombok.NonNull;
+import lombok.*;
 
 import java.util.List;
-import lombok.Getter;
-import lombok.Setter;
 
+@NoArgsConstructor
 @Data
-@Setter
-@Getter
 public class CustomerDTO {
     @NonNull
     private Long id;

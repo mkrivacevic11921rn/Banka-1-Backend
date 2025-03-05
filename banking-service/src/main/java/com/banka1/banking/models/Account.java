@@ -33,7 +33,7 @@ public class Account {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private CurrencyType currencyType;
+    private CurrencyType currency;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
