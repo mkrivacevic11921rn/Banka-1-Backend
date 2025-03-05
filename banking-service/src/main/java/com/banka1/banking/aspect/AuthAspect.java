@@ -103,36 +103,40 @@ public class AuthAspect {
             Class<?>[] types = methodSignature.getParameterTypes();
             Object[] values = joinPoint.getArgs();
 
-            if(types.length == 0)
-                return false;
+            boolean encounteredDto = false;
 
             for (int i = 0; i < types.length; i++) {
                 if(types[i] == CreateAccountDTO.class) {
                     if(!Objects.equals(((CreateAccountDTO) values[i]).getOwnerID(), userId))
                         return false;
+                    encounteredDto = true;
                 } else if(types[i] == ExchangeMoneyTransferDTO.class) {
                     if(!Objects.equals(accountService.findById(((ExchangeMoneyTransferDTO) values[i]).getAccountFrom()).getOwnerID(), userId))
                         return false;
+                    encounteredDto = true;
                 } else if(types[i] == OtpTokenDTO.class) {
                     if(!Objects.equals(transferService.findById(((OtpTokenDTO) values[i]).getTransferId()).getFromAccountId().getOwnerID(), userId))
                         return false;
+                    encounteredDto = true;
                 } else if(types[i] == ReceiverDTO.class) {
                     if(!Objects.equals(accountService.findById(((ReceiverDTO) values[i]).getOwnerAccountId()).getOwnerID(), userId))
                         return false;
+                    encounteredDto = true;
                 } else if(types[i] == InternalTransferDTO.class) {
                     if(!Objects.equals(accountService.findById(((InternalTransferDTO) values[i]).getFromAccountId()).getOwnerID(), userId))
                         return false;
+                    encounteredDto = true;
                 } else if(types[i] == MoneyTransferDTO.class) {
                     if(!Objects.equals(accountService.findById(((MoneyTransferDTO) values[i]).getFromAccountId()).getOwnerID(), userId))
                         return false;
+                    encounteredDto = true;
                 } else if(types[i] == CreateCardDTO.class) {
                     if(!Objects.equals(accountService.findById(((CreateCardDTO) values[i]).getAccountID()).getOwnerID(), userId))
                         return false;
-                } else {
-                    return false;
+                    encounteredDto = true;
                 }
             }
-            return true;
+            return encounteredDto;
         }
         return false;
     }
