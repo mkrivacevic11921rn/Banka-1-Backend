@@ -58,7 +58,7 @@ public class CreateAccountTest {
         acc = new Account();
         acc.setType(AccountType.CURRENT);
         acc.setOwnerID(1L);
-        acc.setCurrency(CurrencyType.RSD);
+        acc.setCurrencyType(CurrencyType.RSD);
         acc.setType(AccountType.CURRENT);
         acc.setSubtype(AccountSubtype.PERSONAL);
         acc.setDailyLimit(0.0);

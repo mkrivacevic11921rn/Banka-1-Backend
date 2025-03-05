@@ -13,7 +13,7 @@ public class CustomerDTO {
     @NonNull
     private String firstName;
 
-    @NonNull
+    @NonNull 
     private String lastName;
 
     @NonNull
