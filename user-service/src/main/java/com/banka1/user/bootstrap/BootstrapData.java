@@ -55,21 +55,6 @@ public class BootstrapData implements CommandLineRunner {
 
         employeeRepository.save(admin);
 
-        var musterija = new Customer();
-
-        musterija.setFirstName("musterija");
-        musterija.setLastName("musterija");
-        musterija.setEmail("musterija@musterija.com");
-        musterija.setPassword("musterija");
-        musterija.setPhoneNumber("1234567890");
-        musterija.setBirthDate(20000101L);
-        musterija.setGender(Gender.MALE);
-        musterija.setAddress("musterija Address");
-        musterija.setSaltPassword("salt");
-        musterija.setUsername("musterija123");
-
-        //customerRepository.save(musterija);
-
         Employee employee1 = new Employee();
         String rawPassword1 = "Per@12345";
         String salt1 = "salt1";

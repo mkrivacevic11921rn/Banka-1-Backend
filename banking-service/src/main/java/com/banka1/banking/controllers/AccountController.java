@@ -72,7 +72,7 @@ public class AccountController {
             @ApiResponse(responseCode = "200", description = "Lista računa uspešno dohvaćena"),
             @ApiResponse(responseCode = "404", description = "Nema dostupnih računa")
     })
-    @AccountAuthorization(employeeOnlyOperation = true)
+    @AccountAuthorization
     public ResponseEntity<?> getAllAccounts() {
         List<Account> accounts = accountService.getAllAccounts();
 
@@ -95,7 +95,7 @@ public class AccountController {
             @ApiResponse(responseCode = "200", description = "Računi uspešno dohvaćeni"),
             @ApiResponse(responseCode = "404", description = "Nema računa za datog korisnika")
     })
-    @AccountAuthorization
+    @AccountAuthorization(employeeOnlyOperation = true)
     public ResponseEntity<?> getAccountsByOwner(@PathVariable Long userId) {
         List<Account> accounts = accountService.getAccountsByOwnerId(userId);
 

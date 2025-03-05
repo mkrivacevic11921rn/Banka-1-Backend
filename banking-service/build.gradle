@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.3'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'idea'
 }
 
 group = 'com.banka1'
@@ -16,6 +17,19 @@ java {
 repositories {
     mavenCentral()
     mavenLocal()
+    maven { url 'https://repo.spring.io/release' }
+}
+
+dependencyManagement {
+    imports {
+        mavenBom 'org.springframework.cloud:spring-cloud-dependencies:2024.0.0'
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 dependencies {
@@ -32,8 +46,20 @@ dependencies {
     implementation 'javax.jms:javax.jms-api:2.0.1'
     implementation 'javax.validation:validation-api:2.0.1.Final'
     implementation 'org.springframework.boot:spring-boot-starter-activemq'
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
     implementation 'com.banka1:common:1.0-SNAPSHOT'
+
+    // Cucumber
+    testImplementation 'io.cucumber:cucumber-java:7.14.0'
+    testImplementation 'io.cucumber:cucumber-spring:7.14.0'
+    testImplementation 'io.cucumber:cucumber-junit:7.14.0'
+
+    testImplementation 'org.junit.vintage:junit-vintage-engine:5.9.3'
+
+    // Mockito za unit testove
+    testImplementation 'org.mockito:mockito-core:4.8.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:4.8.0'
 
     runtimeOnly 'org.aspectj:aspectjweaver'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
@@ -43,14 +69,17 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'//
     testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.mockito:mockito-core:5.14.2'
 
-    testImplementation 'io.cucumber:cucumber-java:7.14.0'
+    //cucumber
     testImplementation 'io.cucumber:cucumber-spring:7.14.0'
+    testImplementation 'io.cucumber:cucumber-java:7.14.0'
     testImplementation 'io.cucumber:cucumber-junit:7.14.0'
-
     testImplementation 'org.junit.vintage:junit-vintage-engine:5.9.3'
 
-
+    // Mockito za unit testove
+    testImplementation 'org.mockito:mockito-core:4.8.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:4.8.0'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
@@ -59,6 +88,8 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-tasks.named('test', Test) {
+tasks.named('test') {
     useJUnitPlatform()
+    systemProperty "cucumber.execution.parallel.enabled", "false"
 }
+

@@ -44,7 +44,7 @@ public class ReceiverController {
             )
     })
     @PostMapping
-    @AccountAuthorization
+    @ReceiverAuthorization
     public ResponseEntity<?> addReceivers(
             @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Podaci o primaocu",
@@ -75,7 +75,7 @@ public class ReceiverController {
             )
     })
     @GetMapping("/{accountId}")
-    @AccountAuthorization
+    @ReceiverAuthorization
     public ResponseEntity<?> getReceivers(
             @Parameter(description = "ID naloga korisnika", required = true, example = "2")
             @PathVariable Long accountId) {
@@ -101,7 +101,7 @@ public class ReceiverController {
     @ReceiverAuthorization
     public ResponseEntity<?> updateReceiver(
             @Parameter(description = "ID primaoca", required = true, example = "1")
-            @PathVariable("id") Long receiverId,
+            @PathVariable Long id,
             @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Podaci za ažuriranje primaoca",
                     required = true,
@@ -109,7 +109,7 @@ public class ReceiverController {
                             examples = @ExampleObject(value = "{ \"ownerAccountId\": 2, \"accountNumber\": \"987654321\", \"fullName\": \"Nikola Nikolić\", \"address\": \"Nemanjina 4\" }"))
             ) ReceiverDTO receiverDTO) {
         try {
-            Receiver updatedReceiver = receiverService.updateReceiver(receiverId, receiverDTO);
+            Receiver updatedReceiver = receiverService.updateReceiver(id, receiverDTO);
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Primalac uspešno ažuriran", "receiver", updatedReceiver), null);
         } catch (Exception e) {
             return ResponseTemplate.create(ResponseEntity.badRequest(), e);
@@ -130,12 +130,12 @@ public class ReceiverController {
                             examples = @ExampleObject(value = "{ \"success\": false, \"error\": \"Primalac nije pronađen.\" }"))
             )
     })
-    @ReceiverAuthorization
     @DeleteMapping("/{id}")
+    @ReceiverAuthorization
     public ResponseEntity<?> deleteReceiver(
             @Parameter(description = "ID primaoca", required = true, example = "1")
-            @PathVariable("id") Long receiverId) {
-        receiverService.deleteReceiver(receiverId);
+            @PathVariable Long id) {
+        receiverService.deleteReceiver(id);
         return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Primalac uspešno obrisan"), null);
     }
 }

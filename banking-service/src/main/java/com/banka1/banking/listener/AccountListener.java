@@ -1,6 +1,5 @@
 package com.banka1.banking.listener;
 
-import com.banka1.banking.dto.CreateAccountByEmployeeDTO;
 import com.banka1.banking.dto.request.CreateAccountDTO;
 import com.banka1.banking.services.AccountService;
 import jakarta.jms.JMSException;
@@ -19,10 +18,10 @@ public class AccountListener {
 
     @JmsListener(destination = "${destination.account}", concurrency = "5-10")
     public void onActivationMessage(Message message) throws JMSException {
-        var dto = messageHelper.getMessage(message, CreateAccountByEmployeeDTO.class);
+        var dto = messageHelper.getMessage(message, CreateAccountDTO.class);
         try {
             if (dto != null)
-                accountService.createAccount(dto.getCreateAccountDTO(), dto.getEmployeeId());
+                accountService.createAccount(dto, 1L);
         } catch (Exception e) {
             log.error("AccountListener: ", e);
         }

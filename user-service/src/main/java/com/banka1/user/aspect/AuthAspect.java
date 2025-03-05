@@ -2,6 +2,7 @@ package com.banka1.user.aspect;
 
 import com.banka1.common.model.Permission;
 import com.banka1.common.model.Position;
+import com.banka1.common.service.IAuthService;
 import com.banka1.user.service.BlackListTokenService;
 import com.banka1.user.service.implementation.AuthService;
 import com.banka1.user.utils.ResponseMessage;
@@ -29,6 +30,7 @@ import java.util.stream.IntStream;
 @Configuration
 @EnableAspectJAutoProxy
 public class AuthAspect {
+
     private final AuthService authService;
     private final BlackListTokenService blackListTokenService;
 

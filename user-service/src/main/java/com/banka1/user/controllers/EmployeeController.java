@@ -1,13 +1,12 @@
 package com.banka1.user.controllers;
 
-import com.banka1.common.model.Permission;
 import com.banka1.user.DTO.request.CreateEmployeeRequest;
 import com.banka1.user.DTO.request.SetPasswordRequest;
 import com.banka1.user.DTO.request.UpdateEmployeeRequest;
 import com.banka1.user.DTO.request.UpdatePermissionsRequest;
 import com.banka1.user.aspect.Authorization;
 import com.banka1.user.model.Employee;
-import com.banka1.common.model.Position;
+import com.banka1.common.model.Permission;
 import com.banka1.common.model.Position;
 import com.banka1.user.service.EmployeeService;
 import com.banka1.user.utils.ResponseTemplate;

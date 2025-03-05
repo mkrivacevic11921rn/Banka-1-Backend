@@ -7,8 +7,13 @@ import com.banka1.user.DTO.response.EmployeeResponse;
 import com.banka1.user.model.Employee;
 import com.banka1.user.model.helper.Department;
 import com.banka1.user.model.helper.Gender;
+<<<<<<< HEAD
 import com.banka1.common.model.Permission;
 import com.banka1.common.model.Position;
+=======
+import com.banka1.user.model.helper.Permission;
+import com.banka1.user.model.helper.Position;
+>>>>>>> upstream/main
 import com.banka1.user.service.EmployeeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
