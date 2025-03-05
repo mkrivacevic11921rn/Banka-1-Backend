@@ -38,8 +38,8 @@ public class CardController {
             @ApiResponse(responseCode = "404", description = "Nema kartica za traženi račun.")
     })
     @CardAuthorization
-    public ResponseEntity<?> getCardsByAccountID(@PathVariable int account_id) {
-        return getCards(account_id);
+    public ResponseEntity<?> getCardsByAccountID(@PathVariable("account_id") int accountId) {
+        return getCards(accountId);
     }
 
     @PostMapping("/")
@@ -66,8 +66,8 @@ public class CardController {
             @ApiResponse(responseCode = "400", description = "Nevalidni podaci.")
     })
     @CardAuthorization
-    public ResponseEntity<?> blockCard(@PathVariable int card_id, @RequestBody UpdateCardDTO updateCardDTO) {
-        return updateCardStatus(card_id, updateCardDTO);
+    public ResponseEntity<?> blockCard(@PathVariable("card_id") int cardId, @RequestBody UpdateCardDTO updateCardDTO) {
+        return updateCardStatus(cardId, updateCardDTO);
     }
 
     @GetMapping("/admin/{account_id}")
@@ -77,8 +77,8 @@ public class CardController {
             @ApiResponse(responseCode = "404", description = "Nema kartica za traženi račun.")
     })
     @CardAuthorization(employeeOnlyOperation = true)
-    public ResponseEntity<?> getAdminCardsByAccountID(@PathVariable int account_id) {
-        return getCards(account_id);
+    public ResponseEntity<?> getAdminCardsByAccountID(@PathVariable("account_id") int accountId) {
+        return getCards(accountId);
     }
 
     @PatchMapping("/admin/{card_id}")
@@ -88,8 +88,8 @@ public class CardController {
             @ApiResponse(responseCode = "400", description = "Nevalidni podaci.")
     })
     @CardAuthorization(employeeOnlyOperation = true)
-    public ResponseEntity<?> activateCard(@PathVariable int card_id, @RequestBody UpdateCardDTO updateCardDTO) {
-        return updateCardStatus(card_id, updateCardDTO);
+    public ResponseEntity<?> activateCard(@PathVariable("card_id") int cardId, @RequestBody UpdateCardDTO updateCardDTO) {
+        return updateCardStatus(cardId, updateCardDTO);
     }
 
     private ResponseEntity<?> getCards(int account_id) {

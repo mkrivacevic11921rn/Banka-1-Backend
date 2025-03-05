@@ -134,8 +134,8 @@ public class ReceiverController {
     @ReceiverAuthorization
     public ResponseEntity<?> deleteReceiver(
             @Parameter(description = "ID primaoca", required = true, example = "1")
-            @PathVariable Long id) {
-        receiverService.deleteReceiver(id);
+            @PathVariable("id") Long receiverId) {
+        receiverService.deleteReceiver(receiverId);
         return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Primalac uspešno obrisan"), null);
     }
 }

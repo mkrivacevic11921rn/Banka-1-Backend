@@ -30,11 +30,12 @@ public abstract class GenericAuthService implements IAuthService {
     }
 
     // Generiše token bez zahtevanja enum tipova
-    private String generateTokenRaw(Long userId, String position, List<String> permissions, Boolean isAdmin) {
+    private String generateTokenRaw(Long userId, String position, List<String> permissions, Boolean isEmployed, Boolean isAdmin) {
         return Jwts.builder()
                 .claim("id", userId)
                 .claim("position", position)
                 .claim("permissions", permissions)
+                .claim("isEmployed", isEmployed)
                 .claim("isAdmin", isAdmin)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
@@ -66,6 +67,7 @@ public abstract class GenericAuthService implements IAuthService {
             return generateTokenRaw(claims.get("id", Long.class),
                                     claims.get("position", String.class),
                                     (List<String>) claims.get("permissions"),
+                                    claims.get("isEmployed", Boolean.class),
                                     claims.get("isAdmin", Boolean.class));
         } catch (Exception e) {
             return null;
@@ -73,7 +75,7 @@ public abstract class GenericAuthService implements IAuthService {
     }
 
     @Override
-    public String generateToken(Long userId, Position position, List<Permission> permissions, Boolean isAdmin) {
-        return generateTokenRaw(userId, position.toString(), permissions.stream().map(Permission::toString).collect(Collectors.toList()), isAdmin);
+    public String generateToken(Long userId, Position position, List<Permission> permissions, Boolean isEmployed, Boolean isAdmin) {
+        return generateTokenRaw(userId, position.toString(), permissions.stream().map(Permission::toString).collect(Collectors.toList()), isEmployed, isAdmin);
     }
 }
