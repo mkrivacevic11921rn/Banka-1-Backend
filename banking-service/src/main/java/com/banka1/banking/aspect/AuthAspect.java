@@ -150,7 +150,7 @@ public class AuthAspect {
             AccountAuthorization authorization = method.getAnnotation(AccountAuthorization.class);
 
             if(!authorization.customerOnlyOperation()) {
-                if(!claims.get("position", String.class).equals(Position.NONE.toString())) {
+                if(claims.get("isEmployed", Boolean.class)) {
                     // Zaposleni
                     return joinPoint.proceed();
                 }
@@ -186,7 +186,7 @@ public class AuthAspect {
             CardAuthorization authorization = method.getAnnotation(CardAuthorization.class);
 
             if(!authorization.customerOnlyOperation()) {
-                if(!claims.get("position", String.class).equals(Position.NONE.toString())) {
+                if(claims.get("isEmployed", Boolean.class)) {
                     // Zaposleni
                     return joinPoint.proceed();
                 }
@@ -222,7 +222,7 @@ public class AuthAspect {
             LoanAuthorization authorization = method.getAnnotation(LoanAuthorization.class);
 
             if(!authorization.customerOnlyOperation()) {
-                if(!claims.get("position", String.class).equals(Position.NONE.toString())) {
+                if(claims.get("isEmployed", Boolean.class)) {
                     // Zaposleni
                     return joinPoint.proceed();
                 }
@@ -263,7 +263,7 @@ public class AuthAspect {
             ReceiverAuthorization authorization = method.getAnnotation(ReceiverAuthorization.class);
 
             if(!authorization.customerOnlyOperation()) {
-                if(!claims.get("position", String.class).equals(Position.NONE.toString())) {
+                if(claims.get("isEmployed", Boolean.class)) {
                     // Zaposleni
                     return joinPoint.proceed();
                 }

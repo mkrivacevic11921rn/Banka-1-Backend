@@ -166,7 +166,7 @@ public class AuthServiceTests {
 
     @Test
     void authorizationTest_validTokenEmployeeAccess() throws Throwable {
-        when(claims.get("position", String.class)).thenReturn(Position.WORKER.toString());
+        when(claims.get("isEmployed", Boolean.class)).thenReturn(true);
 
         when(joinPoint.getSignature()).thenReturn(methodSignature);
         when(joinPoint.getArgs()).thenReturn(new Object[] { "Bearer ValidanToken", 1L });

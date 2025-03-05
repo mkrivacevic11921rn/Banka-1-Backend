@@ -36,5 +36,5 @@ public interface IAuthService {
     String recreateToken(String token);
 
     // Kreira jwt sa korisnickim ID-em, rolom i permisijama.
-    String generateToken(Long userId, Position position, List<Permission> permissions, Boolean isAdmin);
+    String generateToken(Long userId, Position position, List<Permission> permissions, Boolean isEmployed, Boolean isAdmin);
 }
