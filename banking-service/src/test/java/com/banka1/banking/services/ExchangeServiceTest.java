@@ -84,8 +84,17 @@ public class ExchangeServiceTest {
         exchangeMoneyTransferDTO.setAccountFrom(1L);
         exchangeMoneyTransferDTO.setAccountTo(2L);
         exchangeMoneyTransferDTO.setAmount(500.0);
- 
-        // customerDTO = new CustomerDTO(10L,"Marko","Markovic",0101L,"test@test.com","0101010101","MARSALA TULBUHINA", new List<>());
+
+//        customerDTO = new CustomerDTO();
+//        customerDTO.setId(10L);
+//        customerDTO.setFirstName("Marko");
+//        customerDTO.setLastName("Markovic");
+//        customerDTO.setBirthDate(19990101L);
+//        customerDTO.setEmail("test@test.com");
+//        customerDTO.setPhoneNumber("010101010");
+//        customerDTO.setAddress("MARSALA TULBUHINA");
+
+         customerDTO = new CustomerDTO(10L,"Marko","Markovic",0101L,"test@test.com","0101010101","MARSALA TULBUHINA");
 
 
         ReflectionTestUtils.setField(exchangeService, "destinationEmail", "test-destination");
