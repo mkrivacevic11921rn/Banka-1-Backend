@@ -42,8 +42,6 @@ public class TransferService {
 
     private final OtpTokenService otpTokenService;
 
-    @Value("${frontend.url}")
-    private String frontendUrl;
 
     public TransferService(AccountRepository accountRepository, TransferRepository transferRepository, CurrencyRepository currencyRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("${destination.email}") String destinationEmail, UserServiceCustomer userServiceCustomer, OtpTokenService otpTokenService) {
         this.accountRepository = accountRepository;
@@ -91,7 +89,7 @@ public class TransferService {
     }
 
 
-    public void createInternalTransfer(InternalTransferDTO internalTransferDTO){
+    public Long createInternalTransfer(InternalTransferDTO internalTransferDTO){
 
         Optional<Account> fromAccountOtp = accountRepository.findById(internalTransferDTO.getFromAccountId());
         Optional<Account> toAccountOtp = accountRepository.findById(internalTransferDTO.getToAccountId());
@@ -128,7 +126,7 @@ public class TransferService {
             transfer.setToCurrency(toCurrency);
             transfer.setCreatedAt(System.currentTimeMillis());
 
-            transferRepository.save(transfer);
+            transferRepository.saveAndFlush(transfer);
 
             String otpCode = otpTokenService.generateOtp(transfer.getId());
             transfer.setOtp(otpCode);
@@ -143,11 +141,12 @@ public class TransferService {
             emailDto.setType("email");
 
             jmsTemplate.convertAndSend(destinationEmail,messageHelper.createTextMessage(emailDto));
+            return transfer.getId();
         }
-
+        return null;
     }
 
-    public void createMoneyTransfer(MoneyTransferDTO moneyTransferDTO){
+    public Long createMoneyTransfer(MoneyTransferDTO moneyTransferDTO){
 
         Optional<Account> fromAccountOtp = accountRepository.findById(moneyTransferDTO.getFromAccountId());
         Optional<Account> toAccountOtp = accountRepository.findById(moneyTransferDTO.getToAccountId());
@@ -189,7 +188,7 @@ public class TransferService {
             transfer.setPaymentDescription(moneyTransferDTO.getPayementDescription());
             transfer.setCreatedAt(System.currentTimeMillis());
 
-            transferRepository.save(transfer);
+            transferRepository.saveAndFlush(transfer);
 
             String otpCode = otpTokenService.generateOtp(transfer.getId());
             transfer.setOtp(otpCode);
@@ -204,8 +203,10 @@ public class TransferService {
             emailDto.setType("email");
 
             jmsTemplate.convertAndSend(destinationEmail,messageHelper.createTextMessage(emailDto));
-        }
+            return transfer.getId();
 
+        }
+        return null;
     }
 
     @Scheduled(fixedRate = 10000)
