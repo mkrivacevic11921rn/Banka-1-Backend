@@ -1,8 +1,6 @@
 package com.banka1.banking.models;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,15 +8,23 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Receiver {
+
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
+    private Long ownerAccountId;
+
+    @Column(nullable = false)
+    private String accountNumber;
+
+    @Column(nullable = true)
     private String firstName;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String lastName;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String address;
 }
