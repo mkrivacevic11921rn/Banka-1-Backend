@@ -139,6 +139,45 @@ public class BootstrapData implements CommandLineRunner {
 
         customerRepository.save(customer2);
 
+        Customer customer3 = new Customer();
+        String rawPassword5 = "jovanjovan";
+        String salt5 = "salt5";
+        String hashedPassword5 = BCrypt.hashpw(rawPassword5 + salt5, BCrypt.gensalt());
+
+        customer3.setFirstName("Jovan");
+        customer3.setLastName("Pavlovic");
+        customer3.setEmail("jpavlovic6521rn@raf.rs");
+        customer3.setUsername("anastass");
+        customer3.setPhoneNumber("+381641001003");
+        customer3.setBirthDate(20010202L);
+        customer3.setGender(Gender.MALE);
+        customer3.setAddress("Knez Mihailova 8");
+        customer3.setPermissions(List.of(Permission.READ_EMPLOYEE));
+        customer3.setSaltPassword(salt5);
+        customer3.setPassword(hashedPassword5);
+
+        customerRepository.save(customer3);
+
+        Customer customer4 = new Customer();
+        String rawPassword6 = "nemanjanemanja";
+        String salt6 = "salt5";
+        String hashedPassword6 = BCrypt.hashpw(rawPassword6 + salt6, BCrypt.gensalt());
+
+        customer4.setFirstName("Nemanja");
+        customer4.setLastName("Marjanov");
+        customer4.setEmail("nmarjanov6121rn@raf.rs");
+        customer4.setUsername("anastass");
+        customer4.setPhoneNumber("+381641001003");
+        customer4.setBirthDate(20010202L);
+        customer4.setGender(Gender.MALE);
+        customer4.setAddress("Knez Mihailova 8");
+        customer4.setPermissions(List.of(Permission.READ_EMPLOYEE));
+        customer4.setSaltPassword(salt6);
+        customer4.setPassword(hashedPassword6);
+
+        customerRepository.save(customer4);
+
+
         System.out.println("============== Data Loaded ==============");
     }
 }

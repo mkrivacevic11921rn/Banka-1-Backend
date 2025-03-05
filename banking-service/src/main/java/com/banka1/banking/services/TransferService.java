@@ -13,6 +13,7 @@ import com.banka1.banking.repository.CurrencyRepository;
 import com.banka1.banking.repository.TransactionRepository;
 import com.banka1.banking.repository.TransferRepository;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +29,6 @@ import java.util.Optional;
 
 @Service
 public class TransferService {
-
 
     private final AccountRepository accountRepository;
 
@@ -360,7 +360,7 @@ public class TransferService {
     @Scheduled(fixedRate = 10000)
     public void cancelExpiredTransfers(){
 
-        long expirationTime = System.currentTimeMillis() - (5*6*1000);
+        long expirationTime = System.currentTimeMillis() - (5*60*1000);
 
         List<Transfer> expiredTransfers = transferRepository.findAllByStatusAndCreatedAtBefore(TransferStatus.PENDING,expirationTime);
 
