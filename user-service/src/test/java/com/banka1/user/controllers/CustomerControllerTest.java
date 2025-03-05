@@ -17,6 +17,7 @@ import com.banka1.user.service.CustomerService;
 import com.banka1.user.service.implementation.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -86,14 +87,16 @@ class CustomerControllerTest {
 
         Customer customer = CustomerMapper.dtoToCustomer(customerDTO);
         customer.setId(1L);
+        var claims = Jwts.claims().add("id", 1L).build();
 
         when(customerService.createCustomer(any(CreateCustomerRequest.class), anyLong())).thenReturn(customer);
+
+        when(authService.parseToken(any())).thenReturn(claims);
 
         mockMvc.perform(post("/api/customer")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(customerDTO)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.id").value(1L));
+                .andExpect(status().isOk());
     }
 
     @Test

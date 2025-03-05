@@ -80,12 +80,6 @@ public class CustomerServiceTest {
         customerDTO.setPhoneNumber("555333");
         customerDTO.setAccountInfo(createAccountDTO);
 
-        when(customerRepository.save(any(Customer.class)))
-                .then(invocation -> {
-                    var savedCustomer = (Customer) invocation.getArguments()[0];
-                    savedCustomer.setId(1L);
-                    return savedCustomer;
-                });
 
         when(customerRepository.save(any(Customer.class)))
                 .then(invocation -> {
