@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.3'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'idea'
 }
 
 group = 'com.banka1'
@@ -32,6 +33,17 @@ dependencies {
     implementation 'javax.validation:validation-api:2.0.1.Final'
     implementation 'org.springframework.boot:spring-boot-starter-activemq'
 
+    // Cucumber
+    testImplementation 'io.cucumber:cucumber-java:7.14.0'
+    testImplementation 'io.cucumber:cucumber-spring:7.14.0'
+    testImplementation 'io.cucumber:cucumber-junit:7.14.0'
+
+    testImplementation 'org.junit.vintage:junit-vintage-engine:5.9.3'
+
+    // Mockito za unit testove
+    testImplementation 'org.mockito:mockito-core:4.8.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:4.8.0'
+
     runtimeOnly 'org.aspectj:aspectjweaver'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
     runtimeOnly 'org.apache.httpcomponents.client5:httpclient5'
@@ -52,4 +64,6 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    systemProperty "cucumber.execution.parallel.enabled", "false"
+
 }
