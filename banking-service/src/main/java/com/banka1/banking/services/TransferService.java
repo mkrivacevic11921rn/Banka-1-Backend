@@ -43,7 +43,6 @@ public class TransferService {
 
     private final OtpTokenService otpTokenService;
 
-
     @Value("${frontend.url}")
     private String frontendUrl;
 
@@ -156,7 +155,8 @@ public class TransferService {
         Account fromAccount = fromAccountInternal.get();
         Account toAccount = toAccountInternal.get();
 
-        if (!fromAccount.getCurrency().equals(toAccount.getCurrency())) {
+
+        if(!fromAccount.getCurrencyType().equals(toAccount.getCurrencyType())){
             return false;
         }
 
@@ -178,8 +178,7 @@ public class TransferService {
         return !fromAccount.getOwnerID().equals(toAccount.getOwnerID());
     }
 
-
-    public void createInternalTransfer(InternalTransferDTO internalTransferDTO) {
+    public Long createInternalTransfer(InternalTransferDTO internalTransferDTO){
 
         Optional<Account> fromAccountOtp = accountRepository.findById(internalTransferDTO.getFromAccountId());
         Optional<Account> toAccountOtp = accountRepository.findById(internalTransferDTO.getToAccountId());
@@ -189,10 +188,10 @@ public class TransferService {
             Account fromAccount = fromAccountOtp.get();
             Account toAccount = toAccountOtp.get();
 
-            Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrency())
+            Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrencyType())
                     .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
-            Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrency())
+            Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrencyType())
                     .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
             Long customerId = fromAccount.getOwnerID();
@@ -216,7 +215,7 @@ public class TransferService {
             transfer.setToCurrency(toCurrency);
             transfer.setCreatedAt(System.currentTimeMillis());
 
-            transferRepository.save(transfer);
+            transferRepository.saveAndFlush(transfer);
 
             String otpCode = otpTokenService.generateOtp(transfer.getId());
             transfer.setOtp(otpCode);
@@ -230,12 +229,13 @@ public class TransferService {
             emailDto.setLastName(lastName);
             emailDto.setType("email");
 
-            jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDto));
+            jmsTemplate.convertAndSend(destinationEmail,messageHelper.createTextMessage(emailDto));
+            return transfer.getId();
         }
-
+        return null;
     }
 
-    public void createMoneyTransfer(MoneyTransferDTO moneyTransferDTO) {
+    public Long createMoneyTransfer(MoneyTransferDTO moneyTransferDTO){
 
         Optional<Account> fromAccountOtp = accountRepository.findById(moneyTransferDTO.getFromAccountId());
         Optional<Account> toAccountOtp = accountRepository.findById(moneyTransferDTO.getToAccountId());
@@ -245,10 +245,10 @@ public class TransferService {
             Account fromAccount = fromAccountOtp.get();
             Account toAccount = toAccountOtp.get();
 
-            Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrency())
+            Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrencyType())
                     .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
-            Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrency())
+            Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrencyType())
                     .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
             Long customerId = fromAccount.getOwnerID();
@@ -277,7 +277,7 @@ public class TransferService {
             transfer.setPaymentDescription(moneyTransferDTO.getPayementDescription());
             transfer.setCreatedAt(System.currentTimeMillis());
 
-            transferRepository.save(transfer);
+            transferRepository.saveAndFlush(transfer);
 
             String otpCode = otpTokenService.generateOtp(transfer.getId());
             transfer.setOtp(otpCode);
@@ -290,10 +290,11 @@ public class TransferService {
             emailDto.setFirstName(firstName);
             emailDto.setLastName(lastName);
             emailDto.setType("email");
+            jmsTemplate.convertAndSend(destinationEmail,messageHelper.createTextMessage(emailDto));
+            return transfer.getId();
 
-            jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDto));
         }
-
+        return null;
     }
 
     @Scheduled(fixedRate = 10000)
