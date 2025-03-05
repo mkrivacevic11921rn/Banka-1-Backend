@@ -21,7 +21,7 @@ public class AccountListener {
         var dto = messageHelper.getMessage(message, CreateAccountDTO.class);
         try {
             if (dto != null)
-                accountService.createAccount(dto);
+                accountService.createAccount(dto, 1L);
         } catch (Exception e) {
             log.error("AccountListener: ", e);
         }

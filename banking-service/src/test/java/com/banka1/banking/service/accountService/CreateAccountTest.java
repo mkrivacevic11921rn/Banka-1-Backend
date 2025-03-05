@@ -73,7 +73,7 @@ public class CreateAccountTest {
 
         when(accountRepository.save(acc)).thenReturn(acc);
 
-        Account result = accountService.createAccount(createAccountDTO);
+        Account result = accountService.createAccount(createAccountDTO, 1L);
 
         assertNotNull(result);
         assertEquals(acc.getAccountNumber().substring(0,7), result.getAccountNumber().substring(0,7));
@@ -86,7 +86,7 @@ public class CreateAccountTest {
         createAccountDTO.setCurrency(CurrencyType.EUR);
         
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            accountService.createAccount(createAccountDTO);
+            accountService.createAccount(createAccountDTO, 1L);
         });
         assertEquals("400 BAD_REQUEST \"Nevalidna kombinacija vrste racuna i valute\"", exception.getMessage());
 

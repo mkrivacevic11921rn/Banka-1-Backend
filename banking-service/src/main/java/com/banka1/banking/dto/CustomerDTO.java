@@ -5,6 +5,7 @@ import lombok.*;
 import java.util.List;
 
 @NoArgsConstructor
+@RequiredArgsConstructor
 @Data
 public class CustomerDTO {
     @NonNull

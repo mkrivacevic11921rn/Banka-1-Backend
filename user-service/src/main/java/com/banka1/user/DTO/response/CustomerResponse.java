@@ -1,7 +1,8 @@
 package com.banka1.user.DTO.response;
 
+import com.banka1.common.model.Permission;
 import com.banka1.user.model.helper.Gender;
-import com.banka1.user.model.helper.Permission;
+import com.banka1.common.model.Position;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;

@@ -1,5 +1,6 @@
 package com.banka1.banking.controllers;
 
+import com.banka1.banking.aspect.CardAuthorization;
 import com.banka1.banking.dto.CreateCardDTO;
 import com.banka1.banking.dto.UpdateCardDTO;
 import com.banka1.banking.models.Card;
@@ -36,6 +37,7 @@ public class CardController {
             @ApiResponse(responseCode = "200", description = "Lista kartica korisnika za određeni račun."),
             @ApiResponse(responseCode = "404", description = "Nema kartica za traženi račun.")
     })
+    @CardAuthorization
     public ResponseEntity<?> getCardsByAccountID(@PathVariable int account_id) {
         return getCards(account_id);
     }
@@ -46,6 +48,7 @@ public class CardController {
             @ApiResponse(responseCode = "201", description = "Kartica uspešno kreirana."),
             @ApiResponse(responseCode = "400", description = "Nevalidni podaci.")
     })
+    @CardAuthorization
     public ResponseEntity<?> createCard(@RequestBody CreateCardDTO createCardDTO) {
         try {
             Card card = cardService.createCard(createCardDTO);
@@ -62,6 +65,7 @@ public class CardController {
             @ApiResponse(responseCode = "200", description = "Kartica uspešno ažurirana"),
             @ApiResponse(responseCode = "400", description = "Nevalidni podaci.")
     })
+    @CardAuthorization
     public ResponseEntity<?> blockCard(@PathVariable int card_id, @RequestBody UpdateCardDTO updateCardDTO) {
         return updateCardStatus(card_id, updateCardDTO);
     }
@@ -72,6 +76,7 @@ public class CardController {
             @ApiResponse(responseCode = "200", description = "Lista kartica za određeni račun."),
             @ApiResponse(responseCode = "404", description = "Nema kartica za traženi račun.")
     })
+    @CardAuthorization(employeeOnlyOperation = true)
     public ResponseEntity<?> getAdminCardsByAccountID(@PathVariable int account_id) {
         return getCards(account_id);
     }
@@ -82,6 +87,7 @@ public class CardController {
             @ApiResponse(responseCode = "200", description = "Kartica uspešno ažurirana"),
             @ApiResponse(responseCode = "400", description = "Nevalidni podaci.")
     })
+    @CardAuthorization(employeeOnlyOperation = true)
     public ResponseEntity<?> activateCard(@PathVariable int card_id, @RequestBody UpdateCardDTO updateCardDTO) {
         return updateCardStatus(card_id, updateCardDTO);
     }

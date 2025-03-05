@@ -1,7 +1,8 @@
 package com.banka1.user.controllers;
 
+import com.banka1.common.model.Permission;
 import com.banka1.user.aspect.Authorization;
-import com.banka1.user.model.helper.Permission;
+import com.banka1.common.model.Position;
 import com.banka1.user.service.CustomerService;
 import com.banka1.user.service.EmployeeService;
 import com.banka1.user.utils.ResponseTemplate;
