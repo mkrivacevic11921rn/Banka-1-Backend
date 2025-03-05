@@ -375,6 +375,128 @@ public class BootstrapData implements CommandLineRunner {
 
         accountRepository.save(nemanjaEur2);
 
+        Account nikolaTekuci1 = new Account();
+        nikolaTekuci1.setAccountNumber("111000100330222210");
+        nikolaTekuci1.setBalance(300000.0);
+        nikolaTekuci1.setCompany(null);
+        nikolaTekuci1.setDailyLimit(10000.0);
+        nikolaTekuci1.setMonthlyLimit(100000.0);
+        nikolaTekuci1.setDailySpent(0.0);
+        nikolaTekuci1.setMonthlySpent(0.0);
+        nikolaTekuci1.setCurrencyType(CurrencyType.RSD);
+        nikolaTekuci1.setExpirationDate(1630454400000L);
+        nikolaTekuci1.setCreatedDate(2025030500000L);
+        nikolaTekuci1.setEmployeeID(1L);
+        nikolaTekuci1.setMonthlyMaintenanceFee(0.0);
+        nikolaTekuci1.setReservedBalance(0.0);
+        nikolaTekuci1.setOwnerID(5L);
+        nikolaTekuci1.setStatus(AccountStatus.ACTIVE);
+        nikolaTekuci1.setType(AccountType.FOREIGN_CURRENCY);
+        nikolaTekuci1.setSubtype(AccountSubtype.STANDARD);
+
+        accountRepository.save(nikolaTekuci1);
+
+        Account nikolaEUR = new Account();
+        nikolaEUR.setAccountNumber("111000100335112220");
+        nikolaEUR.setBalance(4000.0);
+        nikolaEUR.setCompany(null);
+        nikolaEUR.setDailyLimit(1000.0);
+        nikolaEUR.setMonthlyLimit(10000.0);
+        nikolaEUR.setDailySpent(0.0);
+        nikolaEUR.setMonthlySpent(0.0);
+        nikolaEUR.setCurrencyType(CurrencyType.EUR);
+        nikolaEUR.setExpirationDate(1630454400000L);
+        nikolaEUR.setCreatedDate(2025030500000L);
+        nikolaEUR.setEmployeeID(1L);
+        nikolaEUR.setMonthlyMaintenanceFee(0.0);
+        nikolaEUR.setReservedBalance(0.0);
+        nikolaEUR.setOwnerID(5L);
+        nikolaEUR.setStatus(AccountStatus.ACTIVE);
+        nikolaEUR.setType(AccountType.FOREIGN_CURRENCY);
+        nikolaEUR.setSubtype(AccountSubtype.STANDARD);
+
+        accountRepository.save(nikolaEUR);
+
+        Account jelenaTekuci = new Account();
+        jelenaTekuci.setAccountNumber("111000100335672210");
+        jelenaTekuci.setBalance(300000.0);
+        jelenaTekuci.setCompany(null);
+        jelenaTekuci.setDailyLimit(10000.0);
+        jelenaTekuci.setMonthlyLimit(100000.0);
+        jelenaTekuci.setDailySpent(0.0);
+        jelenaTekuci.setMonthlySpent(0.0);
+        jelenaTekuci.setCurrencyType(CurrencyType.RSD);
+        jelenaTekuci.setExpirationDate(1630454400000L);
+        jelenaTekuci.setCreatedDate(2025030500000L);
+        jelenaTekuci.setEmployeeID(1L);
+        jelenaTekuci.setMonthlyMaintenanceFee(0.0);
+        jelenaTekuci.setReservedBalance(0.0);
+        jelenaTekuci.setOwnerID(6L);
+        jelenaTekuci.setStatus(AccountStatus.ACTIVE);
+        jelenaTekuci.setType(AccountType.CURRENT);
+        jelenaTekuci.setSubtype(AccountSubtype.STANDARD);
+
+        accountRepository.save(jelenaTekuci);
+
+        Account jelenaEUR = new Account();
+        nikolaEUR.setAccountNumber("111000100366112220");
+        nikolaEUR.setBalance(4000.0);
+        nikolaEUR.setCompany(null);
+        nikolaEUR.setDailyLimit(1000.0);
+        nikolaEUR.setMonthlyLimit(10000.0);
+        nikolaEUR.setDailySpent(0.0);
+        nikolaEUR.setMonthlySpent(0.0);
+        nikolaEUR.setCurrencyType(CurrencyType.EUR);
+        nikolaEUR.setExpirationDate(1630454400000L);
+        nikolaEUR.setCreatedDate(2025030500000L);
+        nikolaEUR.setEmployeeID(1L);
+        nikolaEUR.setMonthlyMaintenanceFee(0.0);
+        nikolaEUR.setReservedBalance(0.0);
+        nikolaEUR.setOwnerID(6L);
+        nikolaEUR.setStatus(AccountStatus.ACTIVE);
+        nikolaEUR.setType(AccountType.FOREIGN_CURRENCY);
+        nikolaEUR.setSubtype(AccountSubtype.STANDARD);
+
+        accountRepository.save(nikolaEUR);
+
+
+        Receiver receiverJovanTekuci1 = new Receiver();
+        receiverJovanTekuci1.setOwnerAccountId(1L);
+        receiverJovanTekuci1.setAccountNumber("111000100000000210");
+        receiverJovanTekuci1.setFirstName("Nemanja");
+        receiverJovanTekuci1.setLastName("Marjanov");
+        receiverRepository.save(receiverJovanTekuci1);
+
+        Receiver receiverJovanTekuci2 = new Receiver();
+        receiverJovanTekuci2.setOwnerAccountId(1L);
+        receiverJovanTekuci2.setAccountNumber("111000100330222210");
+        receiverJovanTekuci2.setFirstName("Nikola");
+        receiverJovanTekuci2.setLastName("Nikolic");
+        receiverRepository.save(receiverJovanTekuci2);
+
+        Receiver receiverJovanTekuci3 = new Receiver();
+        receiverJovanTekuci3.setOwnerAccountId(1L);
+        receiverJovanTekuci3.setAccountNumber("111000100335672210");
+        receiverJovanTekuci3.setFirstName("Jelena");
+        receiverJovanTekuci3.setLastName("Jovanovic");
+        receiverRepository.save(receiverJovanTekuci3);
+
+        Receiver receiverJovanEUR1 = new Receiver();
+        receiverJovanEUR1.setOwnerAccountId(3L);
+        receiverJovanEUR1.setAccountNumber("111000100000000220");
+        receiverJovanEUR1.setFirstName("Nemanja");
+        receiverJovanEUR1.setLastName("Marjanov");
+        receiverRepository.save(receiverJovanEUR1);
+
+        Receiver receiverJovanEUR2 = new Receiver();
+        receiverJovanEUR2.setOwnerAccountId(3L);
+        receiverJovanEUR2.setAccountNumber("111000100366112220");
+        receiverJovanEUR2.setFirstName("Jelena");
+        receiverJovanEUR2.setLastName("Jovanovic");
+        receiverRepository.save(receiverJovanEUR2);
+
+
+
         System.out.println("============== Data Loaded ==============");
     }
 }

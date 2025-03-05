@@ -10,7 +10,7 @@ import lombok.Setter;
 public class MoneyTransferDTO {
 
     private Long fromAccountId;
-    private String accountNumber;
+    private String recipientAccount;
     private Double amount;
     private String receiver;
     private String adress;

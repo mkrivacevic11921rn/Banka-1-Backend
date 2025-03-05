@@ -224,7 +224,7 @@ public class TransferService {
     public boolean validateMoneyTransfer(MoneyTransferDTO transferDTO){
 
         Optional<Account> fromAccountOtp = accountRepository.findById(transferDTO.getFromAccountId());
-        Optional<Account> toAccountOtp = accountRepository.findByAccountNumber(transferDTO.getAccountNumber());
+        Optional<Account> toAccountOtp = accountRepository.findByAccountNumber(transferDTO.getRecipientAccount());
 
         if(fromAccountOtp.isEmpty() || toAccountOtp.isEmpty()){
             return false;
@@ -299,7 +299,7 @@ public class TransferService {
     public Long createMoneyTransfer(MoneyTransferDTO moneyTransferDTO){
 
         Optional<Account> fromAccountOtp = accountRepository.findById(moneyTransferDTO.getFromAccountId());
-        Optional<Account> toAccountOtp = accountRepository.findByAccountNumber(moneyTransferDTO.getAccountNumber());
+        Optional<Account> toAccountOtp = accountRepository.findByAccountNumber(moneyTransferDTO.getRecipientAccount());
 
         if (fromAccountOtp.isPresent() && toAccountOtp.isPresent()){
 
