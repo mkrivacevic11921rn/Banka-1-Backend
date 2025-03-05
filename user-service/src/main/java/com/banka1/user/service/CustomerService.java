@@ -140,7 +140,7 @@ public class CustomerService {
 
         jmsTemplate.convertAndSend(destinationAccount, messageHelper.createTextMessage(new CreateAccountDTO(customerDTO.getAccountInfo(), customer.getId())));
 
-        setPasswordService.saveSetPasswordRequest(verificationCode, customer.getId());
+        setPasswordService.saveSetPasswordRequest(verificationCode, customer.getId(), true);
 
         jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
         return customer;

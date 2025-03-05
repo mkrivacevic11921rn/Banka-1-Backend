@@ -75,7 +75,7 @@ public class EmployeeService {
         emailDTO.setLastName(employee.getLastName());
         emailDTO.setType("email");
 
-        setPasswordService.saveSetPasswordRequest(verificationCode, employee.getId());
+        setPasswordService.saveSetPasswordRequest(verificationCode, employee.getId(), false);
 
         jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
 
