@@ -121,7 +121,7 @@ public class CustomerService {
                     content = @Content(schema = @Schema(implementation = Customer.class))),
             @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public Customer createCustomer(CreateCustomerRequest customerDTO) {
+    public Customer createCustomer(CreateCustomerRequest customerDTO, Long employeeId) {
         Customer customer = CustomerMapper.dtoToCustomer(customerDTO);
 
         String verificationCode = UUID.randomUUID().toString();
@@ -140,7 +140,7 @@ public class CustomerService {
         // Saving the customer in the database gives it an ID, which can be used to generate the set-password token
         customer = customerRepository.save(customer);
 
-        jmsTemplate.convertAndSend(destinationAccount, messageHelper.createTextMessage(new CreateAccountDTO(customerDTO.getAccountInfo(), customer.getId())));
+        jmsTemplate.convertAndSend(destinationAccount, messageHelper.createTextMessage(new CreateAccountByEmployeeDTO(new CreateAccountDTO(customerDTO.getAccountInfo(), customer.getId()), employeeId)));
 
         setPasswordService.saveSetPasswordRequest(verificationCode, customer.getId(), true);
 
