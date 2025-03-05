@@ -31,7 +31,7 @@ import static org.mockito.Mockito.*;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
-public class TransferServiceTest {
+public class ExternalTransferServiceTest {
 
     @Mock
     private AccountRepository accountRepository;
