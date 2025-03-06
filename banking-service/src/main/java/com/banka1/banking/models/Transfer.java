@@ -49,17 +49,17 @@ public class Transfer {
     @JoinColumn(name = "to_currency_id", nullable = false)
     private Currency toCurrency;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Long createdAt;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String otp;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     @Enumerated(EnumType.STRING)
     private TransferType type;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     @Enumerated(EnumType.STRING)
     private TransferStatus status;
 
