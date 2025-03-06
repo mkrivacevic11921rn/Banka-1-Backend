@@ -7,7 +7,8 @@ import com.banka1.banking.models.Card;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Random;
 
 @Component
@@ -20,7 +21,12 @@ public class CardMapper {
         card.setCardType(dto.getCardType());
         card.setCardBrand(dto.getCardBrand());
         card.setCreatedAt(Instant.now().getEpochSecond());
-        card.setExpirationDate(Instant.now().plus(5, ChronoUnit.YEARS).getEpochSecond());
+
+        Calendar fiveYearsFuture = Calendar.getInstance();
+        fiveYearsFuture.setTime(Date.from(Instant.now()));
+        fiveYearsFuture.add(Calendar.YEAR, 5);
+
+        card.setExpirationDate(fiveYearsFuture.getTime().getTime());
         card.setActive(true);
         card.setBlocked(false);
         card.setCardLimit(1000000.0);
