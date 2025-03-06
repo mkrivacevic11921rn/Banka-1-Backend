@@ -106,6 +106,8 @@ services:
       - SPRING_OUTPUT_ANSI_ENABLED=always
   banking-db:
     image: 'postgres:17-alpine'
+    ports:
+      - '5433:5432'
     networks:
       - banking-net
     environment:
@@ -144,6 +146,8 @@ services:
       - SPRING_OUTPUT_ANSI_ENABLED=always
   user-db:
     image: 'postgres:17-alpine'
+    ports:
+      - '5434:5432'
     networks:
       - user-net
     environment:
