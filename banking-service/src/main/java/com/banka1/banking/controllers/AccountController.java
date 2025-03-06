@@ -1,11 +1,13 @@
 package com.banka1.banking.controllers;
 
+import com.banka1.banking.aspect.AccountAuthorization;
 import com.banka1.banking.dto.request.CreateAccountDTO;
 import com.banka1.banking.dto.request.UpdateAccountDTO;
 import com.banka1.banking.dto.request.UserUpdateAccountDTO;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Transaction;
 import com.banka1.banking.services.AccountService;
+import com.banka1.banking.services.implementation.AuthService;
 import com.banka1.banking.utils.ResponseTemplate;
 import com.banka1.banking.utils.ResponseMessage;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,6 +31,8 @@ import java.util.Map;
 public class AccountController {
     @Autowired
     private AccountService accountService;
+    @Autowired
+    private AuthService authService;
 
     /// pristup imaju samo zaposleni
     /// Da bi zaposleni mogao da kreira novi račun, potrebno je da se prijavi u aplikaciju.
@@ -41,10 +45,11 @@ public class AccountController {
             @ApiResponse(responseCode = "201", description = "Račun uspešno kreiran.\n"),
             @ApiResponse(responseCode = "403", description = "Nevalidni podaci")
     })
-    public ResponseEntity<?> createAccount(@Valid @RequestBody CreateAccountDTO createAccountDTO) {
+    @AccountAuthorization(employeeOnlyOperation = true)
+    public ResponseEntity<?> createAccount(@Valid @RequestBody CreateAccountDTO createAccountDTO, @RequestHeader(value = "Authorization", required = false) String authorization) {
         Account savedAccount = null;
         try {
-            savedAccount = accountService.createAccount(createAccountDTO);
+            savedAccount = accountService.createAccount(createAccountDTO, authService.parseToken(authService.getToken(authorization)).get("id", Long.class));
         } catch (RuntimeException e) {
 //            log.error("Greška prilikom kreiranja racuna: ", e);
             return ResponseTemplate.create(ResponseEntity.badRequest(), e);
@@ -68,6 +73,7 @@ public class AccountController {
             @ApiResponse(responseCode = "200", description = "Lista računa uspešno dohvaćena"),
             @ApiResponse(responseCode = "404", description = "Nema dostupnih računa")
     })
+    @AccountAuthorization
     public ResponseEntity<?> getAllAccounts() {
         List<Account> accounts = accountService.getAllAccounts();
 
@@ -90,6 +96,7 @@ public class AccountController {
             @ApiResponse(responseCode = "200", description = "Računi uspešno dohvaćeni"),
             @ApiResponse(responseCode = "404", description = "Nema računa za datog korisnika")
     })
+    @AccountAuthorization
     public ResponseEntity<?> getAccountsByOwner(@PathVariable Long userId) {
         List<Account> accounts = accountService.getAccountsByOwnerId(userId);
 
@@ -113,6 +120,7 @@ public class AccountController {
             @ApiResponse(responseCode = "404", description = "Račun nije pronađen"),
             @ApiResponse(responseCode = "400", description = "Nevalidni podaci za ažuriranje")
     })
+    @AccountAuthorization(employeeOnlyOperation = true)
     public ResponseEntity<?> updateAccount(
             @PathVariable Long accountId,
             @RequestBody UpdateAccountDTO updateAccountDTO) {
@@ -161,6 +169,7 @@ public class AccountController {
             @ApiResponse(responseCode = "200", description = "Transakcije uspešno dohvaćene"),
             @ApiResponse(responseCode = "404", description = "Račun nije pronađen ili nema transakcija")
     })
+    @AccountAuthorization
     public ResponseEntity<?> getTransactionsForAccount(@PathVariable Long accountId) {
         List<Transaction> transactions = accountService.getTransactionsForAccount(accountId);
 

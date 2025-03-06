@@ -1,5 +1,6 @@
 package com.banka1.banking.controllers;
 
+import com.banka1.banking.aspect.AccountAuthorization;
 import com.banka1.banking.dto.OtpTokenDTO;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Currency;
@@ -7,6 +8,8 @@ import com.banka1.banking.models.Transfer;
 import com.banka1.banking.models.helper.TransferStatus;
 import com.banka1.banking.repository.TransferRepository;
 import com.banka1.banking.services.OtpTokenService;
+import com.banka1.banking.services.TransactionService;
+import com.banka1.banking.services.TransferService;
 import com.banka1.banking.utils.ResponseTemplate;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -35,6 +38,7 @@ public class OtpTokenController {
 
     private final OtpTokenService otpTokenService;
     private final TransferRepository transferRepository;
+    private final TransferService transferService;
 
     @Operation(
             summary = "Verifikacija OTP koda",
@@ -55,6 +59,7 @@ public class OtpTokenController {
             )
     })
     @PostMapping("/verification")
+    @AccountAuthorization(customerOnlyOperation = true)
     public ResponseEntity<?> verifyOtp(@RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody(
             description = "Podaci za verifikaciju OTP koda",
             required = true,
@@ -76,7 +81,6 @@ public class OtpTokenController {
                         false, null, "Nevalidan OTP kod ili je već iskorišćen.");
             }
 
-            // PODACI ZA OBRADU TRANSAKCIJA KOJE TREBA POZVATI OVDE
 
             Optional<Transfer> optionalTransfer = transferRepository.findById(transferId);
 
@@ -88,20 +92,15 @@ public class OtpTokenController {
                 }
                 otpTokenService.markOtpAsUsed(transferId, otpCode);
 
-                Account accountTo = transfer.getToAccountId();
-                Account accountFrom = transfer.getFromAccountId();
-                Currency currencyTo = transfer.getToCurrency();
-                Currency currencyFrom = transfer.getFromCurrency();
-                Double amount = transfer.getAmount();
+
+                try {
+                    transferService.processTransfer(transferId);
+                } catch (Exception e){
+                    return ResponseTemplate.create(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR),
+                            false, null, "Transakcija nije uspela: " + e.getMessage());
+                }
 
 
-                // TRANSFER OBELEZEN KAO USPESNO ZAVRSEN
-                // transfer.get().setStatus(TransferStatus.COMPLETED);
-
-                // TRANSFER OBELEZEN KAO NEUSPEO AKO TRANSAKCIJE NISU USPELE
-                // transfer.setStatus(TransferStatus.FAILED);
-
-                transferRepository.save(transfer);
             }
 
 

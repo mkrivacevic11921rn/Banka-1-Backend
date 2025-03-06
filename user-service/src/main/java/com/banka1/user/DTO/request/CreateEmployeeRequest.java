@@ -2,8 +2,8 @@ package com.banka1.user.DTO.request;
 
 import com.banka1.user.model.helper.Department;
 import com.banka1.user.model.helper.Gender;
-import com.banka1.user.model.helper.Permission;
-import com.banka1.user.model.helper.Position;
+import com.banka1.common.model.Position;
+import com.banka1.common.model.Permission;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

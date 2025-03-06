@@ -13,6 +13,7 @@ import com.banka1.banking.repository.CurrencyRepository;
 import com.banka1.banking.repository.TransactionRepository;
 import com.banka1.banking.repository.TransferRepository;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +29,6 @@ import java.util.Optional;
 
 @Service
 public class TransferService {
-
 
     private final AccountRepository accountRepository;
 
@@ -224,7 +224,7 @@ public class TransferService {
     public boolean validateMoneyTransfer(MoneyTransferDTO transferDTO){
 
         Optional<Account> fromAccountOtp = accountRepository.findById(transferDTO.getFromAccountId());
-        Optional<Account> toAccountOtp = accountRepository.findById(transferDTO.getToAccountId());
+        Optional<Account> toAccountOtp = accountRepository.findByAccountNumber(transferDTO.getRecipientAccount());
 
         if(fromAccountOtp.isEmpty() || toAccountOtp.isEmpty()){
             return false;
@@ -270,6 +270,8 @@ public class TransferService {
             transfer.setAmount(internalTransferDTO.getAmount());
             transfer.setStatus(TransferStatus.PENDING);
             transfer.setType(TransferType.INTERNAL);
+            transfer.setPaymentDescription("Interni prenos");
+            transfer.setReceiver(firstName + " " + lastName);
             transfer.setFromCurrency(fromCurrency);
             transfer.setToCurrency(toCurrency);
             transfer.setCreatedAt(System.currentTimeMillis());
@@ -297,7 +299,7 @@ public class TransferService {
     public Long createMoneyTransfer(MoneyTransferDTO moneyTransferDTO){
 
         Optional<Account> fromAccountOtp = accountRepository.findById(moneyTransferDTO.getFromAccountId());
-        Optional<Account> toAccountOtp = accountRepository.findById(moneyTransferDTO.getToAccountId());
+        Optional<Account> toAccountOtp = accountRepository.findByAccountNumber(moneyTransferDTO.getRecipientAccount());
 
         if (fromAccountOtp.isPresent() && toAccountOtp.isPresent()){
 
@@ -360,7 +362,7 @@ public class TransferService {
     @Scheduled(fixedRate = 10000)
     public void cancelExpiredTransfers(){
 
-        long expirationTime = System.currentTimeMillis() - (5*6*1000);
+        long expirationTime = System.currentTimeMillis() - (5*60*1000);
 
         List<Transfer> expiredTransfers = transferRepository.findAllByStatusAndCreatedAtBefore(TransferStatus.PENDING,expirationTime);
 
@@ -371,5 +373,9 @@ public class TransferService {
 
     }
 
+    public Transfer findById(Long transferId) {
+        return transferRepository.findById(transferId)
+                .orElseThrow(() -> new RuntimeException("Transfer sa ID-jem " + transferId + " nije pronađen"));
+    }
 }
 

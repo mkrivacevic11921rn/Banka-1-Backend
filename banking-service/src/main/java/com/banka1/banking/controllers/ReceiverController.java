@@ -1,5 +1,7 @@
 package com.banka1.banking.controllers;
 
+import com.banka1.banking.aspect.AccountAuthorization;
+import com.banka1.banking.aspect.ReceiverAuthorization;
 import com.banka1.banking.dto.ReceiverDTO;
 import com.banka1.banking.models.Receiver;
 import com.banka1.banking.services.ReceiverService;
@@ -42,6 +44,7 @@ public class ReceiverController {
             )
     })
     @PostMapping
+    @ReceiverAuthorization
     public ResponseEntity<?> addReceivers(
             @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Podaci o primaocu",
@@ -72,6 +75,7 @@ public class ReceiverController {
             )
     })
     @GetMapping("/{accountId}")
+    @ReceiverAuthorization
     public ResponseEntity<?> getReceivers(
             @Parameter(description = "ID naloga korisnika", required = true, example = "2")
             @PathVariable Long accountId) {
@@ -94,6 +98,7 @@ public class ReceiverController {
             )
     })
     @PutMapping("/{id}")
+    @ReceiverAuthorization
     public ResponseEntity<?> updateReceiver(
             @Parameter(description = "ID primaoca", required = true, example = "1")
             @PathVariable Long id,
@@ -126,10 +131,11 @@ public class ReceiverController {
             )
     })
     @DeleteMapping("/{id}")
+    @ReceiverAuthorization
     public ResponseEntity<?> deleteReceiver(
             @Parameter(description = "ID primaoca", required = true, example = "1")
-            @PathVariable Long id) {
-        receiverService.deleteReceiver(id);
+            @PathVariable("id") Long receiverId) {
+        receiverService.deleteReceiver(receiverId);
         return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Primalac uspešno obrisan"), null);
     }
 }

@@ -1,5 +1,6 @@
 package com.banka1.banking.controllers;
 
+import com.banka1.banking.aspect.AccountAuthorization;
 import com.banka1.banking.dto.ExchangeMoneyTransferDTO;
 import com.banka1.banking.dto.InternalTransferDTO;
 import com.banka1.banking.services.ExchangeService;
@@ -45,6 +46,7 @@ public class ExchangeController {
             )
     })
     @PostMapping
+    @AccountAuthorization(customerOnlyOperation = true)
     public ResponseEntity<?> exchangeMoneyTransfer(
             @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Podaci za transfer sa konverzijom",

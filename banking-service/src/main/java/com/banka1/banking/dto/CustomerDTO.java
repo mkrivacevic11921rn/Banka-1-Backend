@@ -5,6 +5,7 @@ import lombok.*;
 import java.util.List;
 
 @NoArgsConstructor
+@RequiredArgsConstructor
 @Data
 public class CustomerDTO {
     @NonNull
@@ -13,7 +14,7 @@ public class CustomerDTO {
     @NonNull
     private String firstName;
 
-    @NonNull
+    @NonNull 
     private String lastName;
 
     @NonNull

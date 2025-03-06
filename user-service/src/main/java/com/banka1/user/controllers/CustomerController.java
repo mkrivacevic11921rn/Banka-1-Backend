@@ -6,8 +6,9 @@ import com.banka1.user.DTO.request.UpdateCustomerRequest;
 import com.banka1.user.DTO.request.UpdatePermissionsRequest;
 import com.banka1.user.aspect.Authorization;
 import com.banka1.user.model.Customer;
-import com.banka1.user.model.helper.Permission;
+import com.banka1.common.model.Permission;
 import com.banka1.user.service.CustomerService;
+import com.banka1.user.service.AuthService;
 import com.banka1.user.utils.ResponseTemplate;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -21,7 +22,6 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -31,9 +31,11 @@ import java.util.Optional;
 public class CustomerController {
 
     private final CustomerService customerService;
+    private final AuthService authService;
 
-    public CustomerController(CustomerService customerService) {
+    public CustomerController(CustomerService customerService, AuthService authService) {
         this.customerService = customerService;
+        this.authService = authService;
     }
 
     @Operation(
@@ -64,9 +66,10 @@ public class CustomerController {
             @ApiResponse(responseCode = "403", description = "Nemaš permisije za ovu akciju")
     })
     public ResponseEntity<?> createCustomer(
-            @RequestBody @Parameter(description = "Customer data for creation") CreateCustomerRequest customerDTO) {
-        Customer savedCustomer = customerService.createCustomer(customerDTO);
-        return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("id", savedCustomer.getId()), null);
+            @RequestBody @Parameter(description = "Customer data for creation") CreateCustomerRequest customerDTO,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        Customer savedCustomer = customerService.createCustomer(customerDTO, authService.parseToken(authService.getToken(authorization)).get("id", Long.class));
+        return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("customer", savedCustomer), null);
     }
 
     @PutMapping("/{id}")

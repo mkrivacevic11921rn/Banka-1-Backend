@@ -5,9 +5,9 @@ import com.banka1.user.DTO.response.EmployeeResponse;
 import com.banka1.user.DTO.response.EmployeesPageResponse;
 import com.banka1.user.listener.MessageHelper;
 import com.banka1.user.model.Employee;
+import com.banka1.common.model.Position;
 import com.banka1.user.model.helper.Department;
 import com.banka1.user.model.helper.Gender;
-import com.banka1.user.model.helper.Position;
 import com.banka1.user.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -38,8 +38,8 @@ public class EmployeeService {
 
     @Value("${destination.email}")
     private String destinationEmail;
-	@Value("${frontend.url}")
-	private String frontendUrl;
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     public EmployeeResponse findById(String id) {
         var employeeOptional = employeeRepository.findById(Long.parseLong(id));
@@ -68,18 +68,21 @@ public class EmployeeService {
         NotificationRequest emailDTO = new NotificationRequest();
         emailDTO.setSubject("Nalog uspešno kreiran");
         emailDTO.setEmail(employee.getEmail());
-	    emailDTO
-	    .setMessage("Vaš nalog je uspešno kreiran. Kliknite na sledeći link da biste postavili lozinku: "
-			    + frontendUrl + "/set-password?token=" + verificationCode);
+        emailDTO
+                .setMessage("Vaš nalog je uspešno kreiran. Kliknite na sledeći link da biste postavili lozinku: "
+                        + frontendUrl + "/set-password?token=" + verificationCode);
         emailDTO.setFirstName(employee.getFirstName());
         emailDTO.setLastName(employee.getLastName());
         emailDTO.setType("email");
 
-        setPasswordService.saveSetPasswordRequest(verificationCode, employee.getId());
+        // Saving the customer in the database gives it an ID, which can be used to generate the set-password token
+        employee = employeeRepository.save(employee);
+
+        setPasswordService.saveSetPasswordRequest(verificationCode, employee.getId(), false);
 
         jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
 
-        return employeeRepository.save(employee);
+        return employee;
     }
 
     public void setPassword(SetPasswordRequest setPasswordRequest) {

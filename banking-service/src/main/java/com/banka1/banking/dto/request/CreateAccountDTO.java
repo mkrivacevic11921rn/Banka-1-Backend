@@ -29,6 +29,9 @@ public class CreateAccountDTO {
     @NotNull(message = "Izaberi status racuna")
     private AccountStatus status;
 
+    @NotNull(message = "Izaberi da li da se kreiraju kartice za racun")
+    private Boolean createCard;
+
     private Double balance;
 
 }

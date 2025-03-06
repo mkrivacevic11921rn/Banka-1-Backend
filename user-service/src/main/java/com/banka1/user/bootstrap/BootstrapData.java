@@ -4,8 +4,8 @@ import com.banka1.user.model.Customer;
 import com.banka1.user.model.Employee;
 import com.banka1.user.model.helper.Department;
 import com.banka1.user.model.helper.Gender;
-import com.banka1.user.model.helper.Permission;
-import com.banka1.user.model.helper.Position;
+import com.banka1.common.model.Permission;
+import com.banka1.common.model.Position;
 import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -138,6 +138,83 @@ public class BootstrapData implements CommandLineRunner {
         customer2.setPassword(hashedPassword4);
 
         customerRepository.save(customer2);
+
+        Customer customer3 = new Customer();
+        String rawPassword5 = "Jov@njovan1";
+        String salt5 = "salt5";
+        String hashedPassword5 = BCrypt.hashpw(rawPassword5 + salt5, BCrypt.gensalt());
+
+        customer3.setFirstName("Jovan");
+        customer3.setLastName("Pavlovic");
+        customer3.setEmail("jpavlovic6521rn@raf.rs");
+        customer3.setUsername("jovan");
+        customer3.setPhoneNumber("+381641001003");
+        customer3.setBirthDate(20010202L);
+        customer3.setGender(Gender.MALE);
+        customer3.setAddress("Knez Mihailova 8");
+        customer3.setPermissions(List.of(Permission.READ_EMPLOYEE));
+        customer3.setSaltPassword(salt5);
+        customer3.setPassword(hashedPassword5);
+
+        customerRepository.save(customer3);
+
+        Customer customer4 = new Customer();
+        String rawPassword6 = "Nemanjanemanj@1";
+        String salt6 = "salt6";
+        String hashedPassword6 = BCrypt.hashpw(rawPassword6 + salt6, BCrypt.gensalt());
+
+        customer4.setFirstName("Nemanja");
+        customer4.setLastName("Marjanov");
+        customer4.setEmail("nmarjanov6121rn@raf.rs");
+        customer4.setUsername("nemanja");
+        customer4.setPhoneNumber("+381641001123");
+        customer4.setBirthDate(20010202L);
+        customer4.setGender(Gender.MALE);
+        customer4.setAddress("Knez Mihailova 8");
+        customer4.setPermissions(List.of(Permission.READ_EMPLOYEE));
+        customer4.setSaltPassword(salt6);
+        customer4.setPassword(hashedPassword6);
+
+        customerRepository.save(customer4);
+
+        Customer customer5 = new Customer();
+        String rawPassword7 = "Nikola12345";
+        String salt7 = "salt7";
+        String hashedPassword7 = BCrypt.hashpw(rawPassword7 + salt7, BCrypt.gensalt());
+
+        customer5.setFirstName("Nikola");
+        customer5.setLastName("Nikolic");
+        customer5.setEmail("primer@primer.rs");
+        customer5.setUsername("nikkola");
+        customer5.setPhoneNumber("+381641001303");
+        customer5.setBirthDate(20010202L);
+        customer5.setGender(Gender.MALE);
+        customer5.setAddress("Knez Mihailova 8");
+        customer5.setPermissions(List.of(Permission.READ_EMPLOYEE));
+        customer5.setSaltPassword(salt7);
+        customer5.setPassword(hashedPassword7);
+
+        customerRepository.save(customer5);
+
+        Customer customer6 = new Customer();
+        String rawPassword8 = "nemanjanemanja";
+        String salt8 = "salt8";
+        String hashedPassword8 = BCrypt.hashpw(rawPassword8 + salt8, BCrypt.gensalt());
+
+        customer6.setFirstName("Jelena");
+        customer6.setLastName("Jovanovic");
+        customer6.setEmail("jelena@primer.rs");
+        customer6.setUsername("jelena");
+        customer6.setPhoneNumber("+381621001003");
+        customer6.setBirthDate(20010202L);
+        customer6.setGender(Gender.FEMALE);
+        customer6.setAddress("Knez Mihailova 8");
+        customer6.setPermissions(List.of(Permission.READ_EMPLOYEE));
+        customer6.setSaltPassword(salt8);
+        customer6.setPassword(hashedPassword8);
+
+        customerRepository.save(customer6);
+
 
         System.out.println("============== Data Loaded ==============");
     }

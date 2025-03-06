@@ -1,5 +1,6 @@
 package com.banka1.banking.services;
 
+import com.banka1.banking.dto.CreateCardDTO;
 import com.banka1.banking.dto.CustomerDTO;
 import com.banka1.banking.dto.NotificationDTO;
 import com.banka1.banking.dto.request.CreateAccountDTO;
@@ -8,9 +9,7 @@ import com.banka1.banking.dto.request.UserUpdateAccountDTO;
 import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Transaction;
-import com.banka1.banking.models.helper.AccountSubtype;
-import com.banka1.banking.models.helper.AccountType;
-import com.banka1.banking.models.helper.CurrencyType;
+import com.banka1.banking.models.helper.*;
 import com.banka1.banking.repository.AccountRepository;
 
 import com.banka1.banking.repository.TransactionRepository;
@@ -37,19 +36,21 @@ public class AccountService {
     private final ModelMapper modelMapper;
     private final String destinationEmail;
     private final UserServiceCustomer userServiceCustomer;
+    private final CardService cardService;
 
-    public AccountService(AccountRepository accountRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, @Value("${destination.email}") String destinationEmail, UserServiceCustomer userServiceCustomer) {
+    public AccountService(AccountRepository accountRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, @Value("${destination.email}") String destinationEmail, UserServiceCustomer userServiceCustomer, CardService cardService) {
         this.accountRepository = accountRepository;
         this.jmsTemplate = jmsTemplate;
         this.messageHelper = messageHelper;
         this.modelMapper = modelMapper;
         this.destinationEmail = destinationEmail;
         this.userServiceCustomer = userServiceCustomer;
+        this.cardService = cardService;
     }
 
-    public Account createAccount(CreateAccountDTO createAccountDTO) {
+    public Account createAccount(CreateAccountDTO createAccountDTO, Long employeeId) {
         CustomerDTO owner = userServiceCustomer.getCustomerById(createAccountDTO.getOwnerID());
-        if (owner == null) {
+        if (owner == null || employeeId == null) {
             return null;
         }
 
@@ -84,8 +85,19 @@ public class AccountService {
         account.setMonthlyMaintenanceFee(0.0);
 
         account.setAccountNumber(generateAccountNumber(account));
-//dohvatanje employeeId-a iz jwt tokena? idk tako su mi rekli srecno onome koji se bavi autorizacijom
-        account.setEmployeeID(Long.valueOf(1));
+
+        account.setEmployeeID(employeeId);
+
+        account = accountRepository.save(account);
+
+        if (createAccountDTO.getCreateCard()) {
+            CreateCardDTO createCardDTO = new CreateCardDTO();
+            createCardDTO.setAccountID(account.getId());
+            createCardDTO.setCardBrand(CardBrand.VISA);
+            createCardDTO.setCardType(CardType.CREDIT);
+            createCardDTO.setAuthorizedPerson(null);
+            cardService.createCard(createCardDTO);
+        }
 
         NotificationDTO emailDTO = new NotificationDTO();
         emailDTO.setSubject("Račun uspešno kreiran");
@@ -97,7 +109,7 @@ public class AccountService {
 
         jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
 
-        return accountRepository.save(account);
+        return account;
     }
 
     public List<Account> getAllAccounts() {
@@ -106,6 +118,11 @@ public class AccountService {
 
     public List<Account> getAccountsByOwnerId(Long ownerId) {
         return accountRepository.findByOwnerID(ownerId);
+    }
+
+    public Account findById(Long accountId) {
+        return accountRepository.findById(accountId)
+                .orElseThrow(() -> new RuntimeException("Račun sa ID-jem " + accountId + " nije pronađen"));
     }
 
     public Account updateAccount(Long accountId, UpdateAccountDTO updateAccountDTO) {

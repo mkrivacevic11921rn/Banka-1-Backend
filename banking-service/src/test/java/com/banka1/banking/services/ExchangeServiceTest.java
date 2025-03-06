@@ -21,6 +21,8 @@ import org.springframework.jms.core.JmsTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -83,7 +85,16 @@ public class ExchangeServiceTest {
         exchangeMoneyTransferDTO.setAccountTo(2L);
         exchangeMoneyTransferDTO.setAmount(500.0);
 
-        customerDTO = new CustomerDTO(10L,"Marko","Markovic",0101L,"test@test.com","0101010101","MARSALA TULBUHINA");
+//        customerDTO = new CustomerDTO();
+//        customerDTO.setId(10L);
+//        customerDTO.setFirstName("Marko");
+//        customerDTO.setLastName("Markovic");
+//        customerDTO.setBirthDate(19990101L);
+//        customerDTO.setEmail("test@test.com");
+//        customerDTO.setPhoneNumber("010101010");
+//        customerDTO.setAddress("MARSALA TULBUHINA");
+
+         customerDTO = new CustomerDTO(10L,"Marko","Markovic",0101L,"test@test.com","0101010101","MARSALA TULBUHINA");
 
 
         ReflectionTestUtils.setField(exchangeService, "destinationEmail", "test-destination");

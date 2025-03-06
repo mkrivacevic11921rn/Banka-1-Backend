@@ -1,5 +1,8 @@
 package com.banka1.user.service;
 
+
+import com.banka1.user.DTO.banking.CreateAccountByEmployeeDTO;
+import com.banka1.common.model.Permission;
 import com.banka1.user.DTO.banking.CreateAccountDTO;
 import com.banka1.user.DTO.request.CreateCustomerRequest;
 import com.banka1.user.DTO.request.NotificationRequest;
@@ -11,7 +14,6 @@ import com.banka1.user.listener.MessageHelper;
 import com.banka1.user.mapper.CustomerMapper;
 import com.banka1.user.model.Customer;
 import com.banka1.user.model.helper.Gender;
-import com.banka1.user.model.helper.Permission;
 import com.banka1.user.repository.CustomerRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -119,7 +121,7 @@ public class CustomerService {
                     content = @Content(schema = @Schema(implementation = Customer.class))),
             @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public Customer createCustomer(CreateCustomerRequest customerDTO) {
+    public Customer createCustomer(CreateCustomerRequest customerDTO, Long employeeId) {
         Customer customer = CustomerMapper.dtoToCustomer(customerDTO);
 
         String verificationCode = UUID.randomUUID().toString();
@@ -138,9 +140,9 @@ public class CustomerService {
         // Saving the customer in the database gives it an ID, which can be used to generate the set-password token
         customer = customerRepository.save(customer);
 
-        jmsTemplate.convertAndSend(destinationAccount, messageHelper.createTextMessage(new CreateAccountDTO(customerDTO.getAccountInfo(), customer.getId())));
+        jmsTemplate.convertAndSend(destinationAccount, messageHelper.createTextMessage(new CreateAccountByEmployeeDTO(new CreateAccountDTO(customerDTO.getAccountInfo(), customer.getId()), employeeId)));
 
-        setPasswordService.saveSetPasswordRequest(verificationCode, customer.getId());
+        setPasswordService.saveSetPasswordRequest(verificationCode, customer.getId(), true);
 
         jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
         return customer;

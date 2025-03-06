@@ -27,4 +27,5 @@ public class SetPassword {
     private Instant expirationDate;
     private Boolean used;
     private Instant createdDate;
+    private Boolean customer;
 }

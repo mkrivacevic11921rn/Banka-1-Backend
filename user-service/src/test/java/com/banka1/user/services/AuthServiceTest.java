@@ -4,13 +4,12 @@ import com.banka1.user.DTO.request.LoginRequest;
 import com.banka1.user.aspect.AuthAspect;
 import com.banka1.user.aspect.Authorization;
 import com.banka1.user.model.Customer;
-import com.banka1.user.model.helper.Permission;
-import com.banka1.user.model.helper.Position;
+import com.banka1.common.model.Permission;
+import com.banka1.common.model.Position;
 import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.repository.EmployeeRepository;
 import com.banka1.user.service.BlackListTokenService;
-import com.banka1.user.service.IAuthService;
-import com.banka1.user.service.implementation.AuthService;
+import com.banka1.user.service.AuthService;
 import com.banka1.user.utils.ResponseMessage;
 import io.jsonwebtoken.Claims;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -40,7 +39,7 @@ public class AuthServiceTest {
     @Mock
     private EmployeeRepository employeeRepository;
     @Mock
-    private IAuthService mockAuthService;
+    private AuthService mockAuthService;
     @InjectMocks
     private AuthService authService;
     @Mock
@@ -217,7 +216,7 @@ public class AuthServiceTest {
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> authService.login(loginRequest));
 
-        assertEquals(ResponseMessage.INVALID_USER.toString(), exception.getMessage());
+        assertEquals(ResponseMessage.FAILED_LOGIN.toString(), exception.getMessage());
     }
 
     @Test

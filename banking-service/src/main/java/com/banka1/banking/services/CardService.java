@@ -32,6 +32,11 @@ public class CardService {
         this.cardMapper = cardMapper;
     }
 
+    public Card findById(Long cardId) {
+        return cardRepository.findById(cardId)
+                .orElseThrow(() -> new RuntimeException("Kartica sa ID-jem " + cardId + " nije pronađena"));
+    }
+
     public List<Card> findAllByAccountId(int accountId) {
         return cardRepository.findByAccountId((long) accountId).isPresent() ? cardRepository.findByAccountId((long) accountId).get() : null;
     }

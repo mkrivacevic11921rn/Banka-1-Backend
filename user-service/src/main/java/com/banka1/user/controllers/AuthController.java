@@ -3,7 +3,7 @@ package com.banka1.user.controllers;
 import com.banka1.user.DTO.request.LoginRequest;
 import com.banka1.user.aspect.Authorization;
 import com.banka1.user.service.BlackListTokenService;
-import com.banka1.user.service.IAuthService;
+import com.banka1.user.service.AuthService;
 import com.banka1.user.utils.ResponseMessage;
 import com.banka1.user.utils.ResponseTemplate;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,7 +25,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Tag(name = "Autentifikacija" , description = "Rute za login, logout i osvežavanje JWT tokena")
 public class AuthController {
-    private final IAuthService authService;
+    private final AuthService authService;
     private final BlackListTokenService blackListTokenService;
 
     @Operation(

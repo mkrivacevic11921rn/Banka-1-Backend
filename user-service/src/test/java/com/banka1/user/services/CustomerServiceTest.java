@@ -12,7 +12,7 @@ import com.banka1.user.DTO.response.CustomerResponse;
 import com.banka1.user.listener.MessageHelper;
 import com.banka1.user.model.Customer;
 import com.banka1.user.model.helper.Gender;
-import com.banka1.user.model.helper.Permission;
+import com.banka1.common.model.Permission;
 import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.service.CustomerService;
 import com.banka1.user.service.SetPasswordService;
@@ -80,6 +80,7 @@ public class CustomerServiceTest {
         customerDTO.setPhoneNumber("555333");
         customerDTO.setAccountInfo(createAccountDTO);
 
+
         when(customerRepository.save(any(Customer.class)))
                 .then(invocation -> {
                     var savedCustomer = (Customer) invocation.getArguments()[0];
@@ -87,7 +88,7 @@ public class CustomerServiceTest {
                     return savedCustomer;
                 });
 
-        Customer createdCustomer = customerService.createCustomer(customerDTO);
+        Customer createdCustomer = customerService.createCustomer(customerDTO, 1L);
 
         assertNotNull(createdCustomer);
         assertNull(createdCustomer.getPassword());

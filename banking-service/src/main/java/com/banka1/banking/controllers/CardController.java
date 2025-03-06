@@ -1,5 +1,6 @@
 package com.banka1.banking.controllers;
 
+import com.banka1.banking.aspect.CardAuthorization;
 import com.banka1.banking.dto.CreateCardDTO;
 import com.banka1.banking.dto.UpdateCardDTO;
 import com.banka1.banking.models.Card;
@@ -36,8 +37,9 @@ public class CardController {
             @ApiResponse(responseCode = "200", description = "Lista kartica korisnika za određeni račun."),
             @ApiResponse(responseCode = "404", description = "Nema kartica za traženi račun.")
     })
-    public ResponseEntity<?> getCardsByAccountID(@PathVariable int account_id) {
-        return getCards(account_id);
+    @CardAuthorization
+    public ResponseEntity<?> getCardsByAccountID(@PathVariable("account_id") int accountId) {
+        return getCards(accountId);
     }
 
     @PostMapping("/")
@@ -46,6 +48,7 @@ public class CardController {
             @ApiResponse(responseCode = "201", description = "Kartica uspešno kreirana."),
             @ApiResponse(responseCode = "400", description = "Nevalidni podaci.")
     })
+    @CardAuthorization
     public ResponseEntity<?> createCard(@RequestBody CreateCardDTO createCardDTO) {
         try {
             Card card = cardService.createCard(createCardDTO);
@@ -62,8 +65,9 @@ public class CardController {
             @ApiResponse(responseCode = "200", description = "Kartica uspešno ažurirana"),
             @ApiResponse(responseCode = "400", description = "Nevalidni podaci.")
     })
-    public ResponseEntity<?> blockCard(@PathVariable int card_id, @RequestBody UpdateCardDTO updateCardDTO) {
-        return updateCardStatus(card_id, updateCardDTO);
+    @CardAuthorization
+    public ResponseEntity<?> blockCard(@PathVariable("card_id") int cardId, @RequestBody UpdateCardDTO updateCardDTO) {
+        return updateCardStatus(cardId, updateCardDTO);
     }
 
     @GetMapping("/admin/{account_id}")
@@ -72,8 +76,9 @@ public class CardController {
             @ApiResponse(responseCode = "200", description = "Lista kartica za određeni račun."),
             @ApiResponse(responseCode = "404", description = "Nema kartica za traženi račun.")
     })
-    public ResponseEntity<?> getAdminCardsByAccountID(@PathVariable int account_id) {
-        return getCards(account_id);
+    @CardAuthorization(employeeOnlyOperation = true)
+    public ResponseEntity<?> getAdminCardsByAccountID(@PathVariable("account_id") int accountId) {
+        return getCards(accountId);
     }
 
     @PatchMapping("/admin/{card_id}")
@@ -82,8 +87,9 @@ public class CardController {
             @ApiResponse(responseCode = "200", description = "Kartica uspešno ažurirana"),
             @ApiResponse(responseCode = "400", description = "Nevalidni podaci.")
     })
-    public ResponseEntity<?> activateCard(@PathVariable int card_id, @RequestBody UpdateCardDTO updateCardDTO) {
-        return updateCardStatus(card_id, updateCardDTO);
+    @CardAuthorization(employeeOnlyOperation = true)
+    public ResponseEntity<?> activateCard(@PathVariable("card_id") int cardId, @RequestBody UpdateCardDTO updateCardDTO) {
+        return updateCardStatus(cardId, updateCardDTO);
     }
 
     private ResponseEntity<?> getCards(int account_id) {
