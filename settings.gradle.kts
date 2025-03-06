@@ -6,5 +6,6 @@ include(
     "banking-service",
     "api-gateway",
     "common",
-    "eureka"
+    "eureka",
+    "message-brooker-service"
 )
