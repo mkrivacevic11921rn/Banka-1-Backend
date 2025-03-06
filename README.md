@@ -19,6 +19,9 @@ docker compose -f compose.full.yaml up -d
 
 ## Backend development
 
+### ‼️ You cannot do both of these at once ‼️
+
+
 For backend development, you need to have Docker and JDK 17 installed.
 To run the backend infrastructure (DBs and message queues) in development, run the following command:
 ```shell
@@ -43,5 +46,8 @@ Afterwards, depending on which service you want to work on, you should do:
 ```shell
 docker compose -f compose.full.yaml stop <service-name>
 ```
-
+After that, you can run
+```shell
+./gradlew <service-name>:bootRun
+```
 If you change the [common](common) module, you need to rebuild the docker images.
