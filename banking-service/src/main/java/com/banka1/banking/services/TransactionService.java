@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-
+import java.util.List;
 
 
 //  MISLIM DA SVE VEZANO ZA TRANSAKCIJE TREBA PREBACITI U OVAJ SERVIS
@@ -170,5 +170,12 @@ public class TransactionService {
             transferRepository.save(transfer);
             throw new RuntimeException("Transfer processing failed", e);
         }
+    }
+
+    @Transactional
+    public List<Transaction> getTransactionsByUserId(Long userId) {
+        List<Account> accounts = accountRepository.findByOwnerID(userId);
+        List<Transaction> transactions = transactionRepository.findByFromAccountIdIn(accounts);
+        return transactions;
     }
 }

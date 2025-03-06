@@ -30,6 +30,9 @@ public class CreateAccountDTO {
     @NotNull(message = "Izaberi status racuna")
     private AccountStatus status;
 
+    @NotNull(message = "Izaberi da li da se kreiraju kartice za racun")
+    private Boolean createCard;
+
     public CreateAccountDTO(CreateAccountWithoutOwnerIdDTO createAccountWithoutOwnerIdDTO, Long ownerID) {
         setCurrency(createAccountWithoutOwnerIdDTO.getCurrency());
         setStatus(createAccountWithoutOwnerIdDTO.getStatus());
@@ -38,5 +41,6 @@ public class CreateAccountDTO {
         setDailyLimit(createAccountWithoutOwnerIdDTO.getDailyLimit());
         setMonthlyLimit(createAccountWithoutOwnerIdDTO.getMonthlyLimit());
         setOwnerID(ownerID);
+        setCreateCard(createAccountWithoutOwnerIdDTO.getCreateCard());
     }
 }

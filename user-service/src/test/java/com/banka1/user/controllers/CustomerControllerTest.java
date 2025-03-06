@@ -74,6 +74,7 @@ class CustomerControllerTest {
         createAccountDTO.setDailyLimit(0.0);
         createAccountDTO.setMonthlyLimit(0.0);
         createAccountDTO.setStatus(AccountStatus.ACTIVE);
+        createAccountDTO.setCreateCard(true);
         var customerDTO = new CreateCustomerRequest(
                 "Petar",
                 "Petrovic",
