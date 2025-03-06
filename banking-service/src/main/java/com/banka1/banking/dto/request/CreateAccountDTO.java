@@ -22,10 +22,8 @@ public class CreateAccountDTO {
     @NotNull(message = "Izaberi podtip racuna")
     private AccountSubtype subtype;
 
-    @NotNull(message = "Izaberi dnevni limit za potrosnju sredstava sa racuna")
     private Double dailyLimit;
 
-    @NotNull(message = "Izaberi mesecni limit za potrosnju sredstava sa racuna")
     private Double monthlyLimit;
 
     @NotNull(message = "Izaberi status racuna")

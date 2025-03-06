@@ -4,6 +4,7 @@ import com.banka1.banking.dto.CustomerDTO;
 import com.banka1.banking.dto.NotificationDTO;
 import com.banka1.banking.dto.request.CreateAccountDTO;
 import com.banka1.banking.dto.request.UpdateAccountDTO;
+import com.banka1.banking.dto.request.UserUpdateAccountDTO;
 import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Transaction;
@@ -64,6 +65,16 @@ public class AccountService {
         } else {
             account.setBalance(0.0);
         }
+        if (account.getDailyLimit() != null) {
+            account.setDailyLimit(account.getDailyLimit());
+        } else {
+            account.setDailyLimit(0.0);
+        }
+        if (account.getMonthlyLimit() != null) {
+            account.setMonthlyLimit(account.getMonthlyLimit());
+        } else {
+            account.setMonthlyLimit(0.0);
+        }
 
         account.setReservedBalance(100.0);
         account.setCreatedDate(Instant.now().getEpochSecond());
@@ -107,6 +118,19 @@ public class AccountService {
 
         return accountRepository.save(account);
     }
+
+    public Account userUpdateAccount(Long userId, Long accountId, UserUpdateAccountDTO updateAccountDTO) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new RuntimeException("Račun sa ID-jem " + accountId + " nije pronađen"));
+        if (!account.getOwnerID().equals(userId)) {
+            return null;
+        }
+        Optional.ofNullable(updateAccountDTO.getDailyLimit()).ifPresent(account::setDailyLimit);
+        Optional.ofNullable(updateAccountDTO.getMonthlyLimit()).ifPresent(account::setMonthlyLimit);
+
+        return accountRepository.save(account);
+    }
+    //realno metode mogu da se spoje i ne treba odvojen dto al ajde kao da ni ne dam opciju useru da slucajno sam sebi menja status
 
     @Autowired
     private TransactionRepository transactionRepository;

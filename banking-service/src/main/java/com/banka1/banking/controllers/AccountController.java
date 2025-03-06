@@ -2,6 +2,7 @@ package com.banka1.banking.controllers;
 
 import com.banka1.banking.dto.request.CreateAccountDTO;
 import com.banka1.banking.dto.request.UpdateAccountDTO;
+import com.banka1.banking.dto.request.UserUpdateAccountDTO;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Transaction;
 import com.banka1.banking.services.AccountService;
@@ -118,6 +119,34 @@ public class AccountController {
 
         try {
             Account updatedAccount = accountService.updateAccount(accountId, updateAccountDTO);
+            return ResponseTemplate.create(ResponseEntity.ok(), true,
+                    Map.of( "message", ResponseMessage.UPDATED, "data", updatedAccount), null);
+        } catch (RuntimeException e) {
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
+    }
+
+    /// pristup imaju zaposleni i vlasnici racuna
+    @PutMapping("/user/{userId}/{accountId}")
+    @Operation(summary = "Ažuriranje računa od strane korisnika",
+            description = "Omogućava korisnicima da ažuriraju podatke o računu.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Račun uspešno ažuriran"),
+            @ApiResponse(responseCode = "404", description = "Račun nije pronađen"),
+            @ApiResponse(responseCode = "400", description = "Nevalidni podaci za ažuriranje")
+    })
+    public ResponseEntity<?> updateUserAccount(
+            @PathVariable Long userId,
+            @PathVariable Long accountId,
+            @RequestBody UserUpdateAccountDTO updateAccountDTO) {
+
+        try {
+            Account updatedAccount = accountService.userUpdateAccount(userId, accountId, updateAccountDTO);
+            if (updatedAccount == null) {
+                return ResponseTemplate.create(ResponseEntity.badRequest(), false,
+                        Map.of( "message", ResponseMessage.NOT_THE_OWNER), null);
+
+            }
             return ResponseTemplate.create(ResponseEntity.ok(), true,
                     Map.of( "message", ResponseMessage.UPDATED, "data", updatedAccount), null);
         } catch (RuntimeException e) {
