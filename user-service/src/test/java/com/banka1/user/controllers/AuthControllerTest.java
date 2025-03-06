@@ -2,13 +2,8 @@ package com.banka1.user.controllers;
 
 
 import com.banka1.user.DTO.request.LoginRequest;
-<<<<<<< HEAD
 import com.banka1.common.model.Permission;
 import com.banka1.common.model.Position;
-=======
-import com.banka1.user.model.helper.Permission;
-import com.banka1.user.model.helper.Position;
->>>>>>> upstream/main
 import com.banka1.user.service.BlackListTokenService;
 import com.banka1.user.service.implementation.AuthService;
 import com.banka1.user.utils.ResponseMessage;
