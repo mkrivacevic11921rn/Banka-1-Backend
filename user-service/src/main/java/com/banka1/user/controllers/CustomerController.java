@@ -69,7 +69,7 @@ public class CustomerController {
     public ResponseEntity<?> createCustomer(
             @RequestBody @Parameter(description = "Customer data for creation") CreateCustomerRequest customerDTO,
             @RequestHeader(value = "Authorization", required = false) String authorization) {
-        Customer savedCustomer = customerService.createCustomer(customerDTO, authService.parseToken(authorization).get("id", Long.class));
+        Customer savedCustomer = customerService.createCustomer(customerDTO, authService.parseToken(authService.getToken(authorization)).get("id", Long.class));
         return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("customer", savedCustomer), null);
     }
 
