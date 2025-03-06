@@ -6,6 +6,7 @@ import com.banka1.common.service.IAuthService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
  * Standardna implementacija {@link IAuthService} interfejsa.
  */
 @Service
+@Slf4j
 public abstract class GenericAuthService implements IAuthService {
     @Value("${oauth.jwt.secret}")
     protected String secret;
@@ -45,16 +47,20 @@ public abstract class GenericAuthService implements IAuthService {
 
     @Override
     public String getToken(String authHeader) {
+        log.info("Grabbing token from header " + authHeader);
         if(authHeader != null && authHeader.startsWith("Bearer"))
             return authHeader.split(" ")[1];
+        log.warn("Didn't grab token from header (make sure it starts with \"Bearer \" (" + authHeader + ")");
         return null;
     }
 
     @Override
     public Claims parseToken(String token) {
         try {
+            log.info("Parsing token " + token);
             return Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
         } catch (Exception e) {
+            log.warn("Did not parse token " + token);
             return null;
         }
     }
