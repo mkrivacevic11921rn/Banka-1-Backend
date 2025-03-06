@@ -23,6 +23,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +35,7 @@ import java.util.Optional;
 @RequestMapping("/otp")
 @RequiredArgsConstructor
 @Tag(name = "OTP verifikacija", description = "Ruta za validaciju kreiranog transfera")
+@Slf4j
 public class OtpTokenController {
 
     private final OtpTokenService otpTokenService;
@@ -72,11 +74,13 @@ public class OtpTokenController {
             String otpCode = otpTokenDTO.getOtpCode();
 
             if (otpTokenService.isOtpExpired(transferId)) {
+                log.info("ERROR: OTP kod je istekao.");
                 return ResponseTemplate.create(ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT),
                         false, null, "OTP kod je istekao.");
             }
 
             if (!otpTokenService.isOtpValid(transferId, otpCode)) {
+                log.info("ERROR: Nevalidan OTP kod ili je već iskorišćen.");
                 return ResponseTemplate.create(ResponseEntity.status(HttpStatus.UNAUTHORIZED),
                         false, null, "Nevalidan OTP kod ili je već iskorišćen.");
             }
