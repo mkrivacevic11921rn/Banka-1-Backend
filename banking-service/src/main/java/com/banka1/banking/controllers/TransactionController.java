@@ -2,7 +2,6 @@ package com.banka1.banking.controllers;
 
 import com.banka1.banking.aspect.AccountAuthorization;
 import com.banka1.banking.models.Transaction;
-import com.banka1.banking.services.AccountService;
 import com.banka1.banking.services.TransactionService;
 import com.banka1.banking.services.implementation.AuthService;
 import com.banka1.banking.utils.ResponseTemplate;
@@ -11,7 +10,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,16 +27,15 @@ public class TransactionController {
     @Autowired
     private AuthService authService;
 
-    @GetMapping("/")
+    @GetMapping("/{userId}")
     @Operation(summary = "Dobavljanje svih transakcija", description = "Vraća listu svih transakcija u sistemu.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Uspešno dobavljanje transakcija"),
             @ApiResponse(responseCode = "400", description = "Greška pri dobavljanju transakcija")
     })
     @AccountAuthorization
-    public ResponseEntity<?> getAllTransactions(@RequestHeader(value = "Authorization", required = false) String authorization) {
+    public ResponseEntity<?> getAllTransactions(@RequestHeader(value = "Authorization", required = false) String authorization, @PathVariable Long userId) {
         try {
-            Long userId = authService.parseToken(authService.getToken(authorization)).get("id", Long.class);
             List<Transaction> transactions = transactionService.getTransactionsByUserId(userId);
             Map<String, Object> response = new HashMap<>();
             response.put("data", transactions);
