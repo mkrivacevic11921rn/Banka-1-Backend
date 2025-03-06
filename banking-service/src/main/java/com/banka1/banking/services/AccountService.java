@@ -114,6 +114,11 @@ public class AccountService {
                 .orElseThrow(() -> new RuntimeException("Račun sa ID-jem " + accountId + " nije pronađen"));
     }
 
+    public Account findByAccountNumber(String accountNumber) {
+        return accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new RuntimeException("Račun sa brojem " + accountNumber + " nije pronađen"));
+    }
+
     public Account updateAccount(Long accountId, UpdateAccountDTO updateAccountDTO) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new RuntimeException("Račun sa ID-jem " + accountId + " nije pronađen"));

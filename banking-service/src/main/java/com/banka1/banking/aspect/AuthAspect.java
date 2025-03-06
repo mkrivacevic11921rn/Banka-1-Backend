@@ -127,7 +127,7 @@ public class AuthAspect {
                         return false;
                     encounteredDto = true;
                 } else if(types[i] == MoneyTransferDTO.class) {
-                    if(!Objects.equals(accountService.findById(((MoneyTransferDTO) values[i]).getFromAccountId()).getOwnerID(), userId))
+                    if(!Objects.equals(accountService.findByAccountNumber(((MoneyTransferDTO) values[i]).getFromAccountNumber()).getOwnerID(), userId))
                         return false;
                     encounteredDto = true;
                 } else if(types[i] == CreateCardDTO.class) {
