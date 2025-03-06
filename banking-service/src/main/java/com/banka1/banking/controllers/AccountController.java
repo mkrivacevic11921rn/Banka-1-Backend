@@ -48,7 +48,7 @@ public class AccountController {
     public ResponseEntity<?> createAccount(@Valid @RequestBody CreateAccountDTO createAccountDTO, @RequestHeader(value = "Authorization", required = false) String authorization) {
         Account savedAccount = null;
         try {
-            savedAccount = accountService.createAccount(createAccountDTO, authService.parseToken(authorization).get("id", Long.class));
+            savedAccount = accountService.createAccount(createAccountDTO, authService.parseToken(authService.getToken(authorization)).get("id", Long.class));
         } catch (RuntimeException e) {
 //            log.error("Greška prilikom kreiranja racuna: ", e);
             return ResponseTemplate.create(ResponseEntity.badRequest(), e);
