@@ -11,7 +11,7 @@ import lombok.Setter;
 public class OtpTokenDTO {
 
     private Long transferId;
-    private String OtpCode;
+    private String otpCode;
 
 }
 
