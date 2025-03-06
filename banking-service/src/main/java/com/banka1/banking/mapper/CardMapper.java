@@ -26,7 +26,7 @@ public class CardMapper {
         fiveYearsFuture.setTime(Date.from(Instant.now()));
         fiveYearsFuture.add(Calendar.YEAR, 5);
 
-        card.setExpirationDate(fiveYearsFuture.getTime().getTime());
+        card.setExpirationDate(fiveYearsFuture.getTime().getTime() / 1000);
         card.setActive(true);
         card.setBlocked(false);
         card.setCardLimit(1000000.0);
