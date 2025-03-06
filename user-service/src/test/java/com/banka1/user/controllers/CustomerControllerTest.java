@@ -14,7 +14,7 @@ import com.banka1.user.mapper.CustomerMapper;
 import com.banka1.user.model.Customer;
 import com.banka1.user.model.helper.Gender;
 import com.banka1.user.service.CustomerService;
-import com.banka1.user.service.implementation.AuthService;
+import com.banka1.user.service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

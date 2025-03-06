@@ -9,7 +9,7 @@ import com.banka1.common.model.Position;
 import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.repository.EmployeeRepository;
 import com.banka1.user.service.BlackListTokenService;
-import com.banka1.user.service.implementation.AuthService;
+import com.banka1.user.service.AuthService;
 import com.banka1.user.utils.ResponseMessage;
 import io.jsonwebtoken.Claims;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -216,7 +216,7 @@ public class AuthServiceTest {
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> authService.login(loginRequest));
 
-        assertEquals(ResponseMessage.INVALID_USER.toString(), exception.getMessage());
+        assertEquals(ResponseMessage.FAILED_LOGIN.toString(), exception.getMessage());
     }
 
     @Test

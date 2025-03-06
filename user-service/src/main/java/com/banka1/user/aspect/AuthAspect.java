@@ -2,9 +2,8 @@ package com.banka1.user.aspect;
 
 import com.banka1.common.model.Permission;
 import com.banka1.common.model.Position;
-import com.banka1.common.service.IAuthService;
 import com.banka1.user.service.BlackListTokenService;
-import com.banka1.user.service.implementation.AuthService;
+import com.banka1.user.service.AuthService;
 import com.banka1.user.utils.ResponseMessage;
 import com.banka1.user.utils.ResponseTemplate;
 import io.jsonwebtoken.Claims;

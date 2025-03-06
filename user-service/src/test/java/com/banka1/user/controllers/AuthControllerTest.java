@@ -5,7 +5,7 @@ import com.banka1.user.DTO.request.LoginRequest;
 import com.banka1.common.model.Permission;
 import com.banka1.common.model.Position;
 import com.banka1.user.service.BlackListTokenService;
-import com.banka1.user.service.implementation.AuthService;
+import com.banka1.user.service.AuthService;
 import com.banka1.user.utils.ResponseMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
@@ -73,14 +73,14 @@ public class AuthControllerTest {
         loginRequest.setEmail("nonexistent@example.com");
         loginRequest.setPassword("wrongpassword");
 
-        when(authService.login(any(LoginRequest.class))).thenThrow(new IllegalArgumentException("Korisnik ne postoji."));
+        when(authService.login(any(LoginRequest.class))).thenThrow(new IllegalArgumentException(ResponseMessage.FAILED_LOGIN.toString()));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error").value(ResponseMessage.INVALID_USER.toString()));
+                .andExpect(jsonPath("$.error").value(ResponseMessage.FAILED_LOGIN.toString()));
 
         verify(authService, times(1)).login(any(LoginRequest.class));
     }

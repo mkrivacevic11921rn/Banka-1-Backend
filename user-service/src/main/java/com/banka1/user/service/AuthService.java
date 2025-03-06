@@ -1,4 +1,4 @@
-package com.banka1.user.service.implementation;
+package com.banka1.user.service;
 
 import com.banka1.user.DTO.request.LoginRequest;
 import com.banka1.user.model.Customer;
@@ -42,6 +42,6 @@ public class AuthService extends GenericAuthService {
         if(employee != null && verifyPassword(password, employee.getPassword(), employee.getSaltPassword()) && employee.getActive())
             return generateToken(employee.getId(), employee.getPosition(), employee.getPermissions(), true, employee.getIsAdmin());
 
-        throw new IllegalArgumentException(ResponseMessage.INVALID_USER.toString());
+        throw new IllegalArgumentException(ResponseMessage.FAILED_LOGIN.toString());
     }
 }

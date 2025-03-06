@@ -8,7 +8,7 @@ import com.banka1.user.aspect.Authorization;
 import com.banka1.user.model.Customer;
 import com.banka1.common.model.Permission;
 import com.banka1.user.service.CustomerService;
-import com.banka1.user.service.implementation.AuthService;
+import com.banka1.user.service.AuthService;
 import com.banka1.user.utils.ResponseTemplate;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -22,7 +22,6 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
