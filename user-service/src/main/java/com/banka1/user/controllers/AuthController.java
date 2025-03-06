@@ -3,7 +3,7 @@ package com.banka1.user.controllers;
 import com.banka1.user.DTO.request.LoginRequest;
 import com.banka1.user.aspect.Authorization;
 import com.banka1.user.service.BlackListTokenService;
-import com.banka1.user.service.implementation.AuthService;
+import com.banka1.user.service.AuthService;
 import com.banka1.user.utils.ResponseMessage;
 import com.banka1.user.utils.ResponseTemplate;
 import io.swagger.v3.oas.annotations.Operation;

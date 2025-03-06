@@ -75,11 +75,14 @@ public class EmployeeService {
         emailDTO.setLastName(employee.getLastName());
         emailDTO.setType("email");
 
+        // Saving the customer in the database gives it an ID, which can be used to generate the set-password token
+        employee = employeeRepository.save(employee);
+
         setPasswordService.saveSetPasswordRequest(verificationCode, employee.getId(), false);
 
         jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
 
-        return employeeRepository.save(employee);
+        return employee;
     }
 
     public void setPassword(SetPasswordRequest setPasswordRequest) {
