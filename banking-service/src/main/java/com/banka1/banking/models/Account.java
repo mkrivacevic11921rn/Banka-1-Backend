@@ -19,7 +19,7 @@ public class Account {
     @Column(nullable = false)
     private Long ownerID;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String accountNumber;
 
     @Column(nullable = false)

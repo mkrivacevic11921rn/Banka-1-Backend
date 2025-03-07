@@ -346,12 +346,13 @@ public class AuthServiceTests {
         when(otpTokenDTO.getTransferId()).thenReturn(1L);
         when(receiverDTO.getOwnerAccountId()).thenReturn(1L);
         when(internalTransferDTO.getFromAccountId()).thenReturn(1L);
-        when(moneyTransferDTO.getFromAccountId()).thenReturn(1L);
+        when(moneyTransferDTO.getFromAccountNumber()).thenReturn("1");
         when(createCardDTO.getAccountID()).thenReturn(1L);
 
         when(authService.parseToken(notNull(String.class))).thenReturn(claims);
 
         when(accountService.findById(1L)).thenReturn(account);
+        when(accountService.findByAccountNumber("1")).thenReturn(account);
         //when(loanService.findById("1")).thenReturn(loan);
         when(transferService.findById(1L)).thenReturn(transfer);
 
