@@ -36,7 +36,7 @@ public class LoanController {
     @Autowired
     private AuthService authService;
 
-    @PostMapping("")
+    @PostMapping("/")
     @Operation(summary = "Kreiranje zahteva za kredit",
             description = "Dodaje novi kredit u sistem i cuva se u bazi pod statusom na cekanju.")
     @ApiResponses({

@@ -63,6 +63,8 @@ public class LoanService {
         newLoan.setPaymentStatus(PaymentStatus.PENDING);
         newLoan.setAccount(account);
         newLoan.setCreatedDate(Instant.now().getEpochSecond());
+        newLoan.setRemainingAmount(newLoan.getLoanAmount());
+        newLoan.setNextPaymentDate(newLoan.getCreatedDate()+30*24*60*60);
 //        newLoan.setCurrencyType(account.getCurrencyType());
 
         newLoan = loanRepository.save(newLoan);

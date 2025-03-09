@@ -164,8 +164,6 @@ public class BootstrapData implements CommandLineRunner {
             currencyService.fetchExchangeRates();
             System.out.println("Currencies have been initialized in the database.");
 
-        } else {
-            System.out.println("Currencies are already present in the database.");
         }
 
         Account jovanTekuci = new Account();
@@ -520,7 +518,6 @@ public class BootstrapData implements CommandLineRunner {
             loanRepository.save(loan);
         }
 
-        System.out.println("id: "+jovanTekuci.getOwnerID());
         System.out.println("============== Data Loaded ==============");
     }
 }
