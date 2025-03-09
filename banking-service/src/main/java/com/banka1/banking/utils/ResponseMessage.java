@@ -11,6 +11,7 @@ public enum ResponseMessage {
     PASSWORD_RESET_SUCCESS("Lozinka uspešno resetovana."),
     LOGOUT_SUCCESS("Korisnik odjavljen."),
     ACCOUNTS_NOT_FOUND("Korisnik nema otvorenih racuna"),
+    ACCOUNT_NOT_FOUND("Racun ne postoji"),
     TRANSACTIONS_NOT_FOUND("Nema transakcija za izabrani racun"),
     UPDATED("Uspesno izmenjen sadrzaj"),
     USER_NOT_FOUND("Prvo registruj korisnika"),
