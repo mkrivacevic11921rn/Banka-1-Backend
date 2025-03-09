@@ -2,6 +2,7 @@ package com.banka1.banking.services;
 
 import com.banka1.banking.dto.CreateCardDTO;
 import com.banka1.banking.dto.UpdateCardDTO;
+import com.banka1.banking.dto.UpdateCardLimitDTO;
 import com.banka1.banking.mapper.CardMapper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.AuthorizedPerson;
@@ -87,6 +88,14 @@ public class CardService {
             case DEACTIVATED -> card.setActive(false);
         }
 
+        cardRepository.save(card);
+    }
+
+    public void updateCardLimit(Long cardId, UpdateCardLimitDTO updateCardLimitDTO) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new RuntimeException("Kartica nije pronađena"));
+
+        card.setCardLimit(updateCardLimitDTO.getNewLimit());
         cardRepository.save(card);
     }
 }
