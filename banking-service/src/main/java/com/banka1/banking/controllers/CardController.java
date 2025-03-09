@@ -3,6 +3,7 @@ package com.banka1.banking.controllers;
 import com.banka1.banking.aspect.CardAuthorization;
 import com.banka1.banking.dto.CreateCardDTO;
 import com.banka1.banking.dto.UpdateCardDTO;
+import com.banka1.banking.dto.UpdateCardLimitDTO;
 import com.banka1.banking.models.Card;
 import com.banka1.banking.services.CardService;
 import com.banka1.banking.utils.ResponseMessage;
@@ -111,6 +112,24 @@ public class CardController {
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", ResponseMessage.CARD_UPDATED_SUCCESS.toString()), null);
         } catch (RuntimeException e) {
             log.error("Greška prilikom ažuriranja kartice: ", e);
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
+    }
+
+    @PatchMapping("/{card_id}/limit")
+    @Operation(summary = "Promena limita kartice", description = "Omogućava korisniku da promeni limit kartice.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Limit kartice uspešno promenjen."),
+            @ApiResponse(responseCode = "400", description = "Nevalidni podaci."),
+            @ApiResponse(responseCode = "404", description = "Kartica nije pronađena.")
+    })
+    @CardAuthorization
+    public ResponseEntity<?> updateCardLimit(@PathVariable("card_id") Long cardId, @RequestBody UpdateCardLimitDTO updateCardLimitDTO) {
+        try {
+            cardService.updateCardLimit(cardId, updateCardLimitDTO);
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Limit kartice uspešno ažuriran."), null);
+        } catch (RuntimeException e) {
+            log.error("Greška prilikom ažuriranja limita kartice: ", e);
             return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
     }
