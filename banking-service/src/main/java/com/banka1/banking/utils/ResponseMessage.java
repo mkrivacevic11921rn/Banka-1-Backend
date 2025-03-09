@@ -19,7 +19,8 @@ public enum ResponseMessage {
     CARD_NOT_FOUND("Nema kartica za traženi račun."),
     CARD_CREATED_SUCCESS("Kartica uspešno kreirana."),
     CARD_UPDATED_SUCCESS("Kartica uspešno ažurirana."),
-    INVALID_REQUEST("Nevalidni podaci.");
+    INVALID_REQUEST("Nevalidni podaci."),
+    WRONG_NUM_OF_INSTALLMENTS("Netacan broj rata");
 
     private final String message;
 

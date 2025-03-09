@@ -47,8 +47,9 @@ public class LoanController {
         }
 
         if (newLoan == null) {
-            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.SEE_OTHER), false, null, ResponseMessage.ACCOUNT_NOT_FOUND.getMessage());
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.SEE_OTHER), false, null, ResponseMessage.WRONG_NUM_OF_INSTALLMENTS.getMessage());
         }
+
         Map<String, Object> response = new HashMap<>();
         response.put("broj racuna", newLoan.getId());
         response.put("message", "Kredit uspešno kreiran.\n");

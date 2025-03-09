@@ -1,5 +1,6 @@
 package com.banka1.banking.dto.request;
 
+import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.models.helper.InterestType;
 import com.banka1.banking.models.helper.LoanType;
 import jakarta.validation.constraints.NotNull;
@@ -16,6 +17,7 @@ public class CreateLoanDTO {
     private Double duration;
     private Long allowedDate;
     private Double monthlyPayment;
+    private CurrencyType currencyType;
     @NotNull
     private Long accountId; //ne mozemo bas da trazimo Account type ali mozemo da povezemo sa Acc repo i da vadimo odatle
 }
