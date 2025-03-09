@@ -1,6 +1,6 @@
 package com.banka1.banking.models.helper;
 
-public enum LoanStatus {
+public enum PaymentStatus {
     PENDING, //na cekanju
     APPROVED, // odobren
     DENIED, //odbijen

@@ -2,7 +2,7 @@ package com.banka1.banking.models;
 
 import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.models.helper.InterestType;
-import com.banka1.banking.models.helper.LoanStatus;
+import com.banka1.banking.models.helper.PaymentStatus;
 import com.banka1.banking.models.helper.LoanType;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -33,7 +33,7 @@ public class Loan {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private LoanStatus loanStatus;
+    private PaymentStatus paymentStatus;
 
     @Column(nullable = false)
     private Double nominalRate;
