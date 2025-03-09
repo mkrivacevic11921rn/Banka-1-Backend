@@ -8,6 +8,7 @@ import lombok.Data;
 
 @Data
 public class CreateLoanDTO {
+    private String loanReason;
     private LoanType loanType;
     private Integer numberOfInstallments;
     private InterestType interestType;
