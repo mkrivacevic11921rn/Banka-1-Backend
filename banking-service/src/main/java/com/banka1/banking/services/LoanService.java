@@ -2,6 +2,7 @@ package com.banka1.banking.services;
 
 import com.banka1.banking.dto.CustomerDTO;
 import com.banka1.banking.dto.request.CreateLoanDTO;
+import com.banka1.banking.dto.request.LoanUpdateDTO;
 import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Loan;
@@ -91,5 +92,16 @@ public class LoanService {
                 orElseThrow(() -> new RuntimeException("Kredit nije pronadjen"));
         if (!loan.getAccount().getOwnerID().equals(ownerId)) {return null;}
         return loan;
+    }
+
+    public Loan updateLoanRequest(Long loanId, LoanUpdateDTO loanUpdateDTO) {
+        Loan loan = loanRepository.getById(loanId);
+        if (loan == null) {return null;}
+        if (loanUpdateDTO.getApproved()) {
+            loan.setPaymentStatus(PaymentStatus.APPROVED);
+        } else {
+            loan.setPaymentStatus(PaymentStatus.DENIED);
+        }
+        return loanRepository.save(loan);
     }
 }

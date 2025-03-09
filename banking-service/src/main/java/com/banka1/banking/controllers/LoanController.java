@@ -4,6 +4,8 @@ import com.banka1.banking.aspect.AccountAuthorization;
 import com.banka1.banking.aspect.CardAuthorization;
 import com.banka1.banking.dto.request.CreateAccountDTO;
 import com.banka1.banking.dto.request.CreateLoanDTO;
+import com.banka1.banking.dto.request.LoanUpdateDTO;
+import com.banka1.banking.dto.request.UserUpdateAccountDTO;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Card;
 import com.banka1.banking.models.Loan;
@@ -59,6 +61,7 @@ public class LoanController {
 
         return ResponseTemplate.create(ResponseEntity.status(HttpStatus.CREATED), true, response, null);
     }
+
 /// samo zaposleni imaju pristup
     @GetMapping("/pending")
     @Operation(summary = "Pregled svih kredita na cekanju",
@@ -67,7 +70,7 @@ public class LoanController {
             @ApiResponse(responseCode = "200", description = "lista kredita."),
             @ApiResponse(responseCode = "404", description = "nema kredita na cekanju.")
     })
-//    @AccountAuthorization(employeeOnlyOperation = true)
+//    @Authorization(employeeOnlyOperation = true)
     public ResponseEntity<?> getPendingLoans() {
         try {
             List<Loan> loans = loanService.getPendingLoans();
@@ -88,8 +91,9 @@ public class LoanController {
             @ApiResponse(responseCode = "200", description = "lista kredita."),
             @ApiResponse(responseCode = "404", description = "nema kredita na cekanju.")
     })
-//    @AccountAuthorization(employeeOnlyOperation = true)
-    public ResponseEntity<?> getAllUserLoans(@PathVariable("user_id") Long ownerId) {
+//    @Authorization(employeeOnlyOperation = true)
+    public ResponseEntity<?> getAllUserLoans(
+            @PathVariable("user_id") Long ownerId) {
         try {
             List<Loan> loans = loanService.getAllUserLoans(ownerId);
             if (loans == null) {
@@ -113,7 +117,8 @@ public class LoanController {
             @ApiResponse(responseCode = "200", description = "lista kredita."),
             @ApiResponse(responseCode = "404", description = "nema kredita na cekanju.")
     })
-    public ResponseEntity<?> getLoansByUserId(@RequestHeader(value = "Authorization", required = false) String authorization) {
+    public ResponseEntity<?> getLoansByUserId(
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
         try {
             Long ownerId = 3L;//authService.parseToken(authService.getToken(authorization)).get("id", Long.class);
             List<Loan> loans = loanService.getAllUserLoans(ownerId);
@@ -138,7 +143,9 @@ public class LoanController {
             @ApiResponse(responseCode = "200", description = "lista kredita."),
             @ApiResponse(responseCode = "404", description = "nema kredita na cekanju.")
     })
-    public ResponseEntity<?> getLoanDetails(@PathVariable("loan_id") Long loanId/*, @RequestHeader(value = "Authorization", required = false) String authorization*/) {
+    public ResponseEntity<?> getLoanDetails(
+            @PathVariable("loan_id") Long loanId
+            /*, @RequestHeader(value = "Authorization", required = false) String authorization*/) {
         try {
             Long ownerId = 3L;//authService.parseToken(authService.getToken(authorization)).get("id", Long.class);
             Loan loan = loanService.getLoanDetails(ownerId, loanId);
@@ -151,4 +158,31 @@ public class LoanController {
             return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
     }
+
+/// samo zaposleni ima pristup
+    @PutMapping("/admin/{loan_id}/approve")
+    @Operation(summary = "Ažuriranje zahteva za kredit od strane zaposlenog",
+            description = "Omogućava zaposlenima da ažuriraju stanje kredita.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Kredit uspešno ažuriran"),
+            @ApiResponse(responseCode = "404", description = "Kredit nije pronađen"),
+            @ApiResponse(responseCode = "400", description = "Nevalidni podaci za ažuriranje")
+    })
+    //    @Authorization(employeeOnlyOperation = true)
+    public ResponseEntity<?> updateLoanRequest(
+            @PathVariable("loan_id") Long loanId,
+            @RequestBody LoanUpdateDTO loanUpdateDTO) {
+        try {
+            Loan updatedLoan = loanService.updateLoanRequest(loanId, loanUpdateDTO);
+            if (updatedLoan == null) {
+                return ResponseTemplate.create(ResponseEntity.badRequest(), false,
+                        Map.of( "message", ResponseMessage.INVALID_REQUEST), null);
+            }
+            return ResponseTemplate.create(ResponseEntity.ok(), true,
+                    Map.of( "message", ResponseMessage.UPDATED, "data", updatedLoan), null);
+        } catch (RuntimeException e) {
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
+    }
+
 }
