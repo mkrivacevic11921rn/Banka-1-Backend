@@ -43,7 +43,6 @@ public class LoanService {
         newLoan.setCreatedDate(Instant.now().getEpochSecond());
 
         newLoan = loanRepository.save(newLoan);
-
         return newLoan;
     }
 }
