@@ -34,7 +34,9 @@ public class LoanService {
     }
 
     public Loan createLoan(@Valid CreateLoanDTO createLoanDTO) {
-        Account account = accountRepository.findById(createLoanDTO.getAccountId()).orElse(null);
+        Account account = accountRepository.findById(createLoanDTO.getAccountId())
+                .orElseThrow(() -> new RuntimeException("Racun nije pronadjen"));
+
         if (account == null) {return null;}
 
         Loan newLoan = modelMapper.map(createLoanDTO, Loan.class);
