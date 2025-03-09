@@ -1,9 +1,11 @@
 package com.banka1.banking.controllers;
 
 import com.banka1.banking.aspect.AccountAuthorization;
+import com.banka1.banking.aspect.CardAuthorization;
 import com.banka1.banking.dto.request.CreateAccountDTO;
 import com.banka1.banking.dto.request.CreateLoanDTO;
 import com.banka1.banking.models.Account;
+import com.banka1.banking.models.Card;
 import com.banka1.banking.models.Loan;
 import com.banka1.banking.services.LoanService;
 import com.banka1.banking.services.implementation.AuthService;
@@ -20,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -55,5 +58,25 @@ public class LoanController {
         response.put("message", "Kredit uspešno kreiran.\n");
 
         return ResponseTemplate.create(ResponseEntity.status(HttpStatus.CREATED), true, response, null);
+    }
+/// samo zaposleni imaju pristup
+    @GetMapping("/pending")
+    @Operation(summary = "Pregled svih kredita na cekanju",
+            description = "Pregled svih kredita za koje su korisnici podneli zahtev a koji jos uvek nisu odobreni/odbijeni")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "lista kredita."),
+            @ApiResponse(responseCode = "404", description = "nema kredita na cekanju.")
+    })
+//    @AccountAuthorization(employeeOnlyOperation = true)
+    public ResponseEntity<?> getPendingLoans() {
+        try {
+            List<Loan> loans = loanService.getPendingLoans();
+            if (loans.isEmpty()) {
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, ResponseMessage.NO_DATA.toString());
+            }
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("loans", loans), null);
+        } catch (Exception e) {
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
     }
 }

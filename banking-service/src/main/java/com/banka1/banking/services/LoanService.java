@@ -15,6 +15,7 @@ import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
 public class LoanService {
@@ -63,5 +64,9 @@ public class LoanService {
 
         newLoan = loanRepository.save(newLoan);
         return newLoan;
+    }
+
+    public List<Loan> getPendingLoans() {
+        return loanRepository.findByPaymentStatus(PaymentStatus.PENDING);
     }
 }

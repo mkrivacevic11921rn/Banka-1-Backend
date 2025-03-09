@@ -20,7 +20,8 @@ public enum ResponseMessage {
     CARD_CREATED_SUCCESS("Kartica uspešno kreirana."),
     CARD_UPDATED_SUCCESS("Kartica uspešno ažurirana."),
     INVALID_REQUEST("Nevalidni podaci."),
-    WRONG_NUM_OF_INSTALLMENTS("Netacan broj rata");
+    WRONG_NUM_OF_INSTALLMENTS("Netacan broj rata"),
+    NO_DATA("Nema podataka u sistemu");
 
     private final String message;
 
