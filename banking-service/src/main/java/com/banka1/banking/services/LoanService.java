@@ -21,15 +21,13 @@ public class LoanService {
     private final JmsTemplate jmsTemplate;
     private final MessageHelper messageHelper;
     private final ModelMapper modelMapper;
-    private final String destinationEmail;
     private final AccountRepository accountRepository;
 
-    public LoanService(LoanRepository loanRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, @Value("${destination.email}") String destinationEmail, AccountRepository accountRepository) {
+    public LoanService(LoanRepository loanRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, AccountRepository accountRepository) {
         this.loanRepository = loanRepository;
         this.jmsTemplate = jmsTemplate;
         this.messageHelper = messageHelper;
         this.modelMapper = modelMapper;
-        this.destinationEmail = destinationEmail;
         this.accountRepository = accountRepository;
     }
 
