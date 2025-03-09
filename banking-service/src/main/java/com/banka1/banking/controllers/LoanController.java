@@ -34,7 +34,7 @@ public class LoanController {
     @Autowired
     private AuthService authService;
 
-    @PostMapping("/request")
+    @PostMapping("")
     @Operation(summary = "Kreiranje zahteva za kredit",
             description = "Dodaje novi kredit u sistem i cuva se u bazi pod statusom na cekanju.")
     @ApiResponses({
@@ -81,7 +81,7 @@ public class LoanController {
     }
 
     /// samo zaposleni imaju pristup
-    @GetMapping("/{owner_id}")
+    @GetMapping("/admin/{user_id}")
     @Operation(summary = "Pregled svih kredita korisnika",
             description = "Pregled svih kredita koje korisnik ima na racunima")
     @ApiResponses({
@@ -89,7 +89,7 @@ public class LoanController {
             @ApiResponse(responseCode = "404", description = "nema kredita na cekanju.")
     })
 //    @AccountAuthorization(employeeOnlyOperation = true)
-    public ResponseEntity<?> getAllUserLoans(@PathVariable("owner_id") Long ownerId) {
+    public ResponseEntity<?> getAllUserLoans(@PathVariable("user_id") Long ownerId) {
         try {
             List<Loan> loans = loanService.getAllUserLoans(ownerId);
             if (loans == null) {
@@ -101,6 +101,52 @@ public class LoanController {
                         ResponseMessage.NO_DATA.toString());
             }
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("loans", loans), null);
+        } catch (Exception e) {
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
+    }
+
+    @GetMapping("/")
+    @Operation(summary = "Pregled svih kredita korisnika",
+            description = "Pregled svih kredita korisnika")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "lista kredita."),
+            @ApiResponse(responseCode = "404", description = "nema kredita na cekanju.")
+    })
+    public ResponseEntity<?> getLoansByUserId(@RequestHeader(value = "Authorization", required = false) String authorization) {
+        try {
+            Long ownerId = 3L;//authService.parseToken(authService.getToken(authorization)).get("id", Long.class);
+            List<Loan> loans = loanService.getAllUserLoans(ownerId);
+            if (loans == null) {
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
+                        ResponseMessage.ACCOUNTS_NOT_FOUND.toString());
+            }
+            else if (loans.isEmpty()) {
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
+                        ResponseMessage.NO_DATA.toString());
+            }
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("loans", loans), null);
+        } catch (Exception e) {
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
+    }
+
+    @GetMapping("/{loan_id}")
+    @Operation(summary = "Pregled svih kredita korisnika",
+            description = "Pregled svih kredita korisnika")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "lista kredita."),
+            @ApiResponse(responseCode = "404", description = "nema kredita na cekanju.")
+    })
+    public ResponseEntity<?> getLoanDetails(@PathVariable("loan_id") Long loanId/*, @RequestHeader(value = "Authorization", required = false) String authorization*/) {
+        try {
+            Long ownerId = 3L;//authService.parseToken(authService.getToken(authorization)).get("id", Long.class);
+            Loan loan = loanService.getLoanDetails(ownerId, loanId);
+            if (loan == null) {
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
+                        ResponseMessage.INVALID_REQUEST.toString());
+            }
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("loan", loan), null);
         } catch (Exception e) {
             return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }

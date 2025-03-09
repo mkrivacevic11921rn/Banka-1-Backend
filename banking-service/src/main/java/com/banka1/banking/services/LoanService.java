@@ -85,4 +85,11 @@ public class LoanService {
     public List<Loan> getAllLoans(Account account) {
         return loanRepository.getLoansByAccount(account);
     }
+
+    public Loan getLoanDetails(Long ownerId, Long loanId) {
+        Loan loan = loanRepository.findById(loanId).
+                orElseThrow(() -> new RuntimeException("Kredit nije pronadjen"));
+        if (!loan.getAccount().getOwnerID().equals(ownerId)) {return null;}
+        return loan;
+    }
 }
