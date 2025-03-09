@@ -79,4 +79,30 @@ public class LoanController {
             return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
     }
+
+    /// samo zaposleni imaju pristup
+    @GetMapping("/{owner_id}")
+    @Operation(summary = "Pregled svih kredita korisnika",
+            description = "Pregled svih kredita koje korisnik ima na racunima")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "lista kredita."),
+            @ApiResponse(responseCode = "404", description = "nema kredita na cekanju.")
+    })
+//    @AccountAuthorization(employeeOnlyOperation = true)
+    public ResponseEntity<?> getAllUserLoans(@PathVariable("owner_id") Long ownerId) {
+        try {
+            List<Loan> loans = loanService.getAllUserLoans(ownerId);
+            if (loans == null) {
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
+                        ResponseMessage.ACCOUNTS_NOT_FOUND.toString());
+            }
+            else if (loans.isEmpty()) {
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
+                        ResponseMessage.NO_DATA.toString());
+            }
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("loans", loans), null);
+        } catch (Exception e) {
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
+    }
 }

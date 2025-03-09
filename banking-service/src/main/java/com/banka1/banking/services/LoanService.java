@@ -1,5 +1,6 @@
 package com.banka1.banking.services;
 
+import com.banka1.banking.dto.CustomerDTO;
 import com.banka1.banking.dto.request.CreateLoanDTO;
 import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
@@ -15,6 +16,7 @@ import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -68,5 +70,19 @@ public class LoanService {
 
     public List<Loan> getPendingLoans() {
         return loanRepository.findByPaymentStatus(PaymentStatus.PENDING);
+    }
+
+    public List<Loan> getAllUserLoans(Long ownerId) {
+        List<Account> accounts = accountRepository.findByOwnerID(ownerId);
+        if (accounts.isEmpty()) {return null;}
+        List<Loan> loans = new ArrayList<>();
+        for (Account acc : accounts) {
+            loans.addAll(getAllLoans(acc));
+        }
+        return loans;
+    } //mozda da bude mapa sa parovima racun-lista kredita ?
+
+    public List<Loan> getAllLoans(Account account) {
+        return loanRepository.getLoansByAccount(account);
     }
 }
