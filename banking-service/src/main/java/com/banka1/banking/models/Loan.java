@@ -1,5 +1,9 @@
 package com.banka1.banking.models;
 
+import com.banka1.banking.models.helper.CurrencyType;
+import com.banka1.banking.models.helper.InterestType;
+import com.banka1.banking.models.helper.LoanStatus;
+import com.banka1.banking.models.helper.LoanType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,7 +17,23 @@ public class Loan {
     private Long id;
 
     @Column(nullable = false)
-    private String name;
+    @Enumerated(EnumType.STRING)
+    private LoanType loanType;
+
+    @Column
+    private Integer numberOfInstallments;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private CurrencyType currencyType;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private InterestType interestType;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private LoanStatus loanStatus;
 
     @Column(nullable = false)
     private Double nominalRate;
