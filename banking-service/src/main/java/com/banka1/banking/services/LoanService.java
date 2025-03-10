@@ -83,12 +83,12 @@ public class LoanService {
         if (accounts.isEmpty()) {return null;}
         List<Loan> loans = new ArrayList<>();
         for (Account acc : accounts) {
-            loans.addAll(getAllLoans(acc));
+            loans.addAll(getAllLoansForAccount(acc));
         }
         return loans;
     } //mozda da bude mapa sa parovima racun-lista kredita ?
 
-    public List<Loan> getAllLoans(Account account) {
+    public List<Loan> getAllLoansForAccount(Account account) {
         return loanRepository.getLoansByAccount(account);
     }
 
@@ -121,5 +121,9 @@ public class LoanService {
         jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
 
         return loanRepository.save(loan);
+    }
+
+    public List<Loan> getAllLoans() {
+        return loanRepository.findAll();
     }
 }

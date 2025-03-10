@@ -131,6 +131,29 @@ public class LoanController {
             return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
     }
+/// samo zaposleni
+    @GetMapping("/admin")
+    @Operation(summary = "Pregled svih kredita jednog korisnika",
+            description = "Pregled svih kredita koje korisnik ima vezane za svoje racune")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "lista kredita."),
+            @ApiResponse(responseCode = "404", description = "nema kredita na cekanju.")
+    })
+    @LoanAuthorization(employeeOnlyOperation = true)
+    public ResponseEntity<?> getAllLoans(
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        try {
+            List<Loan> loans = loanService.getAllLoans();
+            if (loans == null || loans.isEmpty()) {
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
+                        ResponseMessage.NO_DATA.toString());
+            }
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("loans", loans), null);
+        } catch (Exception e) {
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
+    }
+
 
     @GetMapping("/{loan_id}")
     @Operation(summary = "Pregled detalja kredita korisnika",
