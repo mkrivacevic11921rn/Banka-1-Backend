@@ -2,8 +2,10 @@ package com.banka1.banking.aspect;
 
 import com.banka1.banking.dto.*;
 import com.banka1.banking.dto.request.CreateAccountDTO;
+import com.banka1.banking.dto.request.CreateLoanDTO;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Card;
+import com.banka1.banking.models.Loan;
 import com.banka1.banking.models.Receiver;
 import com.banka1.banking.services.*;
 import com.banka1.banking.services.implementation.AuthService;
@@ -134,6 +136,10 @@ public class AuthAspect {
                     if(!Objects.equals(accountService.findById(((CreateCardDTO) values[i]).getAccountID()).getOwnerID(), userId))
                         return false;
                     encounteredDto = true;
+                } else if(types[i] == CreateLoanDTO.class) {
+                    if(!Objects.equals(accountService.findById(((CreateLoanDTO) values[i]).getAccountId()).getOwnerID(), userId))
+                        return false;
+                    encounteredDto = true;
                 }
             }
             return encounteredDto;
@@ -232,17 +238,14 @@ public class AuthAspect {
                 if(accountDataOk(methodSignature, joinPoint, claims.get("id", Long.class)))
                     return joinPoint.proceed();
 
-                // krediti ne postoje trenutno?
-                /*
                 OptionalInt maybeLoanIdIndex = IntStream.range(0, methodSignature.getParameterNames().length).filter(i -> methodSignature.getParameterNames()[i].compareTo("loanId") == 0).findFirst();
                 if(maybeLoanIdIndex.isPresent()) {
-                    Loan loan = loanService.findById(Long.valueOf(joinPoint.getArgs()[maybeLoanIdIndex.getAsInt()].toString()));
+                    Loan loan = loanService.getLoanDetails(Long.valueOf(joinPoint.getArgs()[maybeLoanIdIndex.getAsInt()].toString()));
                     if(loan != null) {
                         if (Objects.equals(claims.get("id", Long.class), loan.getAccount().getOwnerID()))
                             return joinPoint.proceed();
                     }
                 }
-                 */
             }
 
             // ako je admin

@@ -92,17 +92,15 @@ public class LoanService {
         return loanRepository.getLoansByAccount(account);
     }
 
-    public Loan getLoanDetails(Long ownerId, Long loanId) {
-        Loan loan = loanRepository.findById(loanId).
+    public Loan getLoanDetails(Long loanId) {
+        return loanRepository.findById(loanId).
                 orElseThrow(() -> new RuntimeException("Kredit nije pronadjen"));
-        if (!loan.getAccount().getOwnerID().equals(ownerId)) {return null;}
-        return loan;
     }
 
     public Loan updateLoanRequest(Long loanId, LoanUpdateDTO loanUpdateDTO) {
-        Loan loan = loanRepository.getById(loanId);
-        String message = "";
+        Loan loan = loanRepository.findById(loanId).orElse(null);
         if (loan == null) {return null;}
+        String message = "";
         if (loanUpdateDTO.getApproved()) {
             loan.setPaymentStatus(PaymentStatus.APPROVED);
             message = "Vaš kredit je odobren.";
