@@ -1,13 +1,6 @@
 package com.banka1.banking.controllers;
-
-import com.banka1.banking.aspect.AccountAuthorization;
-import com.banka1.banking.aspect.CardAuthorization;
-import com.banka1.banking.dto.request.CreateAccountDTO;
 import com.banka1.banking.dto.request.CreateLoanDTO;
 import com.banka1.banking.dto.request.LoanUpdateDTO;
-import com.banka1.banking.dto.request.UserUpdateAccountDTO;
-import com.banka1.banking.models.Account;
-import com.banka1.banking.models.Card;
 import com.banka1.banking.models.Loan;
 import com.banka1.banking.services.LoanService;
 import com.banka1.banking.services.implementation.AuthService;
@@ -52,7 +45,8 @@ public class LoanController {
         }
 
         if (newLoan == null) {
-            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.SEE_OTHER), false, null, ResponseMessage.WRONG_NUM_OF_INSTALLMENTS.getMessage());
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.SEE_OTHER), false, null,
+                    ResponseMessage.WRONG_NUM_OF_INSTALLMENTS.getMessage());
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -111,8 +105,8 @@ public class LoanController {
     }
 
     @GetMapping("/")
-    @Operation(summary = "Pregled svih kredita korisnika",
-            description = "Pregled svih kredita korisnika")
+    @Operation(summary = "Pregled svih kredita jednog korisnika",
+            description = "Pregled svih kredita koje korisnik ima vezane za svoje racune")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "lista kredita."),
             @ApiResponse(responseCode = "404", description = "nema kredita na cekanju.")
@@ -137,8 +131,8 @@ public class LoanController {
     }
 
     @GetMapping("/{loan_id}")
-    @Operation(summary = "Pregled svih kredita korisnika",
-            description = "Pregled svih kredita korisnika")
+    @Operation(summary = "Pregled detalja kredita korisnika",
+            description = "Pregled detalja jednog od kredita korisnika")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "lista kredita."),
             @ApiResponse(responseCode = "404", description = "nema kredita na cekanju.")
@@ -151,7 +145,30 @@ public class LoanController {
             Loan loan = loanService.getLoanDetails(ownerId, loanId);
             if (loan == null) {
                 return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
-                        ResponseMessage.INVALID_REQUEST.toString());
+                        ResponseMessage.NOT_THE_OWNER.toString());
+            }
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("loan", loan), null);
+        } catch (Exception e) {
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
+    }
+
+    @GetMapping("/admin/{user_id}/{loan_id}")
+    @Operation(summary = "Pregled detalja kredita korisnika",
+            description = "Pregled detalja jednog od kredita korisnika")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "lista kredita."),
+            @ApiResponse(responseCode = "404", description = "nema kredita na cekanju.")
+    })
+    //    @Authorization(employeeOnlyOperation = true)
+    public ResponseEntity<?> getLoanDetails(
+            @PathVariable("user_id") Long userId,
+            @PathVariable("loan_id") Long loanId) {
+        try {
+            Loan loan = loanService.getLoanDetails(userId, loanId);
+            if (loan == null) {
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
+                        ResponseMessage.NOT_THE_OWNER.toString());
             }
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("loan", loan), null);
         } catch (Exception e) {
@@ -176,7 +193,7 @@ public class LoanController {
             Loan updatedLoan = loanService.updateLoanRequest(loanId, loanUpdateDTO);
             if (updatedLoan == null) {
                 return ResponseTemplate.create(ResponseEntity.badRequest(), false,
-                        Map.of( "message", ResponseMessage.INVALID_REQUEST), null);
+                        Map.of( "message", ResponseMessage.LOAN_NOT_FOUND), null);
             }
             return ResponseTemplate.create(ResponseEntity.ok(), true,
                     Map.of( "message", ResponseMessage.UPDATED, "data", updatedLoan), null);

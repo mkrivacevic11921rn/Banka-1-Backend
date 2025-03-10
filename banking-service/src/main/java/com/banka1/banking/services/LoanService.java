@@ -1,6 +1,7 @@
 package com.banka1.banking.services;
 
 import com.banka1.banking.dto.CustomerDTO;
+import com.banka1.banking.dto.NotificationDTO;
 import com.banka1.banking.dto.request.CreateLoanDTO;
 import com.banka1.banking.dto.request.LoanUpdateDTO;
 import com.banka1.banking.listener.MessageHelper;
@@ -28,14 +29,16 @@ public class LoanService {
     private final ModelMapper modelMapper;
     private final String destinationEmail;
     private final AccountRepository accountRepository;
+    private final UserServiceCustomer userServiceCustomer;
 
-    public LoanService(LoanRepository loanRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, @Value("${destination.email}") String destinationEmail, AccountRepository accountRepository) {
+    public LoanService(LoanRepository loanRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, @Value("${destination.email}") String destinationEmail, AccountRepository accountRepository, UserServiceCustomer userServiceCustomer) {
         this.loanRepository = loanRepository;
         this.jmsTemplate = jmsTemplate;
         this.messageHelper = messageHelper;
         this.modelMapper = modelMapper;
         this.destinationEmail = destinationEmail;
         this.accountRepository = accountRepository;
+        this.userServiceCustomer = userServiceCustomer;
     }
 
     public Loan createLoan(@Valid CreateLoanDTO createLoanDTO) {
@@ -98,12 +101,27 @@ public class LoanService {
 
     public Loan updateLoanRequest(Long loanId, LoanUpdateDTO loanUpdateDTO) {
         Loan loan = loanRepository.getById(loanId);
+        String message = "";
         if (loan == null) {return null;}
         if (loanUpdateDTO.getApproved()) {
             loan.setPaymentStatus(PaymentStatus.APPROVED);
+            message = "Vaš kredit je odobren.";
         } else {
             loan.setPaymentStatus(PaymentStatus.DENIED);
+            message = "Vaš kredit je odbijen.";
         }
+
+        CustomerDTO owner = userServiceCustomer.getCustomerById(loan.getAccount().getOwnerID());
+        NotificationDTO emailDTO = new NotificationDTO();
+        emailDTO.setSubject("Promena statusa kredita");
+        emailDTO.setEmail(owner.getEmail());
+        emailDTO.setMessage(message+"\n"+loanUpdateDTO.getReason());
+        emailDTO.setFirstName(owner.getFirstName());
+        emailDTO.setLastName(owner.getLastName());
+        emailDTO.setType("email");
+
+        jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
+
         return loanRepository.save(loan);
     }
 }

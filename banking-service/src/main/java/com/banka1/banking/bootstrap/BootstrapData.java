@@ -496,27 +496,25 @@ public class BootstrapData implements CommandLineRunner {
         receiverJovanEUR2.setLastName("Jovanovic");
         receiverRepository.save(receiverJovanEUR2);
 
-        if (loanRepository.count() == 0) {
 
-            Loan loan = new Loan();
-            loan.setLoanType(LoanType.CASH);
-            loan.setCurrencyType(CurrencyType.RSD);
-            loan.setInterestType(InterestType.FIXED);
-            loan.setPaymentStatus(PaymentStatus.PENDING);
-            loan.setNominalRate(5.5);
-            loan.setEffectiveRate(6.0);
-            loan.setLoanAmount(500000.0);
-            loan.setDuration(24); // 24 months
-            loan.setCreatedDate(System.currentTimeMillis());
-            loan.setAllowedDate(System.currentTimeMillis() + (7 * 24 * 60 * 60 * 1000L)); // Allowed in 7 days
-            loan.setMonthlyPayment(22000.0);
-            loan.setNextPaymentDate(System.currentTimeMillis() + (30L * 24 * 60 * 60 * 1000)); // Next payment in a month
-            loan.setRemainingAmount(500000.0);
-            loan.setLoanReason("Home renovation");
-            loan.setAccount(jovanTekuci);
+        Loan loan = new Loan();
+        loan.setLoanType(LoanType.CASH);
+        loan.setCurrencyType(CurrencyType.RSD);
+        loan.setInterestType(InterestType.FIXED);
+        loan.setPaymentStatus(PaymentStatus.PENDING);
+        loan.setNominalRate(5.5);
+        loan.setEffectiveRate(6.0);
+        loan.setLoanAmount(500000.0);
+        loan.setDuration(24); // 24 months
+        loan.setCreatedDate(System.currentTimeMillis());
+        loan.setAllowedDate(System.currentTimeMillis() + (7 * 24 * 60 * 60 * 1000L)); // Allowed in 7 days
+        loan.setMonthlyPayment(22000.0);
+        loan.setNextPaymentDate(System.currentTimeMillis() + (30L * 24 * 60 * 60 * 1000)); // Next payment in a month
+        loan.setRemainingAmount(500000.0);
+        loan.setLoanReason("Home renovation");
+        loan.setAccount(jovanTekuci);
 
-            loanRepository.save(loan);
-        }
+        loanRepository.save(loan);
 
         System.out.println("============== Data Loaded ==============");
     }
