@@ -35,7 +35,7 @@ public class LoanController {
     @Autowired
     private LoanRepository loanRepository;
     @Autowired
-    private InstallmentRepository installmentRepository;
+    private InstallmentsRepository installmentRepository;
 
     @PostMapping("/")
     @Operation(summary = "Kreiranje zahteva za kredit",
