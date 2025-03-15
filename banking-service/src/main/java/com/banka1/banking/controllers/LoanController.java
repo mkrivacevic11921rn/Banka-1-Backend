@@ -35,7 +35,7 @@ public class LoanController {
     @Autowired
     private LoanRepository loanRepository;
     @Autowired
-    private InstallmentsRepository installmentsRepository;
+    private InstallmentsRepository installmentRepository;
 
     @PostMapping("/")
     @Operation(summary = "Kreiranje zahteva za kredit",
@@ -59,7 +59,7 @@ public class LoanController {
         }
 
         Map<String, Object> response = new HashMap<>();
-        response.put("broj racuna", newLoan.getId());
+        response.put("account_number", newLoan.getAccount().getId());
         response.put("message", "Kredit uspešno kreiran.\n");
 
         return ResponseTemplate.create(ResponseEntity.status(HttpStatus.CREATED), true, response, null);
