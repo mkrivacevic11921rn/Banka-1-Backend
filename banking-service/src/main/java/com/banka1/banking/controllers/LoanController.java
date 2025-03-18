@@ -297,5 +297,20 @@ public class LoanController {
         }
     }
 
+    @GetMapping("/start_cron")
+    @Operation(summary = "Vestacko pokretanje cron joba")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "izvrsen"),
+            @ApiResponse(responseCode = "404", description = "nije")
+    })
+    @LoanAuthorization(employeeOnlyOperation = true)
+    public ResponseEntity<?> getRemainingInstallments() {
+        try {
+            loanService.processLoanPayments();
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("cron", "success"), null);
+        } catch (Exception e) {
+            return ResponseTemplate.create(ResponseEntity.badRequest(), false, Map.of("cron", "failed"), e.getMessage());
+        }
+    }
 
 }
