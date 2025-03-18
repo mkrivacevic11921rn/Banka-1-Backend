@@ -1,6 +1,7 @@
 package main
 
 import (
+	"banka1.com/routes"
 	"os"
 
 	"banka1.com/db"
@@ -19,6 +20,8 @@ func main() {
 	db.Init()
 
 	app := fiber.New()
+
+	routes.Setup(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		response := types.Response{
