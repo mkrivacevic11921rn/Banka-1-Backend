@@ -18,6 +18,7 @@ func main() {
 	}
 
 	db.Init()
+	db.StartScheduler()
 
 	app := fiber.New()
 
