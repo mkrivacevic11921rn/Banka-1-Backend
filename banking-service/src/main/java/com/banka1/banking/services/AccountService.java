@@ -85,6 +85,7 @@ public class AccountService {
         account.setMonthlyMaintenanceFee(0.0);
 
         account.setAccountNumber(generateAccountNumber(account));
+        account.setCurrencyType(createAccountDTO.getCurrency());
 
         account.setEmployeeID(employeeId);
 
