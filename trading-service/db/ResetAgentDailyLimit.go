@@ -6,6 +6,7 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
+// cron posao koji resetuje limit agentu svakog dana u 23 59
 func StartScheduler() {
 	c := cron.New()
 	_, err := c.AddFunc("59 23 * * *", func() {

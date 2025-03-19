@@ -3,9 +3,11 @@ package controllers
 import (
 	"banka1.com/db"
 	"banka1.com/dto"
+	"banka1.com/services"
 	"banka1.com/types"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"strings"
 )
 
 type ActuaryController struct {
@@ -24,7 +26,7 @@ func (ac *ActuaryController) CreateActuary(c *fiber.Ctx) error {
 		response := types.Response{
 			Success: false,
 			Data:    nil,
-			Error:   "Format zahteva nije ispravan",
+			Error:   "Format zahteva nije ispravan.",
 		}
 		return c.Status(400).JSON(response)
 	}
@@ -33,7 +35,7 @@ func (ac *ActuaryController) CreateActuary(c *fiber.Ctx) error {
 		response := types.Response{
 			Success: false,
 			Data:    nil,
-			Error:   err.Error(),
+			Error:   "Poslati podaci nisu validni.",
 		}
 		return c.Status(400).JSON(response)
 	}
@@ -51,7 +53,7 @@ func (ac *ActuaryController) CreateActuary(c *fiber.Ctx) error {
 		response := types.Response{
 			Success: false,
 			Data:    nil,
-			Error:   result.Error.Error(),
+			Error:   "Greska u bazi.",
 		}
 		return c.Status(500).JSON(response)
 	}
@@ -73,7 +75,7 @@ func (ac *ActuaryController) GetAllActuaries(c *fiber.Ctx) error {
 		response := types.Response{
 			Success: false,
 			Data:    nil,
-			Error:   result.Error.Error(),
+			Error:   "Greska u bazi.",
 		}
 		return c.Status(500).JSON(response)
 	}
@@ -95,7 +97,7 @@ func (ac *ActuaryController) ChangeAgentLimits(c *fiber.Ctx) error {
 		return c.Status(404).JSON(types.Response{
 			Success: false,
 			Data:    nil,
-			Error:   "Aktuar nije pronađen",
+			Error:   "Aktuar nije pronadjen",
 		})
 	}
 
@@ -129,47 +131,71 @@ func (ac *ActuaryController) ChangeAgentLimits(c *fiber.Ctx) error {
 func (ac *ActuaryController) FilterActuaries(c *fiber.Ctx) error {
 	var actuaries []types.Actuary
 
-	//name := c.Query("name")
-	//surname := c.Query("surname")
-	//email := c.Query("email")
+	name := c.Query("name")
+	surname := c.Query("surname")
+	email := c.Query("email")
 	position := c.Query("position")
 
-	query := db.DB
-
-	//if name != "" {
-	//	query = query.Joins("JOIN users ON users.id = actuaries.user_id").Where("users.name LIKE ?", "%"+name+"%")
-	//}
-	//if surname != "" {
-	//	query = query.Joins("JOIN users ON users.id = actuaries.user_id").Where("users.surname LIKE ?", "%"+surname+"%")
-	//}
-	//if email != "" {
-	//	query = query.Joins("JOIN users ON users.id = actuaries.user_id").Where("users.email LIKE ?", "%"+email+"%")
-	//}
-	if position != "" {
-		query = query.Where("role = ?", position)
-	}
-
-	result := query.Find(&actuaries)
-
+	result := db.DB.Find(&actuaries)
 	if result.Error != nil {
 		return c.Status(500).JSON(types.Response{
 			Success: false,
-			Data:    nil,
-			Error:   result.Error.Error(),
+			Error:   "Greska pri preuzimanju aktuara.",
 		})
 	}
 
-	if len(actuaries) == 0 {
+	actuaryMap := make(map[uint]types.Actuary)
+	for _, act := range actuaries {
+		actuaryMap[act.UserID] = act
+	}
+
+	employees, err := services.GetEmployees()
+	if err != nil {
+		return c.Status(500).JSON(types.Response{
+			Success: false,
+			Error:   "Neuspesno preuzimanje zaposlenih iz user-service-a",
+		})
+	}
+
+	var filteredEmployees []dto.FilteredActuaryDTO
+	for _, emp := range employees {
+		if actuary, exists := actuaryMap[emp.ID]; exists {
+			if (name == "" || containsIgnoreCase(emp.FirstName, name)) &&
+				(surname == "" || containsIgnoreCase(emp.LastName, surname)) &&
+				(email == "" || containsIgnoreCase(emp.Email, email)) &&
+				(position == "" || emp.Position == position) {
+
+				filteredEmployees = append(filteredEmployees, dto.FilteredActuaryDTO{
+					ID:           emp.ID,
+					FirstName:    emp.FirstName,
+					LastName:     emp.LastName,
+					Email:        emp.Email,
+					Role:         actuary.Role,
+					LimitAmount:  actuary.LimitAmount,
+					UsedLimit:    actuary.UsedLimit,
+					NeedApproval: actuary.NeedApproval,
+				})
+			}
+		}
+	}
+
+	if len(filteredEmployees) == 0 {
 		return c.JSON(types.Response{
 			Success: true,
-			Data:    []types.Actuary{},
-			Error:   "",
+			Data:    []dto.FilteredActuaryDTO{},
+			Error:   "Ne postoji ni jedan aktuar.",
 		})
 	}
 
 	return c.JSON(types.Response{
 		Success: true,
-		Data:    actuaries,
+		Data:    filteredEmployees,
 		Error:   "",
 	})
+}
+
+func containsIgnoreCase(source, search string) bool {
+	sourceLower := strings.ToLower(source)
+	searchLower := strings.ToLower(search)
+	return strings.Contains(sourceLower, searchLower)
 }
