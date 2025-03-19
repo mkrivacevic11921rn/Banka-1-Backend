@@ -3,6 +3,7 @@ module banka1.com
 go 1.24.1
 
 require (
+	github.com/Finnhub-Stock-API/finnhub-go/v2 v2.0.19
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-playground/validator/v10 v10.25.0
 	github.com/gofiber/fiber/v2 v2.52.6
@@ -35,6 +36,7 @@ require (
 	golang.org/x/crypto v0.36.0 // indirect
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
 	golang.org/x/net v0.37.0 // indirect
+	golang.org/x/oauth2 v0.28.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	modernc.org/libc v1.61.13 // indirect
