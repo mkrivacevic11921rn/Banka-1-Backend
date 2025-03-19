@@ -85,10 +85,10 @@ func migrate(db *gorm.DB) {
 		&types.Tax{},
 		&types.Exchange{},
 		&types.Listing{},
-        &types.ListingDailyPriceInfo{},
-        &types.Stock{},
-        &types.ForexPair{},
-        &types.FuturesContract{},
-        &types.Option{},
+		&types.ListingDailyPriceInfo{},
+		&types.Stock{},
+		&types.ForexPair{},
+		&types.FuturesContract{},
+		&types.Option{},
 	)
 }
