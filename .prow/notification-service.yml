@@ -5,8 +5,8 @@
 presubmits:
   # PROMENITI PRI KOPIRANJU
   # Name treba da bude u formatu "pull-<naziv-repozitorijuma>-<naziv-servisa>-test", npr.
-  # pull-banka-1-backend-banking-service-test ili pull-banka-2-backend-berza-service-test
-  - name: pull-banka-1-backend-banking-service-test
+  # pull-banka-1-backend-notification-service-test ili pull-banka-2-backend-berza-service-test
+  - name: pull-banka-1-backend-notification-service-test
     # always_run znači da će se job pokrenuti za svaki commit,
     # nezavisno od toga šta taj commit menja.
     # Bolja alternativa je da se job za dati servis pokrene samo
@@ -15,16 +15,16 @@ presubmits:
     # za šta se koristi run_if_changed.
     # always_run: true
     # PROMENITI PRI KOPIRANJU
-    # Ovde treba da zamenite "banking-service" sa nazivom direktorijuma
+    # Ovde treba da zamenite "notification-service" sa nazivom direktorijuma
     # servisa koji testirate.
     # Regex string koji označava koji fajlovi treba da budu promenjeni
     # kako bi se ovaj job pokrenuo. "|" funkcioniše kao "OR" operator,
     # drugim rečima ovaj job će da se pokreni ako se promeni neki fajl u
-    # "banking-service" ili ".prow" direktorijumima, ili se promeni neki
+    # "notification-service" ili ".prow" direktorijumima, ili se promeni neki
     # od "pom.xml" ili "docker-compose.yml" fajlova.
     # Direktorijumi su naznačeni sa "/" na kraju naziva direktorijuma,
-    # npr. "banking-service/".
-    run_if_changed: "(banking-service/|docker-compose.yml|pom.xml|.prow/)"
+    # npr. "notification-service/".
+    run_if_changed: "(notification-service/|docker-compose.yml|pom.xml|.prow/)"
     decorate: true
     spec:
       containers:
@@ -83,11 +83,11 @@ presubmits:
               # mikroservise).
               # Naredna komanda pokreće servis definisan u "docker-compose.yml" fajlu
               # pod nazivom "postgres-user" (PostgreSQL baza podataka koja se koristi za 
-              # banking-service u okviru ovog projekta).
+              # notification-service u okviru ovog projekta).
               # Promeniti ovu komandu da pokreće one servise koji vam trebaju za vaše
               # testove. Moguće je više puta pokrenuti "docker compose up" za različite
               # Docker Compose servise.
-              docker compose -f compose.full.yaml up -d banking-db message-broker
+              docker compose -f compose.full.yaml up -d notification-db message-broker
               
               # Ovaj sleep obezbeđuje služi da obezbedi dovoljno vremena da se svi
               # kontejneri pokrenuti iznad pokrenu u potpunosti. Po potreba možete
@@ -95,7 +95,7 @@ presubmits:
               # boljim mehanizmom (npr. healthcheck).
               # sleep 120
 
-              SERVICE_NAME="banking-service"
+              SERVICE_NAME="notification-service"
 
               # trap komanda obezbeđuje da se "collectJUnitCoverage"
               # funkcija izvrši pre samog izlaska iz ove skripte, nezavisno
@@ -110,8 +110,7 @@ presubmits:
               # Pokreće sledeće Maven target-e:
               #   - "clean": čisti projekat, npr. ukoliko ste greškom commit-ovali target/ direktorijum
               #   - "test": pokreće sve testove u okviru vaših projekata
-              #   - "verify": verifikuje rezultate integracionih testova
-              ./gradlew banking-service:clean banking-service:test
+              ./gradlew notification-service:clean notification-service:test
           securityContext:
             privileged: true
           imagePullPolicy: Always
