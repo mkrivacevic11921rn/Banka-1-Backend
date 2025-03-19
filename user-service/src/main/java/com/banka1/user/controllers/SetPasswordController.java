@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
@@ -36,8 +37,10 @@ public class SetPasswordController {
         try {
             setPasswordService.setPassword(dto);
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", ResponseMessage.PASSWORD_RESET_SUCCESS.toString()), null);
+        } catch (ResponseStatusException e) {
+            return ResponseTemplate.create(ResponseEntity.status(e.getStatusCode()), false, null, e.getReason());
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.internalServerError(), false, null, "Došlo je do greške prilikom postavljanja lozinke.");
         }
     }
 }

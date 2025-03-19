@@ -109,7 +109,7 @@ public class LoanController {
             }
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("loans", loans), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -135,7 +135,7 @@ public class LoanController {
             }
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("loans", loans), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 /// samo zaposleni
@@ -157,7 +157,7 @@ public class LoanController {
             }
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("loans", loans), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -179,7 +179,7 @@ public class LoanController {
             }
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("loan", loan), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -202,7 +202,7 @@ public class LoanController {
             }
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("loan", loan), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -248,7 +248,7 @@ public class LoanController {
             }
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("installments", installments), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -270,7 +270,7 @@ public class LoanController {
             }
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("installments", installments), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -293,7 +293,7 @@ public class LoanController {
             }
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("remaining_number", num), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 

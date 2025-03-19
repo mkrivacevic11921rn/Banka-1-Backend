@@ -7,6 +7,7 @@ import (
 	"banka1.com/types"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
+	"banka1.com/orders"
 )
 
 func main() {
@@ -28,6 +29,8 @@ func main() {
 		}
 		return c.JSON(response)
 	})
+
+	orders.InitRoutes(app)
 
 	port := os.Getenv("PORT")
 	app.Listen("localhost:" + port)

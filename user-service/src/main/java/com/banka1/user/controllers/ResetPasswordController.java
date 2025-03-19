@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
@@ -49,8 +50,10 @@ public class ResetPasswordController {
         try {
             resetPasswordService.resetPassword(resetPasswordConfirmationRequest);
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", ResponseMessage.PASSWORD_RESET_SUCCESS.toString()), null);
+        } catch (ResponseStatusException e) {
+            return ResponseTemplate.create(ResponseEntity.status(e.getStatusCode()), false, null, e.getReason());
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.badRequest(), false, null, "Došlo je do greške prilikom resetovanja lozinke");
         }
     }
 }

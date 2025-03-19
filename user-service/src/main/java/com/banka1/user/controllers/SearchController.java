@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -65,13 +66,16 @@ public class SearchController {
             @RequestParam Optional<String> filterValue
     ) {
         try {
+            if (sortOrder.isPresent() && !sortOrder.get().matches("(?i)asc|desc")) {
+                return ResponseTemplate.create(ResponseEntity.badRequest(), false, null, "Nevalidan sortOrder. Dozvoljene vrednosti su 'asc' ili 'desc'.");
+            }
             var employees = employeeService.search(
                     page.orElse(0), pageSize.orElse(10),
                     sortField, sortOrder, filterField, filterValue
             );
             return ResponseTemplate.create(ResponseEntity.ok(), true, employees, null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, "Došlo je do greške prilikom pretrage zaposlenih.");
         }
     }
 
@@ -114,13 +118,17 @@ public class SearchController {
             @RequestParam Optional<String> filterValue
     ) {
         try {
+            if (sortOrder.isPresent() && !sortOrder.get().matches("(?i)asc|desc")) {
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, "Nevalidan sortOrder. Dozvoljene vrednosti su 'asc' ili 'desc'.");
+            }
+
             var employees = customerService.search(
                     page.orElse(0), pageSize.orElse(10),
                     sortField, sortOrder, filterField, filterValue
             );
             return ResponseTemplate.create(ResponseEntity.ok(), true, employees, null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, "Došlo je do greške prilikom pretrage zaposlenih.");
         }
     }
 }
