@@ -86,5 +86,6 @@ type Exchange struct {
 	Country   string `gorm:"not null"`
 	Currency  string `gorm:"not null"`
 	Timezone  string `gorm:"not null"`
-	WorkHours string `gorm:"type:json;not null"` // JSON format radnih sati
+	OpenTime  string `gorm:"not null"`
+	CloseTime string `gorm:"not null"`
 }
