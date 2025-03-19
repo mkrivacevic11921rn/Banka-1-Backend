@@ -110,7 +110,7 @@ presubmits:
               # Pokreće sledeće Maven target-e:
               #   - "clean": čisti projekat, npr. ukoliko ste greškom commit-ovali target/ direktorijum
               #   - "test": pokreće sve testove u okviru vaših projekata
-              ./gradlew notification-service:clean notification-service:test
+              gradle notification-service:clean notification-service:test
           securityContext:
             privileged: true
           imagePullPolicy: Always

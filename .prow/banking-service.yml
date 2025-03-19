@@ -111,7 +111,7 @@ presubmits:
               #   - "clean": čisti projekat, npr. ukoliko ste greškom commit-ovali target/ direktorijum
               #   - "test": pokreće sve testove u okviru vaših projekata
               #   - "verify": verifikuje rezultate integracionih testova
-              ./gradlew banking-service:clean banking-service:test
+              gradle banking-service:clean banking-service:test
           securityContext:
             privileged: true
           imagePullPolicy: Always
