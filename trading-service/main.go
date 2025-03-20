@@ -8,6 +8,7 @@ import (
 	"banka1.com/db"
 	"banka1.com/exchanges"
 	"banka1.com/listings/finhub"
+	"banka1.com/listings/forex"
 	"banka1.com/listings/stocks"
 	"banka1.com/orders"
 	"banka1.com/types"
@@ -38,6 +39,12 @@ func main() {
 		log.Println("Finished loading default stocks")
 	}()
 
+	go func() {
+		log.Println("Starting to load default forex pairs...")
+		forex.LoadDefaultForexPairs()
+		log.Println("Finished loading default forex pairs")
+	}()
+
 	app := fiber.New()
 
 	routes.Setup(app)
@@ -49,6 +56,10 @@ func main() {
 			Error:   "",
 		}
 		return c.JSON(response)
+	})
+
+	app.Get("/health", func(c *fiber.Ctx) error {
+		return c.SendStatus(200)
 	})
 
 	app.Get("/exchanges", func(c *fiber.Ctx) error {
@@ -207,68 +218,42 @@ func main() {
 
 	app.Get("/stocks/:ticker/history", func(c *fiber.Ctx) error {
 		ticker := c.Params("ticker")
-
-		// Find the listing first
-		var listing types.Listing
-		if result := db.DB.Where("ticker = ? AND type = ?", ticker, "Stock").First(&listing); result.Error != nil {
-			return c.Status(404).JSON(types.Response{
-				Success: false,
-				Data:    nil,
-				Error:   "Stock not found with ticker: " + ticker,
-			})
-		}
-
 		// Parse date range parameters
 		startDateStr := c.Query("startDate", "")
 		endDateStr := c.Query("endDate", "")
 
-		var startDate, endDate time.Time
-		var err error
+		return getHistoricalData(c, ticker, startDateStr, endDateStr)
+	})
 
-		if startDateStr != "" {
-			startDate, err = time.Parse("2006-01-02", startDateStr)
-			if err != nil {
-				return c.Status(400).JSON(types.Response{
-					Success: false,
-					Data:    nil,
-					Error:   "Invalid startDate format. Use YYYY-MM-DD",
-				})
-			}
-		} else {
-			// Default to 30 days ago
-			startDate = time.Now().AddDate(0, 0, -30)
-		}
+	app.Get("/stocks/:base/:quote", func(c *fiber.Ctx) error {
 
-		if endDateStr != "" {
-			endDate, err = time.Parse("2006-01-02", endDateStr)
-			if err != nil {
-				return c.Status(400).JSON(types.Response{
-					Success: false,
-					Data:    nil,
-					Error:   "Invalid endDate format. Use YYYY-MM-DD",
-				})
-			}
-		} else {
-			// Default to today
-			endDate = time.Now()
-		}
+		base := c.Params("base")
+		quote := c.Params("quote")
+		ticker := base + "/" + quote
 
-		// Fetch historical price data
-		var history []types.ListingDailyPriceInfo
-		if result := db.DB.Omit("Listing").Where("listing_id = ? AND date BETWEEN ? AND ?",
-			listing.ID, startDate, endDate).Order("date").Find(&history); result.Error != nil {
-			return c.Status(500).JSON(types.Response{
+		var listing types.Listing
+		if result := db.DB.Preload("Exchange").Where("ticker = ? AND type = ?", ticker, "Forex").First(&listing); result.Error != nil {
+			return c.Status(404).JSON(types.Response{
 				Success: false,
 				Data:    nil,
-				Error:   "Failed to fetch historical price data: " + result.Error.Error(),
+				Error:   "Forex pair not found with ticker: " + ticker,
 			})
 		}
 
 		return c.JSON(types.Response{
 			Success: true,
-			Data:    history,
+			Data:    listing,
 			Error:   "",
 		})
+	})
+
+	app.Get("/stocks/:base/:quote/history", func(c *fiber.Ctx) error {
+		base := c.Params("base")
+		quote := c.Params("quote")
+		ticker := base + "/" + quote
+		startDateStr := c.Query("startDate", "")
+		endDateStr := c.Query("endDate", "")
+		return getHistoricalData(c, ticker, startDateStr, endDateStr)
 	})
 
 	finhub.GetAllStockTypes()
@@ -276,5 +261,65 @@ func main() {
 	orders.InitRoutes(app)
 
 	port := os.Getenv("PORT")
-	app.Listen("localhost:" + port)
+	log.Fatal(app.Listen(":" + port))
+}
+
+func getHistoricalData(c *fiber.Ctx, ticker string, startDateStr string, endDateStr string) error {
+	// Find the listing first
+	var listing types.Listing
+	if result := db.DB.Where("ticker = ? AND type = ?", ticker, "Stock").First(&listing); result.Error != nil {
+		return c.Status(404).JSON(types.Response{
+			Success: false,
+			Data:    nil,
+			Error:   "Stock not found with ticker: " + ticker,
+		})
+	}
+
+	var startDate, endDate time.Time
+	var err error
+
+	if startDateStr != "" {
+		startDate, err = time.Parse("2006-01-02", startDateStr)
+		if err != nil {
+			return c.Status(400).JSON(types.Response{
+				Success: false,
+				Data:    nil,
+				Error:   "Invalid startDate format. Use YYYY-MM-DD",
+			})
+		}
+	} else {
+		// Default to 30 days ago
+		startDate = time.Now().AddDate(0, 0, -30)
+	}
+
+	if endDateStr != "" {
+		endDate, err = time.Parse("2006-01-02", endDateStr)
+		if err != nil {
+			return c.Status(400).JSON(types.Response{
+				Success: false,
+				Data:    nil,
+				Error:   "Invalid endDate format. Use YYYY-MM-DD",
+			})
+		}
+	} else {
+		// Default to today
+		endDate = time.Now()
+	}
+
+	// Fetch historical price data
+	var history []types.ListingDailyPriceInfo
+	if result := db.DB.Where("listing_id = ? AND date BETWEEN ? AND ?",
+		listing.ID, startDate, endDate).Order("date").Find(&history); result.Error != nil {
+		return c.Status(500).JSON(types.Response{
+			Success: false,
+			Data:    nil,
+			Error:   "Failed to fetch historical price data: " + result.Error.Error(),
+		})
+	}
+
+	return c.JSON(types.Response{
+		Success: true,
+		Data:    history,
+		Error:   "",
+	})
 }
