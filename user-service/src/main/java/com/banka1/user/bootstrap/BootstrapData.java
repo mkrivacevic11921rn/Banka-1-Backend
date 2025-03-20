@@ -101,6 +101,46 @@ public class BootstrapData implements CommandLineRunner {
 
         employeeRepository.save(employee2);
 
+        Employee employee3 = new Employee();
+
+        employee3.setFirstName("Nikolina");
+        employee3.setLastName("Jovanović");
+        employee3.setEmail("nikolina.jovanovic@banka.com");
+        employee3.setUsername("nikolinaaa");
+        employee3.setPhoneNumber("+381641001001");
+        employee3.setBirthDate("2000-10-10");
+        employee3.setAddress("Knez Mihailova 6");
+        employee3.setGender(Gender.FEMALE);
+        employee3.setPosition(Position.WORKER);
+        employee3.setDepartment(Department.SUPERVISOR);
+        employee3.setActive(true);
+        employee3.setIsAdmin(false);
+        employee3.setPermissions(List.of(Permission.READ_CUSTOMER,Permission.CREATE_CUSTOMER,Permission.DELETE_CUSTOMER,Permission.LIST_CUSTOMER,Permission.EDIT_CUSTOMER));
+        employee3.setSaltPassword(salt2);
+        employee3.setPassword(hashedPassword2);
+
+        employeeRepository.save(employee3);
+
+        Employee employee4 = new Employee();
+
+        employee4.setFirstName("Milica");
+        employee4.setLastName("Jovanović");
+        employee4.setEmail("milica.jovanovic@banka.com");
+        employee4.setUsername("milicaaaa");
+        employee4.setPhoneNumber("+381641001001");
+        employee4.setBirthDate("2000-10-10");
+        employee4.setAddress("Knez Mihailova 6");
+        employee4.setGender(Gender.FEMALE);
+        employee4.setPosition(Position.WORKER);
+        employee4.setDepartment(Department.AGENT);
+        employee4.setActive(true);
+        employee4.setIsAdmin(false);
+        employee4.setPermissions(List.of(Permission.READ_CUSTOMER,Permission.CREATE_CUSTOMER,Permission.DELETE_CUSTOMER,Permission.LIST_CUSTOMER,Permission.EDIT_CUSTOMER));
+        employee4.setSaltPassword(salt2);
+        employee4.setPassword(hashedPassword2);
+
+        employeeRepository.save(employee4);
+
         Customer customer1 = new Customer();
         String rawPassword3 = "M@rko12345";
         String salt3 = "salt3";
