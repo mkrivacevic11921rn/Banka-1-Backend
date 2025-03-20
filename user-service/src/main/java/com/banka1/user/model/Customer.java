@@ -24,7 +24,7 @@ public class Customer {
     private String lastName;
 
     @Column(nullable = false)
-    private Long birthDate;
+    private String birthDate; // Format: "YYYY-MM-DD"
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

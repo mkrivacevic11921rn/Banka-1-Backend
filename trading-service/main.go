@@ -7,12 +7,12 @@ import (
 	"banka1.com/listings/futures"
 	"banka1.com/routes"
 
+	"banka1.com/controllers"
 	"banka1.com/db"
 	"banka1.com/exchanges"
 	"banka1.com/listings/finhub"
 	"banka1.com/listings/forex"
 	"banka1.com/listings/stocks"
-	"banka1.com/orders"
 	"banka1.com/types"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
@@ -527,12 +527,13 @@ func main() {
 
 	app.Get("/securities", getSecurities())
 
-	finhub.GetAllStockTypes()
-
-	orders.InitRoutes(app)
+	app.Post("/actuaries", controllers.NewActuaryController().CreateActuary)
+	app.Get("/actuaries", controllers.NewActuaryController().GetAllActuaries)
+	app.Put("/actuaries/:ID", controllers.NewActuaryController().ChangeAgentLimits)
+	app.Get("/actuaries/filter", controllers.NewActuaryController().FilterActuaries)
 
 	port := os.Getenv("PORT")
-	log.Fatal(app.Listen(":" + port))
+	log.Fatal(app.Listen("localhost:" + port))
 }
 
 func getSecurities() func(c *fiber.Ctx) error {

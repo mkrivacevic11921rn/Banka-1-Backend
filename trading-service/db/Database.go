@@ -24,7 +24,7 @@ func Init() {
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true, // Tabele u jednini
 		},
-		Logger: logger.Default.LogMode(logger.Info), // Logovanje
+		Logger: logger.Default.LogMode(logger.Silent), // Logovanje
 	}
 
 	// Inicijalizacija baze

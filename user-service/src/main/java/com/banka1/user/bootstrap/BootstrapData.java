@@ -2,7 +2,7 @@ package com.banka1.user.bootstrap;
 
 import com.banka1.user.model.Customer;
 import com.banka1.user.model.Employee;
-import com.banka1.user.model.helper.Department;
+import com.banka1.common.model.Department;
 import com.banka1.user.model.helper.Gender;
 import com.banka1.common.model.Permission;
 import com.banka1.common.model.Position;
@@ -111,7 +111,7 @@ public class BootstrapData implements CommandLineRunner {
         customer1.setEmail("marko.markovic@banka.com");
         customer1.setUsername("okram");
         customer1.setPhoneNumber("+381641001002");
-        customer1.setBirthDate(20051212L);
+        customer1.setBirthDate("2005-12-12");
         customer1.setGender(Gender.MALE);
         customer1.setAddress("Knez Mihailova 7");
         customer1.setPermissions(List.of(Permission.READ_EMPLOYEE));
@@ -130,7 +130,7 @@ public class BootstrapData implements CommandLineRunner {
         customer2.setEmail("anastasija.milinkovic@banka.com");
         customer2.setUsername("anastass");
         customer2.setPhoneNumber("+381641001003");
-        customer2.setBirthDate(20010202L);
+        customer2.setBirthDate("2001-02-02");
         customer2.setGender(Gender.FEMALE);
         customer2.setAddress("Knez Mihailova 8");
         customer2.setPermissions(List.of(Permission.READ_EMPLOYEE));
@@ -149,7 +149,7 @@ public class BootstrapData implements CommandLineRunner {
         customer3.setEmail("jpavlovic6521rn@raf.rs");
         customer3.setUsername("jovan");
         customer3.setPhoneNumber("+381641001003");
-        customer3.setBirthDate(20010202L);
+        customer3.setBirthDate("2001-02-02");
         customer3.setGender(Gender.MALE);
         customer3.setAddress("Knez Mihailova 8");
         customer3.setPermissions(List.of(Permission.READ_EMPLOYEE));
@@ -168,7 +168,7 @@ public class BootstrapData implements CommandLineRunner {
         customer4.setEmail("nmarjanov6121rn@raf.rs");
         customer4.setUsername("nemanja");
         customer4.setPhoneNumber("+381641001123");
-        customer4.setBirthDate(20010202L);
+        customer4.setBirthDate("2001-02-02");
         customer4.setGender(Gender.MALE);
         customer4.setAddress("Knez Mihailova 8");
         customer4.setPermissions(List.of(Permission.READ_EMPLOYEE));
@@ -187,7 +187,7 @@ public class BootstrapData implements CommandLineRunner {
         customer5.setEmail("primer@primer.rs");
         customer5.setUsername("nikkola");
         customer5.setPhoneNumber("+381641001303");
-        customer5.setBirthDate(20010202L);
+        customer5.setBirthDate("2001-02-02");
         customer5.setGender(Gender.MALE);
         customer5.setAddress("Knez Mihailova 8");
         customer5.setPermissions(List.of(Permission.READ_EMPLOYEE));
@@ -206,7 +206,7 @@ public class BootstrapData implements CommandLineRunner {
         customer6.setEmail("jelena@primer.rs");
         customer6.setUsername("jelena");
         customer6.setPhoneNumber("+381621001003");
-        customer6.setBirthDate(20010202L);
+        customer6.setBirthDate("2001-02-02");
         customer6.setGender(Gender.FEMALE);
         customer6.setAddress("Knez Mihailova 8");
         customer6.setPermissions(List.of(Permission.READ_EMPLOYEE));

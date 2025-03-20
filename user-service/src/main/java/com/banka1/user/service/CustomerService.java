@@ -92,7 +92,7 @@ public class CustomerService {
                 case "id" -> customer.setId(Long.valueOf(filterValue));
                 case "firstName" -> customer.setFirstName(filterValue);
                 case "lastName" -> customer.setLastName(filterValue);
-                case "birthDate" -> customer.setBirthDate(Long.valueOf(filterValue));
+                case "birthDate" -> customer.setBirthDate(filterValue);
                 case "gender" -> customer.setGender(Gender.valueOf(filterValue.toUpperCase()));
                 case "email" -> customer.setEmail(filterValue);
                 case "phoneNumber" -> customer.setPhoneNumber(filterValue);

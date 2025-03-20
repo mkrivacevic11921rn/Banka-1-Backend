@@ -1,4 +1,4 @@
-package com.banka1.user.model.helper;
+package com.banka1.common.model;
 
 public enum Department {
     // primer odeljenja koje zaposleni mogu da imaju u banci

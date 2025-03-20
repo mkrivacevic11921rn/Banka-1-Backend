@@ -1,13 +1,14 @@
 package controllers
 
 import (
+	"strings"
+
 	"banka1.com/db"
 	"banka1.com/dto"
 	"banka1.com/services"
 	"banka1.com/types"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"strings"
 )
 
 type ActuaryController struct {
@@ -72,20 +73,18 @@ func (ac *ActuaryController) GetAllActuaries(c *fiber.Ctx) error {
 	result := db.DB.Find(&actuaries)
 
 	if result.Error != nil {
-		response := types.Response{
+		return c.Status(500).JSON(types.Response{
 			Success: false,
 			Data:    nil,
 			Error:   "Greska u bazi.",
-		}
-		return c.Status(500).JSON(response)
+		})
 	}
 
-	response := types.Response{
+	return c.JSON(types.Response{
 		Success: true,
-		Data:    result,
+		Data:    actuaries,
 		Error:   "",
-	}
-	return c.JSON(response)
+	})
 }
 
 func (ac *ActuaryController) ChangeAgentLimits(c *fiber.Ctx) error {

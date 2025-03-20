@@ -36,11 +36,11 @@ public class AuthService extends GenericAuthService {
 
         Customer customer = customerRepository.findByEmail(email).orElse(null);
         if(customer != null && verifyPassword(password, customer.getPassword(), customer.getSaltPassword()))
-            return generateToken(customer.getId(), Position.NONE, customer.getPermissions(), false, false);
+            return generateToken(customer.getId(), Position.NONE, customer.getPermissions(), false, false, null);
 
         Employee employee = employeeRepository.findByEmail(email).orElse(null);
         if(employee != null && verifyPassword(password, employee.getPassword(), employee.getSaltPassword()) && employee.getActive())
-            return generateToken(employee.getId(), employee.getPosition(), employee.getPermissions(), true, employee.getIsAdmin());
+            return generateToken(employee.getId(), employee.getPosition(), employee.getPermissions(), true, employee.getIsAdmin(), employee.getDepartment());
 
         throw new IllegalArgumentException(ResponseMessage.FAILED_LOGIN.toString());
     }
