@@ -55,7 +55,7 @@ public class ReceiverService {
 
         Receiver receiver = optionalReceiver.get();
 
-        receiver.setAccountNumber(receiver.getAccountNumber());
+        receiver.setAccountNumber(receiverDTO.getAccountNumber());
         if(receiverDTO.getFullName() != null){
             String[] fullName = receiverDTO.getFullName().trim().split("\\s+",2);
             receiver.setFirstName(fullName[0]);
@@ -63,6 +63,8 @@ public class ReceiverService {
         }
 
         receiver.setAddress(receiverDTO.getAddress());
+
+        receiverRepository.save(receiver);
 
         return receiverRepository.save(receiver);
     }
