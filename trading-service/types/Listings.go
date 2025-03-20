@@ -61,14 +61,15 @@ type FuturesContract struct {
 }
 
 type Option struct {
-	ID                uint      `gorm:"primaryKey" json:"id,omitempty"`
-	ListingID         uint      `gorm:"unique;not null" json:"listing_id,omitempty"`
-	UnderlyingID      uint      `gorm:"not null" json:"underlying_id,omitempty"` // References a stock listing
-	OptionType        string    `gorm:"not null" json:"option_type,omitempty"`   // "Call" or "Put"
-	StrikePrice       float64   `gorm:"not null" json:"strike_price,omitempty"`
-	ImpliedVolatility float64   `gorm:"not null" json:"implied_volatility,omitempty"`
-	OpenInterest      int       `gorm:"not null" json:"open_interest,omitempty"`
-	SettlementDate    time.Time `gorm:"not null" json:"settlement_date"`
-	Listing           Listing   `gorm:"foreignKey:ListingID" json:"listing"`
-	UnderlyingStock   Listing   `gorm:"foreignKey:UnderlyingID" json:"underlying_stock"`
+	ID             uint      `gorm:"primaryKey"`
+	ListingID      uint      `gorm:"not null"` // Veza sa osnovnom akcijom
+	Listing        Listing   `gorm:"foreignKey:ListingID"`
+	OptionType     string    `gorm:"not null"`             // "Call" ili "Put"
+	StrikePrice    float64   `gorm:"not null"`             // Ugovorena cena
+	ImpliedVol     float64   `gorm:"not null"`             // Nestabilnost cene
+	OpenInterest   int64     `gorm:"not null"`             // Broj otvorenih ugovora
+	SettlementDate time.Time `gorm:"not null"`             // Datum isteka opcije
+	ContractSize   int       `gorm:"not null;default:100"` // Standardno za akcije
+	CreatedAt      time.Time `gorm:"autoCreateTime"`
+	UpdatedAt      time.Time `gorm:"autoUpdateTime"`
 }

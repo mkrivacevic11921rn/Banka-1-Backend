@@ -9,6 +9,7 @@ import (
 	"banka1.com/types"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 )
 
@@ -23,7 +24,7 @@ func Init() {
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true, // Tabele u jednini
 		},
-		//Logger: logger.Default.LogMode(logger.Warn), // Loguje SQL upite
+		Logger: logger.Default.LogMode(logger.Silent), // Logovanje
 	}
 
 	// Inicijalizacija baze

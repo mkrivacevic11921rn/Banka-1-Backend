@@ -166,8 +166,13 @@ public class AccountService {
 
         List<Transaction> allTransactions = new ArrayList<>();
         allTransactions.addAll(transactionsFrom);
-        allTransactions.addAll(transactionsTo);
+//        allTransactions.addAll(transactionsTo);
 
+        for (Transaction transaction : transactionsTo) {
+            if (transaction.getFromAccountId().getId() != accountId) {
+                allTransactions.add(transaction);
+            }
+        }
         return allTransactions;
     }
 

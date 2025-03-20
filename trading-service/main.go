@@ -1,17 +1,18 @@
 package main
 
 import (
-	"banka1.com/listings/futures"
-	"banka1.com/routes"
 	"os"
 	"time"
 
+	"banka1.com/listings/futures"
+	"banka1.com/routes"
+
+	"banka1.com/controllers"
 	"banka1.com/db"
 	"banka1.com/exchanges"
 	"banka1.com/listings/finhub"
 	"banka1.com/listings/forex"
 	"banka1.com/listings/stocks"
-	"banka1.com/orders"
 	"banka1.com/types"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
@@ -223,6 +224,74 @@ func main() {
 				"details": stock,
 			},
 			Error: "",
+		})
+	})
+
+	app.Get("/stocks/:ticker/history/first", func(c *fiber.Ctx) error {
+		ticker := c.Params("ticker")
+
+		// Find the listing first
+		var listing types.Listing
+		if result := db.DB.Where("ticker = ? AND type = ?", ticker, "Stock").First(&listing); result.Error != nil {
+			return c.Status(404).JSON(types.Response{
+				Success: false,
+				Data:    nil,
+				Error:   "Stock not found with ticker: " + ticker,
+			})
+		}
+
+		history, err := finhub.GetHistoricalPriceFirst(ticker, listing.Subtype)
+		if err != nil {
+			return c.Status(500).JSON(types.Response{
+				Success: false,
+				Data:    nil,
+				Error:   "Failed to fetch historical price data: " + err.Error(),
+			})
+		}
+
+		return c.JSON(types.Response{
+			Success: true,
+			Data:    history,
+			Error:   "",
+		})
+	})
+	app.Get("/stocks/:ticker/history/:date", func(c *fiber.Ctx) error {
+		ticker := c.Params("ticker")
+		date := c.Params("date")
+
+		// Find the listing first
+		var listing types.Listing
+		if result := db.DB.Where("ticker = ? AND type = ?", ticker, "Stock").First(&listing); result.Error != nil {
+			return c.Status(404).JSON(types.Response{
+				Success: false,
+				Data:    nil,
+				Error:   "Stock not found with ticker: " + ticker,
+			})
+		}
+
+		// Parse date parameter
+		dateTime, err := time.Parse("2006-01-02", date)
+		if err != nil {
+			return c.Status(400).JSON(types.Response{
+				Success: false,
+				Data:    nil,
+				Error:   "Invalid date format. Use YYYY-MM-DD",
+			})
+		}
+
+		history, err := finhub.GetHistoricalPriceDate(ticker, listing.Subtype, dateTime)
+		if err != nil {
+			return c.Status(500).JSON(types.Response{
+				Success: false,
+				Data:    nil,
+				Error:   "Failed to fetch historical price data: " + err.Error(),
+			})
+		}
+
+		return c.JSON(types.Response{
+			Success: true,
+			Data:    history,
+			Error:   "",
 		})
 	})
 
@@ -458,12 +527,13 @@ func main() {
 
 	app.Get("/securities", getSecurities())
 
-	finhub.GetAllStockTypes()
-
-	orders.InitRoutes(app)
+	app.Post("/actuaries", controllers.NewActuaryController().CreateActuary)
+	app.Get("/actuaries", controllers.NewActuaryController().GetAllActuaries)
+	app.Put("/actuaries/:ID", controllers.NewActuaryController().ChangeAgentLimits)
+	app.Get("/actuaries/filter", controllers.NewActuaryController().FilterActuaries)
 
 	port := os.Getenv("PORT")
-	log.Fatal(app.Listen(":" + port))
+	log.Fatal(app.Listen("localhost:" + port))
 }
 
 func getSecurities() func(c *fiber.Ctx) error {

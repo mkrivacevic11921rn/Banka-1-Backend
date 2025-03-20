@@ -18,6 +18,9 @@ public class Card {
     private String cardNumber;
 
     @Column(nullable = false)
+    private String cardName;
+
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private CardBrand cardBrand; // VISA, MASTERCARD, AMERICAN_EXPRESS
 

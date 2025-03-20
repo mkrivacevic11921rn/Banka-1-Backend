@@ -7,7 +7,7 @@ import com.banka1.user.DTO.request.UpdateEmployeeRequest;
 import com.banka1.user.DTO.request.UpdatePermissionsRequest;
 import com.banka1.user.DTO.response.EmployeeResponse;
 import com.banka1.user.model.Employee;
-import com.banka1.user.model.helper.Department;
+import com.banka1.common.model.Department;
 import com.banka1.user.model.helper.Gender;
 import com.banka1.user.service.EmployeeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
