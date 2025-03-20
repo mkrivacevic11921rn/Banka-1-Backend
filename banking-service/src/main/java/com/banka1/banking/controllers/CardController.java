@@ -89,7 +89,7 @@ public class CardController {
         return getCards(accountId);
     }
 
-    @PatchMapping("/admin/{card_id}")
+    @PostMapping("/admin/{card_id}")
     @Operation(summary = "Aktivacija i deaktivacija kartice od strane zaposlenog", description = "Aktivacija i deaktivacija kartice od strane zaposlenog")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Kartica uspešno ažurirana"),
@@ -119,7 +119,7 @@ public class CardController {
         }
     }
 
-    @PatchMapping("/{card_id}/limit")
+    @PostMapping("/{card_id}/limit")
     @Operation(summary = "Promena limita kartice", description = "Omogućava korisniku da promeni limit kartice.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Limit kartice uspešno promenjen."),
@@ -137,7 +137,7 @@ public class CardController {
         }
     }
 
-    @PatchMapping("/{card_id}/name")
+    @PostMapping("/{card_id}/name")
     @Operation(summary = "Promena naziva kartice", description = "Omogućava korisniku da promeni naziv kartice.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Naziv kartice uspešno promenjen."),
