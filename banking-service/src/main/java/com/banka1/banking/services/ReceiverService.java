@@ -64,8 +64,6 @@ public class ReceiverService {
 
         receiver.setAddress(receiverDTO.getAddress());
 
-        receiverRepository.save(receiver);
-
         return receiverRepository.save(receiver);
     }
 
