@@ -1,6 +1,7 @@
 package main
 
 import (
+	"banka1.com/routes"
 	"os"
 	"time"
 
@@ -23,6 +24,7 @@ func main() {
 	}
 
 	db.Init()
+	db.StartScheduler()
 
 	err = exchanges.LoadDefaultExchanges()
 	if err != nil {
@@ -36,6 +38,8 @@ func main() {
 	}()
 
 	app := fiber.New()
+
+	routes.Setup(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		response := types.Response{
