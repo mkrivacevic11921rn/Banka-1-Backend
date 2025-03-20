@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"banka1.com/listings/futures"
+	"banka1.com/middlewares"
 	"banka1.com/routes"
 
 	"banka1.com/controllers"
@@ -60,7 +61,7 @@ func main() {
 
 	routes.Setup(app)
 
-	app.Get("/", func(c *fiber.Ctx) error {
+	app.Get("/", middlewares.Auth, middlewares.DepartmentCheck("AGENT"), func(c *fiber.Ctx) error {
 		response := types.Response{
 			Success: true,
 			Data:    "Hello, World!",
@@ -533,7 +534,7 @@ func main() {
 	app.Get("/actuaries/filter", controllers.NewActuaryController().FilterActuaries)
 
 	port := os.Getenv("PORT")
-	log.Fatal(app.Listen("localhost:" + port))
+	log.Fatal(app.Listen(":" + port))
 }
 
 func getSecurities() func(c *fiber.Ctx) error {
