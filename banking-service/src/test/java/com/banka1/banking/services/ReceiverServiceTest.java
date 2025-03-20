@@ -32,7 +32,7 @@ public class ReceiverServiceTest {
     void setUp() {
         receiverDTO = new ReceiverDTO();
         receiverDTO.setOwnerAccountId(1L);
-        receiverDTO.setAccountNumber("123-456789");
+        receiverDTO.setAccountNumber("123-444789");
         receiverDTO.setFullName("Marko Marković");
         receiverDTO.setAddress("Kralja Petra 12");
 
