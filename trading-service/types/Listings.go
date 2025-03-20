@@ -60,14 +60,15 @@ type FuturesContract struct {
 }
 
 type Option struct {
-	ID                uint      `gorm:"primaryKey"`
-	ListingID         uint      `gorm:"unique;not null"`
-	UnderlyingID      uint      `gorm:"not null"` // References a stock listing
-	OptionType        string    `gorm:"not null"` // "Call" or "Put"
-	StrikePrice       float64   `gorm:"not null"`
-	ImpliedVolatility float64   `gorm:"not null"`
-	OpenInterest      int       `gorm:"not null"`
-	SettlementDate    time.Time `gorm:"not null"`
-	Listing           Listing   `gorm:"foreignKey:ListingID"`
-	UnderlyingStock   Listing   `gorm:"foreignKey:UnderlyingID"`
+	ID             uint      `gorm:"primaryKey"`
+	ListingID      uint      `gorm:"not null"` // Veza sa osnovnom akcijom
+	Listing        Listing   `gorm:"foreignKey:ListingID"`
+	OptionType     string    `gorm:"not null"`             // "Call" ili "Put"
+	StrikePrice    float64   `gorm:"not null"`             // Ugovorena cena
+	ImpliedVol     float64   `gorm:"not null"`             // Nestabilnost cene
+	OpenInterest   int64     `gorm:"not null"`             // Broj otvorenih ugovora
+	SettlementDate time.Time `gorm:"not null"`             // Datum isteka opcije
+	ContractSize   int       `gorm:"not null;default:100"` // Standardno za akcije
+	CreatedAt      time.Time `gorm:"autoCreateTime"`
+	UpdatedAt      time.Time `gorm:"autoUpdateTime"`
 }

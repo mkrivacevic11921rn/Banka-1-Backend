@@ -1,8 +1,9 @@
 package db
 
 import (
-	"banka1.com/types"
 	"fmt"
+
+	"banka1.com/types"
 	"github.com/robfig/cron/v3"
 )
 

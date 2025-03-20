@@ -141,17 +141,12 @@ type NasdaqAPIResponse struct {
 	} `json:"data"`
 }
 
-func GetHistoricalPrice(stockSymbol, subtype string) ([]HistoricalPrice, error) {
-	// 30 dana unazad
-	var startDate = time.Now().AddDate(0, 0, -30)
-	var endDate = time.Now()
-	// dates should be in format YYYY-MM-DD
-	fmt.Println("Fetching historical price data for", stockSymbol, "from", startDate, "to", endDate)
-	url := fmt.Sprintf("https://api.nasdaq.com/api/quote/%s/historical?assetclass=%s&fromdate=%s&limit=9999&todate=%s", stockSymbol, subtype, startDate.Format("2006-01-02"), endDate.Format("2006-01-02"))
-
+func GetNasdaqAPIResponse(stockSymbol, subtype string, start, end time.Time) (NasdaqAPIResponse, error) {
+	url := fmt.Sprintf("https://api.nasdaq.com/api/quote/%s/historical?assetclass=%s&fromdate=%s&limit=99999&todate=%s", stockSymbol, "stocks", start.Format("2006-01-02"), end.Format("2006-01-02"))
+	fmt.Println("Fetching historical price data for", url)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, err
+		return NasdaqAPIResponse{}, err
 	}
 
 	// Dodavanje zaglavlja
@@ -171,15 +166,104 @@ func GetHistoricalPrice(stockSymbol, subtype string) ([]HistoricalPrice, error) 
 			}).DialContext,
 		},
 	}
+
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return NasdaqAPIResponse{}, err
 	}
+
 	defer resp.Body.Close()
 
 	var apiResp NasdaqAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		fmt.Println("Failed to decode Nasdaq API response")
+		return NasdaqAPIResponse{}, err
+	}
+
+	return apiResp, nil
+}
+
+func GetHistoricalPriceFirst(stockSymbol, subtype string) (HistoricalPrice, error) {
+	var endDate = time.Now()
+	var startDate = time.Now().AddDate(-20, 0, 0)
+	apiResp, err := GetNasdaqAPIResponse(stockSymbol, subtype, startDate, endDate)
+	if err != nil {
+		return HistoricalPrice{}, err
+	}
+
+	// go through all rows and find the last one
+	var closePrice float64
+	var volume int64
+	var open float64
+	var high float64
+	var low float64
+	// use last row
+	if len(apiResp.Data.TradesTable.Rows) == 0 {
+		return HistoricalPrice{}, fmt.Errorf("No historical data found")
+	}
+	row := apiResp.Data.TradesTable.Rows[len(apiResp.Data.TradesTable.Rows)-1]
+	closePrice, _ = strconv.ParseFloat(row.Close[1:], 64) // Ignorisanje "$"
+	var cleanVolume = strings.ReplaceAll(row.Volume, ",", "")
+	volume, _ = strconv.ParseInt(cleanVolume, 10, 64)
+	open, _ = strconv.ParseFloat(row.Open[1:], 64)
+	high, _ = strconv.ParseFloat(row.High[1:], 64)
+	low, _ = strconv.ParseFloat(row.Low[1:], 64)
+	date, _ := time.Parse("01/02/2006", row.Date)
+
+	return HistoricalPrice{
+		Date:   date,
+		Close:  closePrice,
+		Volume: volume,
+		Open:   open,
+		High:   high,
+		Low:    low,
+	}, nil
+}
+
+func GetHistoricalPriceDate(stockSymbol, subtype string, date time.Time) (HistoricalPrice, error) {
+	var endDate = time.Now()
+	var startDate = time.Now().AddDate(-20, 0, 0)
+	apiResp, err := GetNasdaqAPIResponse(stockSymbol, subtype, startDate, endDate)
+	if err != nil {
+		return HistoricalPrice{}, err
+	}
+
+	// go through all rows and find the one with the date, date is in format MM/DD/YYYY
+	var date_ = date.Format("01/02/2006")
+	var closePrice float64
+	var volume int64
+	var open float64
+	var high float64
+	var low float64
+	for _, row := range apiResp.Data.TradesTable.Rows {
+		if row.Date == date_ {
+			closePrice, _ = strconv.ParseFloat(row.Close[1:], 64) // Ignorisanje "$"
+			var cleanVolume = strings.ReplaceAll(row.Volume, ",", "")
+			volume, _ = strconv.ParseInt(cleanVolume, 10, 64)
+			open, _ = strconv.ParseFloat(row.Open[1:], 64)
+			high, _ = strconv.ParseFloat(row.High[1:], 64)
+			low, _ = strconv.ParseFloat(row.Low[1:], 64)
+			break
+		}
+	}
+
+	return HistoricalPrice{
+		Date:   date,
+		Close:  closePrice,
+		Volume: volume,
+		Open:   open,
+		High:   high,
+		Low:    low,
+	}, nil
+}
+
+func GetHistoricalPrice(stockSymbol, subtype string) ([]HistoricalPrice, error) {
+	// 30 dana unazad
+	var startDate = time.Now().AddDate(0, 0, -30)
+	var endDate = time.Now()
+	// dates should be in format YYYY-MM-DD
+	apiResp, err := GetNasdaqAPIResponse(stockSymbol, subtype, startDate, endDate)
+	if err != nil {
 		return nil, err
 	}
 
