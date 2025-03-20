@@ -54,7 +54,7 @@ func CreatePairsFromAPI(base string) error {
 			continue
 		}
 		rate := rates[strings.ToLower(quote)].(float64)
-		ticker := fmt.Sprintf("%s-%s", base, quote)
+		ticker := fmt.Sprintf("%s/%s", base, quote)
 		lastRefresh := time.Now()
 		tx := db.DB.Begin()
 		var listing types.Listing
