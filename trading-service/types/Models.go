@@ -27,23 +27,28 @@ type Security struct {
 }
 
 type Order struct {
-	ID             uint     `gorm:"primaryKey"`
-	UserID         uint     `gorm:"not null"`
-	SecurityID     uint     `gorm:"not null"`
-	OrderType      string   `gorm:"type:text;not null"`
-	Quantity       int      `gorm:"not null"`
-	ContractSize   int      `gorm:"default:1"`
-	PricePerUnit   float64  `gorm:"default:null"` // Samo za limit i stop order-e
-	Direction      string   `gorm:"type:text;not null"`
-	Status         string   `gorm:"type:text;default:'pending'"`
-	ApprovedBy     *uint    `gorm:"default:null"` // Supervizor koji je odobrio order
-	IsDone         bool     `gorm:"default:false"`
-	LastModified   int64    `gorm:"autoUpdateTime"`
-	RemainingParts *int     `gorm:"default:null"`
-	AfterHours     bool     `gorm:"default:false"`
-	User           uint     `gorm:"foreignKey:UserID"`
-	Security       Security `gorm:"foreignKey:SecurityID"`
-	ApprovedByUser *uint    `gorm:"foreignKey:ApprovedBy"`
+	ID                uint     `gorm:"primaryKey"`
+	UserID            uint     `gorm:"not null"`
+	AccountID         uint     `gorm:"not null"`
+	SecurityID        uint     `gorm:"not null"`
+	OrderType         string   `gorm:"type:text;not null"`
+	Quantity          int      `gorm:"not null"`
+	ContractSize      int      `gorm:"default:1"`
+	StopPricePerUnit  *float64 `gorm:"default:null"`
+	LimitPricePerUnit *float64 `gorm:"default:null"`
+	Direction         string   `gorm:"type:text;not null"`
+	Status            string   `gorm:"type:text;default:'pending'"`
+	ApprovedBy        *uint    `gorm:"default:null"` // Supervizor koji je odobrio order
+	IsDone            bool     `gorm:"default:false"`
+	LastModified      int64    `gorm:"autoUpdateTime"`
+	RemainingParts    *int     `gorm:"default:null"`
+	AfterHours        bool     `gorm:"default:false"`
+	AON               bool     `gorm:"default:false"`
+	Margin            bool     `gorm:"default:false"`
+	User              uint     `gorm:"foreignKey:UserID"`
+	Account           uint     `gorm:"foreignKey:AccountID"`
+	Security          Security `gorm:"foreignKey:SecurityID"`
+	ApprovedByUser    *uint    `gorm:"foreignKey:ApprovedBy"`
 }
 
 type OTCTrade struct {
