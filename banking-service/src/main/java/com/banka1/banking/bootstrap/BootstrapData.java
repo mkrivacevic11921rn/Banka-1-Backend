@@ -500,6 +500,7 @@ public class BootstrapData implements CommandLineRunner {
 
 
         Loan loan = new Loan();
+        loan.setNumberOfInstallments(3);
         loan.setLoanType(LoanType.CASH);
         loan.setCurrencyType(CurrencyType.RSD);
         loan.setInterestType(InterestType.FIXED);
@@ -517,6 +518,7 @@ public class BootstrapData implements CommandLineRunner {
         loan.setAccount(jovanTekuci);
 
         Loan loan1 = new Loan();
+        loan1.setNumberOfInstallments(3);
         loan1.setLoanType(LoanType.CASH);
         loan1.setCurrencyType(CurrencyType.RSD);
         loan1.setInterestType(InterestType.FIXED);
