@@ -132,7 +132,7 @@ public class SearchControllerTest {
                 "Petar",
                 "Petrovic",
                 "ppetrovic",
-                1234567890L,
+                "2000-03-03",
                 Gender.MALE,
                 "ppetrovic@banka.rs",
                 "99999999",
