@@ -77,16 +77,24 @@ public class CardService {
         return cardRepository.save(card);
     }
 
-    public void updateCard(int cardId, UpdateCardDTO updateCardDTO) {
+    public void blockCard(int cardId, UpdateCardDTO updateCardDTO) {
         Card card = cardRepository.findById((long) cardId)
                 .orElseThrow(() -> new RuntimeException("Kartica nije pronađena"));
 
-        switch (updateCardDTO.getStatus()) {
-            case BLOCKED -> card.setBlocked(true);
-            case UNBLOCKED -> card.setBlocked(false);
-            case ACTIVATED -> card.setActive(true);
-            case DEACTIVATED -> card.setActive(false);
+        card.setBlocked(updateCardDTO.isStatus());
+
+        cardRepository.save(card);
+    }
+
+    public void activateCard(int cardId, UpdateCardDTO updateCardDTO) {
+        Card card = cardRepository.findById((long) cardId)
+                .orElseThrow(() -> new RuntimeException("Kartica nije pronađena"));
+
+        if(card.getActive().equals(false)){
+            throw new RuntimeException("Kartica je deaktivirana i ne moze biti aktivirana");
         }
+
+        card.setActive(updateCardDTO.isStatus());
 
         cardRepository.save(card);
     }
