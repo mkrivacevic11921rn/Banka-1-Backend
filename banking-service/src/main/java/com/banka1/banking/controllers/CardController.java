@@ -61,7 +61,7 @@ public class CardController {
         }
     }
 
-    @PatchMapping("/{card_id}")
+    @PostMapping("/{card_id}")
     @Operation(summary = "Blokiranje i deblokiranje kartice", description = "Blokiranje i deblokiranje kartice")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Kartica uspešno ažurirana"),
