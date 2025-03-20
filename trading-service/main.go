@@ -6,6 +6,7 @@ import (
 
 	"banka1.com/db"
 	"banka1.com/exchanges"
+	"banka1.com/listings/finhub"
 	"banka1.com/listings/stocks"
 	"banka1.com/orders"
 	"banka1.com/types"
@@ -250,7 +251,7 @@ func main() {
 
 		// Fetch historical price data
 		var history []types.ListingDailyPriceInfo
-		if result := db.DB.Where("listing_id = ? AND date BETWEEN ? AND ?",
+		if result := db.DB.Omit("Listing").Where("listing_id = ? AND date BETWEEN ? AND ?",
 			listing.ID, startDate, endDate).Order("date").Find(&history); result.Error != nil {
 			return c.Status(500).JSON(types.Response{
 				Success: false,
@@ -265,6 +266,8 @@ func main() {
 			Error:   "",
 		})
 	})
+
+	finhub.GetAllStockTypes()
 
 	orders.InitRoutes(app)
 

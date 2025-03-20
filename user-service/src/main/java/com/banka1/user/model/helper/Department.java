@@ -7,5 +7,7 @@ public enum Department {
     CREDIT,
     LEGAL,
     IT,
-    HR
+    HR,
+    SUPERVISOR,
+    AGENT
 }
