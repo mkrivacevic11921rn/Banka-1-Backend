@@ -80,7 +80,7 @@ public class CardController {
     @GetMapping("/admin/{account_id}")
     @Operation(summary = "Pregled svih kartica od strane zaposlenog", description = "Pregled svih kartica za traženi račun od strane zaposlenog")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Lista kartica za određeni račun."),
+            @ApiResponse(responseCode = "200", description = "L ista kartica za određeni račun."),
             @ApiResponse(responseCode = "404", description = "Nema kartica za traženi račun.")
     })
     @CardAuthorization(employeeOnlyOperation = true)

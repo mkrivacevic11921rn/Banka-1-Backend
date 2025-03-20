@@ -49,7 +49,7 @@ public class CardService {
                 .orElseThrow(() -> new RuntimeException("Racun nije pronadjen"));
         card.setAccount(account);
 
-        if(account.getSubtype().equals(AccountSubtype.PERSONAL) && cardRepository.findByAccountId(createCardDTO.getAccountID()).isPresent() && cardRepository.findByAccountId(createCardDTO.getAccountID()).get().size() == 2){
+        if(!account.getSubtype().equals(AccountSubtype.BUSINESS) && cardRepository.findByAccountId(createCardDTO.getAccountID()).isPresent() && cardRepository.findByAccountId(createCardDTO.getAccountID()).get().size() == 2){
             throw new RuntimeException("Privatni racun moze biti povezan sa najvise dve kartice!");
         }
         else if(account.getSubtype().equals(AccountSubtype.BUSINESS) && cardRepository.findByAccountId(createCardDTO.getAccountID()).isPresent() && cardRepository.findByAccountId(createCardDTO.getAccountID()).get().size() == 5){
