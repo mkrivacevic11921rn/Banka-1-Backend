@@ -3,6 +3,7 @@ package com.banka1.banking.services;
 import com.banka1.banking.dto.CreateCardDTO;
 import com.banka1.banking.dto.UpdateCardDTO;
 import com.banka1.banking.dto.UpdateCardLimitDTO;
+import com.banka1.banking.dto.request.UpdateCardNameDTO;
 import com.banka1.banking.mapper.CardMapper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.AuthorizedPerson;
@@ -48,6 +49,9 @@ public class CardService {
         Account account = accountRepository.findById(createCardDTO.getAccountID())
                 .orElseThrow(() -> new RuntimeException("Racun nije pronadjen"));
         card.setAccount(account);
+
+        String cardName = account.getSubtype() + " kartica";
+        card.setCardName(cardName);
 
         if(!account.getSubtype().equals(AccountSubtype.BUSINESS) && cardRepository.findByAccountId(createCardDTO.getAccountID()).isPresent() && cardRepository.findByAccountId(createCardDTO.getAccountID()).get().size() == 2){
             throw new RuntimeException("Privatni racun moze biti povezan sa najvise dve kartice!");
@@ -106,4 +110,13 @@ public class CardService {
         card.setCardLimit(updateCardLimitDTO.getNewLimit());
         cardRepository.save(card);
     }
+
+    public void updateCardName(Long cardId, UpdateCardNameDTO updateCardNameDTO) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new RuntimeException("Kartica nije pronađena"));
+
+        card.setCardName(updateCardNameDTO.getName());
+        cardRepository.save(card);
+    }
+
 }
