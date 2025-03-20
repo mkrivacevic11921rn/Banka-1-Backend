@@ -17,15 +17,15 @@ type TimeSeriesResponse struct {
 }
 
 // LoadStockFromAPI loads a single stock from Alpha Vantage API
-func LoadStockFromAPI(ticker string, exchangeMic string) error {
+func LoadStockFromAPI(stockRequest finhub.Stock) error {
 
-	stockData, err := finhub.GetStockData(ticker)
+	stockData, err := finhub.GetStockData(stockRequest.Symbol)
 	if err != nil {
 		return fmt.Errorf("failed to fetch stock data: %w", err)
 	}
 
 	// Debug logging
-	fmt.Printf("Trying to find exchange with MIC code: %s\n", exchangeMic)
+	fmt.Printf("Trying to find exchange with MIC code: %s\n", stockRequest.Mic)
 
 	// Find exchange
 
@@ -38,24 +38,30 @@ func LoadStockFromAPI(ticker string, exchangeMic string) error {
 
 	// Begin transaction
 	tx := db.DB.Begin()
-
+	var type_ string = "Stock"
 	// Create or update listing
 	var listing types.Listing
-	if err := tx.Where("ticker = ?", ticker).First(&listing).Error; err != nil {
+	if err := tx.Where("ticker = ?", stockRequest.Symbol).First(&listing).Error; err != nil {
 		// Create new listing
+
+		if stockRequest.Type == "Open-End Fund" {
+			type_ = "ETF"
+		}
+
 		listing = types.Listing{
-			Ticker:       ticker,
-			Name:         strings.Split(ticker, ".")[0] + " Inc.", // Simple name
+			Ticker:       stockRequest.Symbol,
+			Name:         strings.Split(stockRequest.Symbol, ".")[0] + " Inc.", // Simple name
 			ExchangeID:   1,
 			LastRefresh:  lastRefresh,
 			Price:        *price,
 			Ask:          *high,
 			Bid:          *low,
 			Type:         "Stock",
+			Subtype:      type_,
 			ContractSize: 1,
 		}
 
-		fmt.Printf("Creating new listing for %s\n", ticker)
+		fmt.Printf("Creating new listing for %s\n", stockRequest.Symbol)
 		if err := tx.Create(&listing).Error; err != nil {
 			tx.Rollback()
 			return fmt.Errorf("failed to create listing: %w", err)
@@ -67,7 +73,7 @@ func LoadStockFromAPI(ticker string, exchangeMic string) error {
 		listing.Ask = *high
 		listing.Bid = *low
 
-		fmt.Printf("Updating existing listing for %s (ID: %d)\n", ticker, listing.ID)
+		fmt.Printf("Updating existing listing for %s (ID: %d)\n", stockRequest.Symbol, listing.ID)
 		if err := tx.Save(&listing).Error; err != nil {
 			tx.Rollback()
 			return fmt.Errorf("failed to update listing: %w", err)
@@ -90,70 +96,56 @@ func LoadStockFromAPI(ticker string, exchangeMic string) error {
 		}
 	}
 
-	// Add historical price data (last 30 days)
-	// count := 0
-	// for dateStr, priceData := range data.TimeSeries {
-	// 	date, _ := time.Parse("2006-01-02", dateStr)
-	// 	dailyPrice, _ := strconv.ParseFloat(priceData["4. close"], 64)
-	// 	dailyHigh, _ := strconv.ParseFloat(priceData["2. high"], 64)
-	// 	dailyLow, _ := strconv.ParseFloat(priceData["3. low"], 64)
-	// 	dailyVolume, _ := strconv.ParseInt(priceData["5. volume"], 10, 64)
+	history, err := finhub.GetHistoricalPrice(stockRequest.Symbol, "stocks")
+	for i, historyDay := range history {
+		var existing types.ListingDailyPriceInfo
+		if tx.Where("listing_id = ? AND date = ?", listing.ID, historyDay.Date).First(&existing).Error == nil {
+			continue
+		}
 
-	// 	var existing types.ListingDailyPriceInfo
-	// 	if tx.Where("listing_id = ? AND date = ?", listing.ID, date).First(&existing).Error == nil {
-	// 		continue
-	// 	}
+		// Calculate change based on previous day
+		change := 0.0
+		if i > 0 {
+			change = history[i].Open - history[i-1].Open
+		}
 
-	// 	// Calculate change (simplified)
-	// 	change := 0.0
-	// 	if count > 0 {
-	// 		prevDate := ""
-	// 		for d := range data.TimeSeries {
-	// 			if d < dateStr && (prevDate == "" || d > prevDate) {
-	// 				prevDate = d
-	// 			}
-	// 		}
-	// 		if prevDate != "" {
-	// 			prevPrice, _ := strconv.ParseFloat(data.TimeSeries[prevDate]["4. close"], 64)
-	// 			change = dailyPrice - prevPrice
-	// 		}
-	// 	}
+		fmt.Println("historyDay.Date", historyDay.Volume)
 
-	// 	// Create price record
-	// 	priceInfo := types.ListingDailyPriceInfo{
-	// 		ListingID: listing.ID,
-	// 		Date:      date,
-	// 		Price:     dailyPrice,
-	// 		High:      dailyHigh,
-	// 		Low:       dailyLow,
-	// 		Change:    change,
-	// 		Volume:    dailyVolume,
-	// 	}
+		// Create price record
+		priceInfo := types.ListingDailyPriceInfo{
+			ListingID: listing.ID,
+			Date:      historyDay.Date,
+			Price:     historyDay.Open,
+			High:      historyDay.High,
+			Low:       historyDay.Low,
+			Change:    change,
+			Volume:    historyDay.Volume,
+		}
 
-	// 	fmt.Printf("Adding price history for %s on %s\n", ticker, dateStr)
-	// 	if err := tx.Create(&priceInfo).Error; err != nil {
-	// 		tx.Rollback()
-	// 		return fmt.Errorf("failed to create price history: %w", err)
-	// 	}
+		fmt.Printf("Adding price history for %s on %s\n", stockRequest.Symbol, historyDay.Date)
+		if err := tx.Create(&priceInfo).Error; err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to create price history: %w", err)
+		}
 
-	// 	count++
-	// 	if count >= 30 {
-	// 		break
-	// 	}
-	// }
+		// count++
+		// if count >= 30 {
+		// 	break
+		// }
+	}
 
 	if err := tx.Commit().Error; err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	fmt.Printf("Successfully loaded stock data for %s\n", ticker)
+	fmt.Printf("Successfully loaded stock data for %s\n", stockRequest.Symbol)
 	return nil
 }
 
 func LoadDefaultStocks() {
 	// Define stocks with their exchanges
 
-	stocksData, err := finhub.GetAllStock()
+	stocksData, err := finhub.GetAllStockMock()
 	if err != nil {
 		fmt.Printf("Failed to fetch stock data: %v\n", err)
 		return
@@ -171,13 +163,12 @@ func LoadDefaultStocks() {
 
 	fmt.Println("------------------------------")
 
-	for ticker, exchange := range stocksData {
-		fmt.Printf("Loading %s on %s...\n", ticker, exchange)
-		if err := LoadStockFromAPI(ticker, exchange); err != nil {
-			fmt.Printf("Error loading %s: %v\n", ticker, err)
+	for _, stock := range stocksData {
+		fmt.Printf("Loading %s on %s...\n", stock.Symbol, stock.Mic)
+		if err := LoadStockFromAPI(stock); err != nil {
+			fmt.Printf("Error loading %s: %v\n", stock.Symbol, err)
 		} else {
-			fmt.Printf("Successfully loaded %s\n", ticker)
+			fmt.Printf("Successfully loaded %s\n", stock.Symbol)
 		}
-		time.Sleep(15 * time.Second) // Respect API rate limits
 	}
 }

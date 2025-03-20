@@ -15,6 +15,7 @@ type Listing struct {
 	Ask          float32   `gorm:"not null"`
 	Bid          float32   `gorm:"not null"`
 	Type         string    `gorm:"not null"` // "Stock", "Forex", "Future", "Option"
+	Subtype      string    `gorm:"null"`     // "ETF", "Common Stock", "Call Option", "Put Option"
 	ContractSize int       `gorm:"not null"`
 	CreatedAt    time.Time `gorm:"autoCreateTime"`
 	UpdatedAt    time.Time `gorm:"autoUpdateTime"`
@@ -37,7 +38,7 @@ type Stock struct {
 	ListingID         uint    `gorm:"unique;not null"`
 	OutstandingShares int64   `gorm:"not null"`
 	DividendYield     float64 `gorm:"not null"`
-	Listing           Listing `gorm:"foreignKey:ListingID"`
+	Listing           Listing `gorm:"foreignKey:ListingID" json:"-" gorm:"-"`
 }
 
 type ForexPair struct {
