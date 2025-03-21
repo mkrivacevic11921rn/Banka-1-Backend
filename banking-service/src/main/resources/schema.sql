@@ -1,8 +1,3 @@
-create sequence if not exists company_seq
-    increment by 50;
-
-alter sequence company_seq owner to banking_service_user;
-
 create table if not exists authorized_person
 (
     birth_date   bigint       not null,
