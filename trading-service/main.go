@@ -4,7 +4,7 @@ import (
 	"os"
 	"time"
 
-	options "banka1.com/listings/options"
+	// options "banka1.com/listings/options"
 	"banka1.com/middlewares"
 
 	"banka1.com/listings/futures"
@@ -60,14 +60,14 @@ func main() {
 		log.Println("Finished loading default futures")
 	}()
 
-	func() {
-		log.Println("Starting to load default options...")
-		err = options.LoadAllOptions()
-		if err != nil {
-			log.Printf("Warning: Failed to load options: %v", err)
-		}
-		log.Println("Finished loading default options")
-	}()
+	// func() {
+	// 	log.Println("Starting to load default options...")
+	// 	err = options.LoadAllOptions()
+	// 	if err != nil {
+	// 		log.Printf("Warning: Failed to load options: %v", err)
+	// 	}
+	// 	log.Println("Finished loading default options")
+	// }()
 
 	app := fiber.New()
 
