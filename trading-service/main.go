@@ -553,8 +553,8 @@ func main() {
 
 	orders.InitRoutes(app)
 
-	port := os.Getenv("PORT")
-	log.Fatal(app.Listen(":" + port))
+	port := os.Getenv("LISTEN_PATH")
+	log.Fatal(app.Listen(port))
 }
 
 func getSecurities() func(c *fiber.Ctx) error {
