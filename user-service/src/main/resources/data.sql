@@ -31,7 +31,7 @@ INSERT INTO employee (id, first_name, last_name, email, username, phone_number,
                       is_admin, salt_password, password)
 VALUES (2, 'Petar', 'Petrović', 'petar.petrovic@banka.com', 'perica',
         '+381641001000', '1990-07-07', 'Knez Mihailova 5', 'MALE', 'MANAGER',
-        'IT', TRUE, FALSE, 'salt1', '$2a$12$PZ0G6ao.1QMAEZlPHoDo0OBYM.Y/rglJJ5rtuyctPEqaLES/elNhW');
+        'IT', TRUE, FALSE, 'salt', '$2a$12$PZ0G6ao.1QMAEZlPHoDo0OBYM.Y/rglJJ5rtuyctPEqaLES/elNhW');
 
 -- Permissions for Petar
 INSERT INTO employee_permissions (employee_id, permission)
