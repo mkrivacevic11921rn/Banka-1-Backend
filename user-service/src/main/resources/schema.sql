@@ -95,6 +95,7 @@ create table  if not exists employee_permissions
 alter table employee_permissions
     owner to user_service_user;
 
+
 create table if not exists  reset_password
 (
     type            integer      not null,
