@@ -8,18 +8,15 @@ import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Installment;
 import com.banka1.banking.models.Loan;
-import com.banka1.banking.models.Transaction;
 import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.models.helper.LoanType;
 import com.banka1.banking.models.helper.PaymentStatus;
 import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.repository.InstallmentsRepository;
 import com.banka1.banking.repository.LoanRepository;
-import com.banka1.banking.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -35,24 +32,22 @@ import java.util.List;
 
 @Service
 @EnableScheduling
-
+@Slf4j
 public class LoanService {
     private final LoanRepository loanRepository;
     private final JmsTemplate jmsTemplate;
     private final MessageHelper messageHelper;
-    private final ModelMapper modelMapper;
-    private final String destinationEmail;
+	private final String destinationEmail;
     private final AccountRepository accountRepository;
     private final UserServiceCustomer userServiceCustomer;
     private final InstallmentsRepository installmentsRepository;
     private final TransactionService transactionService;
 
-    public LoanService(LoanRepository loanRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, @Value("${destination.email}") String destinationEmail, AccountRepository accountRepository, UserServiceCustomer userServiceCustomer, InstallmentsRepository installmentsRepository, TransactionService transactionService) {
+    public LoanService(LoanRepository loanRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("${destination.email}") String destinationEmail, AccountRepository accountRepository, UserServiceCustomer userServiceCustomer, InstallmentsRepository installmentsRepository, TransactionService transactionService) {
         this.loanRepository = loanRepository;
         this.jmsTemplate = jmsTemplate;
         this.messageHelper = messageHelper;
-        this.modelMapper = modelMapper;
-        this.destinationEmail = destinationEmail;
+	    this.destinationEmail = destinationEmail;
         this.accountRepository = accountRepository;
         this.userServiceCustomer = userServiceCustomer;
         this.installmentsRepository = installmentsRepository;
@@ -66,55 +61,54 @@ public class LoanService {
         // Find account
         Account account = accountRepository.findById(createLoanDTO.getAccountId())
                 .orElseThrow(() -> new RuntimeException("Racun nije pronadjen"));
-    
+
         if (account == null) {return null;}
-        
+
         // Create new loan manually
         Loan newLoan = new Loan();
-        
+
         // Set basic loan info from DTO
         newLoan.setLoanType(createLoanDTO.getLoanType());
         newLoan.setNumberOfInstallments(createLoanDTO.getNumberOfInstallments());
         newLoan.setInterestType(createLoanDTO.getInterestType());
         newLoan.setLoanAmount(createLoanDTO.getLoanAmount());
         newLoan.setCurrencyType(createLoanDTO.getCurrencyType());
-        
+
         // Set loan reason from loanPurpose
         if (createLoanDTO.getLoanPurpose() != null) {
             newLoan.setLoanReason(createLoanDTO.getLoanPurpose());
         } else {
             newLoan.setLoanReason("General purpose");
         }
-        
+
         // CRITICAL - Set duration equal to numberOfInstallments
         newLoan.setDuration(createLoanDTO.getNumberOfInstallments());
-        
+
         // Set rates with defaults
-        newLoan.setNominalRate(createLoanDTO.getNominalRate() != null ? 
+        newLoan.setNominalRate(createLoanDTO.getNominalRate() != null ?
             createLoanDTO.getNominalRate() : 5.5);
-        newLoan.setEffectiveRate(createLoanDTO.getEffectiveRate() != null ? 
+        newLoan.setEffectiveRate(createLoanDTO.getEffectiveRate() != null ?
             createLoanDTO.getEffectiveRate() : 6.0);
-        
-        // Set dates
+
         // Set dates with milliseconds instead of seconds for frontend compatibility
         long currentTimeSeconds = Instant.now().getEpochSecond();
         long currentTimeMillis = currentTimeSeconds * 1000; // Convert to milliseconds
 
         newLoan.setCreatedDate(currentTimeMillis);
-        newLoan.setAllowedDate(createLoanDTO.getAllowedDate() != null ? 
+        newLoan.setAllowedDate(createLoanDTO.getAllowedDate() != null ?
             createLoanDTO.getAllowedDate() * 1000 : currentTimeMillis);
-        newLoan.setNextPaymentDate(currentTimeMillis + 30*24*60*60*1000); // 30 days in milliseconds
-        
+        newLoan.setNextPaymentDate(currentTimeMillis + 30L *24*60*60*1000); // 30 days in milliseconds
+
         // Set payment info
         newLoan.setRemainingAmount(createLoanDTO.getLoanAmount());
-        newLoan.setMonthlyPayment(createLoanDTO.getMonthlyPayment() != null ? 
-            createLoanDTO.getMonthlyPayment() : 
+        newLoan.setMonthlyPayment(createLoanDTO.getMonthlyPayment() != null ?
+            createLoanDTO.getMonthlyPayment() :
             (createLoanDTO.getLoanAmount() / createLoanDTO.getNumberOfInstallments()) * 1.05);
-        
+
         // Set status and account
         newLoan.setPaymentStatus(PaymentStatus.PENDING);
         newLoan.setAccount(account);
-        
+
         // Validation before saving
         if (newLoan.getLoanType().equals(LoanType.MORTGAGE)) {
             if (newLoan.getNumberOfInstallments() == null ||
@@ -129,12 +123,12 @@ public class LoanService {
                 return null;
             }
         }
-        
+
         // Debug output to verify all fields are set
-        System.out.println("SAVING LOAN: Duration=" + newLoan.getDuration() + 
-                          ", Installments=" + newLoan.getNumberOfInstallments() + 
+        System.out.println("SAVING LOAN: Duration=" + newLoan.getDuration() +
+                          ", Installments=" + newLoan.getNumberOfInstallments() +
                           ", Type=" + newLoan.getLoanType());
-        
+
         // Save and return the loan
         return loanRepository.save(newLoan);
     }
@@ -169,68 +163,62 @@ public class LoanService {
             // Find the loan
             Loan loan = loanRepository.findById(loanId).orElse(null);
             if (loan == null) {return null;}
-            
+
             // Update loan status based on approval decision
-            String emailMessage = "";
+            String emailMessage;
             if (loanUpdateDTO.getApproved()) {
                 loan.setPaymentStatus(PaymentStatus.APPROVED);
-                emailMessage = "Vaš zahtev za kredit u iznosu " + loan.getLoanAmount() + 
+                emailMessage = "Vaš zahtev za kredit u iznosu " + loan.getLoanAmount() +
                               " " + loan.getCurrencyType() + " je odobren.";
             } else {
                 loan.setPaymentStatus(PaymentStatus.DENIED);
-                emailMessage = "Vaš zahtev za kredit u iznosu " + loan.getLoanAmount() + 
+                emailMessage = "Vaš zahtev za kredit u iznosu " + loan.getLoanAmount() +
                               " " + loan.getCurrencyType() + " je odbijen.";
-                
+
                 // Store rejection reason if provided
                 if (loanUpdateDTO.getReason() != null && !loanUpdateDTO.getReason().isEmpty()) {
                     emailMessage += "\nRazlog: " + loanUpdateDTO.getReason();
                 }
             }
-            
+
             // Save the updated loan first
             Loan savedLoan = loanRepository.save(loan);
-            
+
             // Direct DB approach to get user email
             Account acc = loan.getAccount();
             sendLoanNotification(acc, emailMessage, loanId);
-            
-            System.out.println("Loan " + loanId + " status updated to: " + 
+
+            System.out.println("Loan " + loanId + " status updated to: " +
                     (loanUpdateDTO.getApproved() ? "APPROVED" : "DENIED"));
 
 //            acc.setBalance(acc.getBalance() + loan.getLoanAmount());
-            
+
             return savedLoan;
         } catch (Exception e) {
-            System.err.println("Error updating loan: " + e.getMessage());
-            e.printStackTrace();
+            log.warn("Error updating loan: " + e.getMessage());
             throw new RuntimeException("Error updating loan: " + e.getMessage());
         }
     }
-    
+    // FIXME should actually do something
     private void sendLoanNotification(Account acc, String emailMessage, Long loanId) {
         try {
-            // Create notification directly
             NotificationDTO emailDTO = new NotificationDTO();
             emailDTO.setSubject("Obaveštenje o statusu kredita");
             emailDTO.setMessage("Nije prosao loan jbg");
             emailDTO.setType("email");
-            
-            // Try getting customer from service first
+
             try {
                 CustomerDTO customer = userServiceCustomer.getCustomerById(acc.getOwnerID());
                 emailDTO.setEmail(customer.getEmail());
-                
-                // Send notification using JMS
+
                 System.out.println("Sending loan notification for loan " + loanId + " to user ID " + customer.getEmail());
                 jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
-                
+
             } catch (Exception e) {
-                System.err.println("Failed to send notification: " + e.getMessage());
-                // Still allow the loan update to succeed even if notification fails
+	            log.warn("Failed to send notification: {}", e.getMessage());
             }
         } catch (Exception e) {
-            System.err.println("Error in notification process: " + e.getMessage());
-            // Don't propagate notification errors to the main workflow
+	        log.warn("Error in notification process: {}", e.getMessage());
         }
     }
 
@@ -258,9 +246,9 @@ public class LoanService {
 
         if (!loan.getAccount().getOwnerID().equals(ownerId)) {return null;}
         Integer paidInstallments = installmentsRepository.countByLoan(loan);
-        Integer numberOfInstallments = loan.getNumberOfInstallments()-paidInstallments;
-        return numberOfInstallments;
+	    return loan.getNumberOfInstallments()-paidInstallments;
     }
+
     public Account getBankAccount(CurrencyType currencyType) {
         Long ownerId = 1L;
         return accountRepository.findByOwnerIDAndCurrencyType(ownerId, currencyType);
@@ -274,15 +262,16 @@ public class LoanService {
 
     public void processDueInstallments() {
         List<Installment> dueInstallments = installmentsRepository.getDueInstallments(Instant.now().getEpochSecond());
-
+        // the emojis will be preserved for posterity
         if (dueInstallments == null || dueInstallments.isEmpty()) {
-            System.out.println("⚠️ No due installments found!");
-            throw new RuntimeException("Nijedna rata nije danas na redu za naplatu");
+            log.info("️⚠️ No loan installments to process");
+            return;
         }
 
         for (Installment installment : dueInstallments) {
             if (installment == null) {
-                System.out.println("⚠️ No installment info found!");
+
+                log.warn("⚠️ No installment info found!");
                 continue;
             }
 
