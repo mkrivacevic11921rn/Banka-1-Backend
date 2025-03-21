@@ -18,11 +18,11 @@ INSERT INTO currency (code, name, country, symbol) VALUES ('CAD', 'Canadian Doll
 INSERT INTO currency (code, name, country, symbol) VALUES ('AUD', 'Australian Dollar', 'Australia', 'A$');
 
 -- User accounts - Jovan (ID: 3)
-INSERT INTO account (id, account_number, balance, company_id, daily_limit, monthly_limit,
+INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
                      daily_spent, monthly_spent, currency_type, expiration_date, created_date,
                      employeeid, monthly_maintenance_fee, reserved_balance, ownerid,
                      status, type, subtype)
-VALUES (100, '111000100000000110', 100000.0, NULL, 10000.0, 100000.0, 0.0, 0.0, 'RSD',
+VALUES ('111000100000000110', 100000.0, NULL, 10000.0, 100000.0, 0.0, 0.0, 'RSD',
         1630454400000, 2025030500000, 1, 0.0, 0.0, 3, 'ACTIVE', 'CURRENT', 'STANDARD');
 
 INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
