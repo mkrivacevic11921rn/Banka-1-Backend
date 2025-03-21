@@ -83,7 +83,7 @@ func GetOrders(c *fiber.Ctx) error {
 
 func CreateOrder(c *fiber.Ctx) error {
 	var orderRequest types.CreateOrderRequest
-	userId := c.Locals("user_id").(uint)
+	userId := c.Locals("user_id").(float64)
 
 	if err := c.BodyParser(&orderRequest); err != nil {
 		return c.Status(400).JSON(types.Response{
@@ -97,7 +97,7 @@ func CreateOrder(c *fiber.Ctx) error {
 			Error:   "Neuspela validacija: " + err.Error(),
 		})
 	}
-	if userId != orderRequest.UserID {
+	if userId != float64(orderRequest.UserID) {
 		return c.Status(403).JSON(types.Response{
 			Success: false,
 			Error:   "Cannot create order for another user",
@@ -238,7 +238,7 @@ func InitRoutes(app *fiber.App) {
 	//   description: ID naloga
 	//   type: integer
 	//   required: true
-	app.Post("/orders/:id/decline", DeclineOrder)
+	app.Post("/orders/:id/decline", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), DeclineOrder)
 	// swagger:operation POST /orders/{id}/approve ApproveOrder
 	//
 	// Odobrenje naloga.
@@ -250,5 +250,5 @@ func InitRoutes(app *fiber.App) {
 	//   description: ID naloga
 	//   type: integer
 	//   required: true
-	app.Post("/orders/:id/approve", ApproveOrder)
+	app.Post("/orders/:id/approve", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), ApproveOrder)
 }
