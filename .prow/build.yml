@@ -18,6 +18,8 @@ postsubmits:
     # je najbolje da imamo image sa tagom koji odgovara hash-u Git commit-a,
     # a da bi to bilo efikasno, treba da pushujemo image sa tim tagom za svaki
     # mikroservis.
+    branches:
+      - ^main$
     always_run: true
     decorate: true
     # max_concurrency omogućava da u istom trenutku može biti pokrenuta samo
