@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gofiber/fiber/v2/log"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -84,23 +85,27 @@ func FetchYahoo(ticker string) (YahooOptionsApiResponse, error) {
 }
 
 func LoadAllOptions() error {
+	log.Info("Hello")
 	// get all listings
 	var listings []types.Listing
 	if err := db.DB.Find(&listings).Error; err != nil {
 		return err
 	}
-
+	log.Infof("Loaded %d listings", len(listings))
 	// delete all options
+	log.Info("Deleting all options")
 	if err := db.DB.Exec("DELETE FROM option").Error; err != nil {
 		return err
 	}
-
-	for _, listing := range listings {
+	for i, listing := range listings {
+		if i%10 != 0 {
+			continue
+		}
 		yahooResp, err := FetchYahoo(listing.Ticker)
 		if err != nil {
-			return err
+			log.Infof("Error: %v", err)
+			continue
 		}
-
 		SaveOptionsToDB(listing.Ticker, yahooResp)
 	}
 
