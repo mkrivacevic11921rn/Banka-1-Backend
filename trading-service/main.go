@@ -1,10 +1,10 @@
 package main
 
 import (
-	options "banka1.com/listings/Options"
-	"banka1.com/middlewares"
 	"os"
 	"time"
+
+	"banka1.com/middlewares"
 
 	"banka1.com/listings/futures"
 	"banka1.com/routes"
