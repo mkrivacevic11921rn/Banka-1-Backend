@@ -4,6 +4,7 @@ import (
 	"os"
 	"time"
 
+	options "banka1.com/listings/options"
 	"banka1.com/middlewares"
 
 	"banka1.com/listings/futures"
@@ -14,7 +15,6 @@ import (
 	"banka1.com/exchanges"
 	"banka1.com/listings/finhub"
 	"banka1.com/listings/forex"
-	"banka1.com/listings/options"
 	"banka1.com/listings/stocks"
 	"banka1.com/orders"
 	"banka1.com/types"
