@@ -1,6 +1,7 @@
 package orders
 
 import (
+	"banka1.com/middlewares"
 	"strings"
 
 	"banka1.com/db"
@@ -82,6 +83,8 @@ func GetOrders(c *fiber.Ctx) error {
 
 func CreateOrder(c *fiber.Ctx) error {
 	var orderRequest types.CreateOrderRequest
+	userId := c.Locals("user_id").(uint)
+
 	if err := c.BodyParser(&orderRequest); err != nil {
 		return c.Status(400).JSON(types.Response{
 			Success: false,
@@ -94,6 +97,13 @@ func CreateOrder(c *fiber.Ctx) error {
 			Error:   "Neuspela validacija: " + err.Error(),
 		})
 	}
+	if userId != orderRequest.UserID {
+		return c.Status(403).JSON(types.Response{
+			Success: false,
+			Error:   "Cannot create order for another user",
+		})
+	}
+
 	order := types.Order{
 		UserID:         orderRequest.UserID,
 		SecurityID:     orderRequest.SecurityID,
@@ -216,7 +226,7 @@ func InitRoutes(app *fiber.App) {
 	//   required: true
 	//   schema:
 	//      $ref: '#/definitions/CreateOrderRequest'
-	app.Post("/orders", CreateOrder)
+	app.Post("/orders", middlewares.Auth, CreateOrder)
 	// swagger:operation POST /orders/{id}/decline DeclineOrder
 	//
 	// Odbijanje naloga.
