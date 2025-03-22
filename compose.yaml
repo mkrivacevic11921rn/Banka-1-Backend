@@ -1,10 +1,10 @@
 # The full docker compose file for the project.
 # Use it if you want to run the whole backend in one go, in docker.
 # Run it with:
-# docker compose -f compose.full.yaml up (-d for detached mode)
+# docker compose -f compose.local.yaml up (-d for detached mode)
 
 # You can also use this compose file for development, just stop the services you want to work on, for example:
-# docker compose -f compose.full.yaml stop user-service
+# docker compose -f compose.local.yaml stop user-service
 
 # Note: ports shouldn't be exposed in production
 
@@ -12,7 +12,7 @@
 services:
   proxy:
     image: caddy:2-alpine
-#    restart: unless-stopped
+    #    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
@@ -31,7 +31,7 @@ services:
     depends_on:
       - user-service
       - banking-service
-#  TODO: Change message broker to RabbitMQ
+  #  TODO: Change message broker to RabbitMQ
   message-broker:
     image: 'apache/activemq-classic:latest'
     ports:
@@ -46,7 +46,7 @@ services:
     networks:
       - broker-net
   notification-service:
-    image: 'notification-service:0.0.1-SNAPSHOT'
+    image: 'harbor.k8s.elab.rs/banka-1/notification-service:latest'
     networks:
       - broker-net
       - notification-net
@@ -66,7 +66,7 @@ services:
       - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
       - SPRING_JPA_HIBERNATE_DDL_AUTO=create-drop
       - SPRING_H2_CONSOLE_ENABLED=false
-#     AMQ_URL and AMQ_QUERYPARAMETERS are joined into SPRING_ACTIVEMQ_BROKER_URL, so I just changed that one.
+      #     AMQ_URL and AMQ_QUERYPARAMETERS are joined into SPRING_ACTIVEMQ_BROKER_URL, so I just changed that one.
       - SPRING_ACTIVEMQ_BROKER_URL=tcp://message-broker:61616?jms.prefetchPolicy.all=1&jms.redeliveryPolicy.maximumRedeliveries=0
       #    If you want colored output, uncomment the following line:
       - SPRING_OUTPUT_ANSI_ENABLED=always
@@ -76,7 +76,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
-# Note: This isn't necessary
+  # Note: This isn't necessary
   notification-db:
     image: 'postgres:17-alpine'
     networks:
@@ -94,7 +94,7 @@ services:
     volumes:
       - 'notification_db_data:/var/lib/postgresql/data/'
   banking-service:
-    image: 'banking-service:0.0.1-SNAPSHOT'
+    image: 'harbor.k8s.elab.rs/banka-1/banking-service:latest'
     ports:
       - '8082:8082'
     networks:
@@ -146,7 +146,7 @@ services:
     volumes:
       - 'banking_db_data:/var/lib/postgresql/data/'
   user-service:
-    image: 'user-service:0.0.1-SNAPSHOT'
+    image: 'harbor.k8s.elab.rs/banka-1/user-service:latest'
     ports:
       - '8081:8081'
     networks:
@@ -201,16 +201,44 @@ services:
     volumes:
       - 'user_db_data:/var/lib/postgresql/data/'
   trading-service:
-    image: 'trading-service:0.0.1-SNAPSHOT'
+    image: harbor.k8s.elab.rs/banka-1/trading-service:latest
+    ports:
+      - '3000:3000'
+    depends_on:
+      trading-db:
+        condition: service_healthy
+    networks:
+      - proxy-net
+      - trading-net
+    healthcheck:
+      test: [ "CMD-SHELL", "echo OK"]
+  trading-db:
+    image: 'postgres:17-alpine'
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U trading_service_user -d trading_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - trading-net
+    environment:
+      POSTGRES_USER: trading_service_user
+      POSTGRES_PASSWORD: trading_service_password
+      POSTGRES_DB: trading_db
+    volumes:
+      - 'trading_db_data:/var/lib/postgresql/data/'
+
 volumes:
-    activemq_data: null
-    notification_db_data: null
-    banking_db_data: null
-    user_db_data: null
+  activemq_data: null
+  notification_db_data: null
+  banking_db_data: null
+  user_db_data: null
+  trading_db_data: null
 networks:
   broker-net: null
   notification-net: null
   user-net: null
   proxy-net: null
   banking-net: null
-
+  trading-net: null
