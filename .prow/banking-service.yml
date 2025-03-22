@@ -105,7 +105,7 @@ presubmits:
               # JUnit pokazuje koji testovi su prošli, a koji nisu.
               # Takođe je izuzetno važno da se ova trap komnda pokrene pre
               # pokretanja testova.
-              # trap collectJUnitCoverage EXIT
+              trap collectJUnitCoverage EXIT
 
               # Pokreće sledeće Maven target-e:
               #   - "clean": čisti projekat, npr. ukoliko ste greškom commit-ovali target/ direktorijum
