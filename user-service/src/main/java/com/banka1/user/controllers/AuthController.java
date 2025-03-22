@@ -23,7 +23,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Tag(name = "Autentifikacija" , description = "Rute za login, logout i osvežavanje JWT tokena")
+@Tag(name = "Authentication API" , description = "API za login, logout i osvežavanje JWT tokena")
 public class AuthController {
     private final AuthService authService;
     private final BlackListTokenService blackListTokenService;
@@ -35,11 +35,22 @@ public class AuthController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200",description = "Uspešan login",
             content = @Content(mediaType = "application/json",
-            examples = @ExampleObject(value = "{ \"success\": true, \"data\": { \"token\": \"jwt_token\" } }"))
+            examples = @ExampleObject(value = """
+                    {
+                      "success": true,
+                      "data": {
+                        "token": "jwt_token"
+                        }
+                    }"""))
         ),
         @ApiResponse(responseCode = "400", description = "Neispravni podaci ili korisnik ne postoji",
             content = @Content(mediaType = "application/json",
-            examples = @ExampleObject(value = "{ \"success\": false, \"error\": \"Korisnik ne postoji.\" }"))
+            examples = @ExampleObject(value = """
+                    {
+                      "success": false,
+                      "error": "Korisnik ne postoji."
+                    }
+                    """))
         )
     })
     @PostMapping("/login")
@@ -78,9 +89,6 @@ public class AuthController {
         required = true,
         example = "Bearer jwt_token"
     ) @RequestHeader(value = "Authorization", required = false) String authorization) {
-
-
-
         try {
             blackListTokenService.blacklistToken(authService.getToken(authorization));
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", ResponseMessage.LOGOUT_SUCCESS.toString()), null);

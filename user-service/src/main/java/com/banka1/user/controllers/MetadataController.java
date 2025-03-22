@@ -30,7 +30,17 @@ public class MetadataController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200",
             content = @Content(mediaType = "application/json",
-            examples = @ExampleObject(value = "{ \"success\": true, \"data\": { \"list\": [ \"IT\", \"HR\", \"...\" ] } }"))
+            examples = @ExampleObject(value = """
+                    {
+                      "success": true,
+                      "data": {
+                        "list": [
+                          "WORKER",
+                          "HR",
+                          "..."
+                        ]
+                      }
+                    }"""))
         )
     })
     public ResponseEntity<?> getAllDepartments() {
@@ -43,7 +53,17 @@ public class MetadataController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200",
             content = @Content(mediaType = "application/json",
-            examples = @ExampleObject(value = "{ \"success\": true, \"data\": { \"list\": [ \"user.employee.create\", \"user.employee.view\", \"...\" ] } }"))
+            examples = @ExampleObject(value = """
+                    {
+                      "success": true,
+                      "data": {
+                        "list": [
+                          "user.employee.create",
+                          "user.employee.view",
+                          "..."
+                        ]
+                      }
+                    }"""))
         )
     })
     public ResponseEntity<?> getAllPermissions() {
@@ -56,7 +76,17 @@ public class MetadataController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200",
             content = @Content(mediaType = "application/json",
-            examples = @ExampleObject(value = "{ \"success\": true, \"data\": { \"list\": [ \"WORKER\", \"HR\", \"...\" ] } }"))
+            examples = @ExampleObject(value = """
+                    {
+                      "success": true,
+                      "data": {
+                        "list": [
+                          "IT",
+                          "HR",
+                          "..."
+                        ]
+                      }
+                    }"""))
         )
     })
     public ResponseEntity<?> getAllPositions() {

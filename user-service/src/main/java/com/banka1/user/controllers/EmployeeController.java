@@ -35,7 +35,7 @@ public class EmployeeController {
     private EmployeeService employeeService;
 
     @Operation(
-            summary = "Dobavljanje informacija o zaposlenom datog ID-a"
+        summary = "Dobavljanje informacija o zaposlenom datog ID-a"
     )
     @GetMapping("/{id}")
     @Authorization(permissions = { Permission.READ_EMPLOYEE }, allowIdFallback = true )

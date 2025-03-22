@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,7 +28,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/customer")
-@Tag(name = "Musterije")
+@Tag(name = "Customer API", description = "API za upravljanje mušterijama")
 public class CustomerController {
 
     private final CustomerService customerService;
@@ -39,8 +40,40 @@ public class CustomerController {
     }
 
     @Operation(
-            summary = "Dobavljanje informacija o musteriji datog ID-a"
+        summary = "Dobavljanje informacija o mušteriji datog ID-a"
     )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200",description = "Uspešno dobavljanje informacija o mušteriji",
+            content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                    {
+                      "data": {
+                        "id": 1,
+                        "firstName": "Pera",
+                        "lastName": "Petrovic",
+                        "username": "pera123",
+                        "birthDate": "2002-12-12",
+                        "gender": "MALE",
+                        "email": "pera@banka.com",
+                        "phoneNumber": "+38160123123",
+                        "address": "Knez Mihailova 6",
+                        "permissions": [
+                          "user.employee.view"
+                        ]
+                      },
+                      "success": true
+                    }"""))
+        ),
+        @ApiResponse(responseCode = "404", description = "Neispravni podaci ili korisnik ne postoji",
+            content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                    {
+                      "success": false,
+                      "error": "Korisnik nije pronadjen."
+                    }
+                    """))
+        )
+    })
     @GetMapping("/{id}")
     @Authorization(permissions = { Permission.READ_CUSTOMER }, allowIdFallback = true )
     public ResponseEntity<?> getById(
@@ -62,8 +95,41 @@ public class CustomerController {
     @Authorization(permissions = { Permission.CREATE_CUSTOMER }, allowIdFallback = true )
     @Operation(summary = "Kreiranje musterije", description = "Kreira musteriju i vraca ID kreirane musterije")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Zaposleni uspešno kreiran", content = @Content(examples = {@ExampleObject(description = "{sucess: true, data: 1}")}) ),
-            @ApiResponse(responseCode = "403", description = "Nemaš permisije za ovu akciju")
+        @ApiResponse(responseCode = "200", description = "Musterija uspešno kreirana",
+            content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": true,
+                  "data": {
+                    "customer": {
+                      "id": 7,
+                      "firstName": "Pera",
+                      "lastName": "Petrovic",
+                      "birthDate": "2002-12-12",
+                      "gender": "MALE",
+                      "email": "pera@banka.com",
+                      "username": "pera123",
+                      "phoneNumber": "+38160123123",
+                      "address": "Knez Mihailova 6",
+                      "password": null,
+                      "saltPassword": null,
+                      "verificationCode": "6efb6106-9107-4f11-8baa-a2576f77dd04",
+                      "permissions": null,
+                      "bankAccounts": null
+                    }
+                  }
+                }
+                """))
+        ),
+        @ApiResponse(responseCode = "403", description = "Nemaš permisije za ovu akciju",
+            content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                   "success": false,
+                   "error": "Nedovoljna autorizacija."
+                 }
+            """))
+        )
     })
     public ResponseEntity<?> createCustomer(
             @RequestBody @Parameter(description = "Customer data for creation") CreateCustomerRequest customerDTO,
@@ -74,10 +140,25 @@ public class CustomerController {
 
     @PutMapping("/{id}")
     @Authorization(permissions = { Permission.EDIT_CUSTOMER }, allowIdFallback = true )
-    @Operation(summary = "Promena musterije")
+    @Operation(summary = "Promena podataka musterije")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Uspesna promena"),
-            @ApiResponse(responseCode = "404", description = "Korisnik nije pronadjen")
+        @ApiResponse(responseCode = "200", description = "Podaci korisnika ažurirani", content = @Content(mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                    {
+                      "success": true,
+                      "data": {
+                        "message": "Podaci korisnika ažurirani"
+                      }
+                    }
+                """))
+        ),
+        @ApiResponse(responseCode = "404", description = "Korisnik nije pronadjen", content = @Content(mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                    {
+                      "success": false,
+                      "error": "Korisnik nije pronadjen"
+                    }
+                """)))
     })
     public ResponseEntity<?> updateCustomer(
             @PathVariable @Parameter(description = "ID musterije") Long id,
@@ -96,8 +177,23 @@ public class CustomerController {
     @Authorization(permissions = { Permission.DELETE_CUSTOMER }, allowIdFallback = true )
     @Operation(summary = "Brisanje musterije")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Uspesno brisanje"),
-            @ApiResponse(responseCode = "404", description = "Korisnik nije pronadjen")
+        @ApiResponse(responseCode = "200", description = "Korisnik uspešno obrisan", content = @Content(mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                    {
+                      "success": true,
+                      "data": {
+                        "message": "Korisnik uspešno obrisan"
+                      }
+                    }
+                """))
+        ),
+        @ApiResponse(responseCode = "404", description = "Korisnik nije pronadjen", content = @Content(mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                    {
+                      "success": false,
+                      "error": "Korisnik nije pronađen"
+                    }
+                """)))
     })
     public ResponseEntity<?> deleteCustomer(
             @PathVariable @Parameter(description = "ID musterije") Long id) {
@@ -115,8 +211,23 @@ public class CustomerController {
     @Authorization(permissions = { Permission.SET_CUSTOMER_PERMISSION }, allowIdFallback = true )
     @Operation(summary = "Promena permisija musterije")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Uspeh"),
-            @ApiResponse(responseCode = "404", description = "Korisnik nije pronadjen")
+        @ApiResponse(responseCode = "200", description = "Uspesno azurirane permisije", content = @Content(mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                    {
+                      "success": true,
+                      "data": {
+                        "message": "Permisije ažurirane"
+                      }
+                    }
+                """))
+        ),
+        @ApiResponse(responseCode = "404", description = "Korisnik nije pronadjen", content = @Content(mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                    {
+                      "success": false,
+                      "error": "Korisnik nije pronađen"
+                    }
+                """)))
     })
     public ResponseEntity<?> updateCustomerPermissions(
             @PathVariable @Parameter(description = "ID musterije") Long id,
@@ -130,20 +241,4 @@ public class CustomerController {
         }
 
     }
-
-    @PutMapping("/set-password")
-    @Operation(summary = "Postavljanje lozinke", description = "Postavljanje lozinke i validacija mejla nakon kreiranja musterije")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Uspeh"),
-    })
-    public ResponseEntity<?> setPassword(@RequestBody SetPasswordRequest setPasswordRequest) {
-        try {
-            customerService.setPassword(setPasswordRequest);
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Lozinka uspešno postavljena"), null);
-        } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
-        }
-    }
-
-
 }
