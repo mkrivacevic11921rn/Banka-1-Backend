@@ -24,7 +24,7 @@ presubmits:
     # od "pom.xml" ili "docker-compose.yml" fajlova.
     # Direktorijumi su naznačeni sa "/" na kraju naziva direktorijuma,
     # npr. "trading-service/".
-    run_if_changed: "(trading-service/|compose.full.yaml|.prow/)"
+    run_if_changed: "(trading-service/|compose.local.yaml|.prow/)"
     decorate: true
     spec:
       containers:
@@ -61,7 +61,7 @@ presubmits:
               # Promeniti ovu komandu da pokreće one servise koji vam trebaju za vaše
               # testove. Moguće je više puta pokrenuti "docker compose up" za različite
               # Docker Compose servise.
-              # docker compose -f compose.full.yaml up -d trading-db message-broker
+              # docker compose up -d trading-db message-broker user-service banking-service
       
               SERVICE_NAME="trading-service"
               cd trading-service
