@@ -24,7 +24,7 @@ presubmits:
     # od "pom.xml" ili "docker-compose.yml" fajlova.
     # Direktorijumi su naznačeni sa "/" na kraju naziva direktorijuma,
     # npr. "user-service/".
-    run_if_changed: "(user-service/|compose.full.yaml|build.gradle.kts|settings.gradle.kts|.prow/)"
+    run_if_changed: "(user-service/|compose.local.yaml|build.gradle.kts|settings.gradle.kts|.prow/)"
     decorate: true
     spec:
       containers:
@@ -91,7 +91,7 @@ presubmits:
               # Promeniti ovu komandu da pokreće one servise koji vam trebaju za vaše
               # testove. Moguće je više puta pokrenuti "docker compose up" za različite
               # Docker Compose servise.
-              docker compose -f compose.full.yaml up -d user-db message-broker
+              docker compose up -d user-db message-broker
               
               # trap komanda obezbeđuje da se "collectJUnitCoverage"
               # funkcija izvrši pre samog izlaska iz ove skripte, nezavisno

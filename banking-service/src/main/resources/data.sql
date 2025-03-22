@@ -39,35 +39,35 @@ VALUES ('AUD', 'Australian Dollar', 'Australia', 'A$');
 -- User accounts - Jovan (ID: 3)
 INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
                      daily_spent, monthly_spent, currency_type, expiration_date, created_date,
-                     employee_id, monthly_maintenance_fee, reserved_balance, ownerid,
+                     employeeid, monthly_maintenance_fee, reserved_balance, ownerid,
                      status, type, subtype)
 VALUES ('111000100000000110', 100000.0, NULL, 10000.0, 100000.0, 0.0, 0.0, 'RSD',
         1630454400000, 2025030500000, 1, 0.0, 0.0, 3, 'ACTIVE', 'CURRENT', 'STANDARD');
 
 INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
                      daily_spent, monthly_spent, currency_type, expiration_date, created_date,
-                     employee_id, monthly_maintenance_fee, reserved_balance, ownerid,
+                     employeeid, monthly_maintenance_fee, reserved_balance, ownerid,
                      status, type, subtype)
 VALUES ('111000100011000110', 1000000.0, NULL, 0.0, 0.0, 0.0, 0.0, 'RSD',
         1630454400000, 2025030500000, 2, 0.0, 0.0, 3, 'ACTIVE', 'CURRENT', 'SAVINGS');
 
 INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
                      daily_spent, monthly_spent, currency_type, expiration_date, created_date,
-                     employee_id, monthly_maintenance_fee, reserved_balance, ownerid,
+                     employeeid, monthly_maintenance_fee, reserved_balance, ownerid,
                      status, type, subtype)
 VALUES ('111000100000000120', 1000.0, NULL, 200.0, 10000.0, 0.0, 0.0, 'EUR',
         1630454400000, 2025030500000, 1, 0.0, 0.0, 3, 'ACTIVE', 'FOREIGN_CURRENCY', 'STANDARD');
 
 INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
                      daily_spent, monthly_spent, currency_type, expiration_date, created_date,
-                     employee_id, monthly_maintenance_fee, reserved_balance, ownerid,
+                     employeeid, monthly_maintenance_fee, reserved_balance, ownerid,
                      status, type, subtype)
 VALUES ('111000100220000120', 1000.0, NULL, 100.0, 1000.0, 0.0, 0.0, 'EUR',
         1630454400000, 2025030500000, 1, 0.0, 0.0, 3, 'ACTIVE', 'FOREIGN_CURRENCY', 'PENSION');
 
 INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
                      daily_spent, monthly_spent, currency_type, expiration_date, created_date,
-                     employee_id, monthly_maintenance_fee, reserved_balance, ownerid,
+                     employeeid, monthly_maintenance_fee, reserved_balance, ownerid,
                      status, type, subtype)
 VALUES ('111000100000000320', 1000.0, NULL, 200.0, 10000.0, 0.0, 0.0, 'USD',
         1630454400000, 2025030500000, 1, 0.0, 0.0, 3, 'ACTIVE', 'FOREIGN_CURRENCY', 'STANDARD');
@@ -75,7 +75,7 @@ VALUES ('111000100000000320', 1000.0, NULL, 200.0, 10000.0, 0.0, 0.0, 'USD',
 -- User accounts - Nemanja (ID: 4)
 INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
                      daily_spent, monthly_spent, currency_type, expiration_date, created_date,
-                     employee_id, monthly_maintenance_fee, reserved_balance, ownerid,
+                     employeeid, monthly_maintenance_fee, reserved_balance, ownerid,
                      status, type, subtype)
 VALUES ('111000100000000210', 100000.0, NULL, 10000.0, 100000.0, 0.0, 0.0, 'RSD',
         1630454400000, 2025030500000, 1, 0.0, 0.0, 4, 'ACTIVE', 'CURRENT', 'STANDARD');
@@ -119,6 +119,7 @@ VALUES (3, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 550000.0, 24,
         22000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '30 days') * 1000,
         500000.0, 'Home renovation, attempt 2', 100);
 
+
 INSERT INTO company (id, name, address, vat_number, company_number)
 VALUES (1, 'Naša Banka', 'Bulevar Banka 1', '111111111', '11111111');
 
@@ -127,11 +128,11 @@ INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_l
                      employee_id, monthly_maintenance_fee, reserved_balance, ownerid,
                      status, type, subtype)
 VALUES
--- RSD - domaća valuta sa većim balansom
+-- RSD - domaća valuta - 10 milijardi
 ('111000100000000199', 10000000000.0, 1, 10000000.0, 100000000.0, 0.0, 0.0, 'RSD',
  2029030500000, 2025030500000, 1, 0.0, 0.0, 7, 'ACTIVE', 'BANK', 'STANDARD'),
 
--- Ostale valute - 100 miliona
+-- Ostale valute - 10 miliona
 ('111000100000000299', 10000000.0, 1, 1000000.0, 1000000.0, 0.0, 0.0, 'EUR',
  2029030500000, 2025030500000, 1, 0.0, 0.0, 7, 'ACTIVE', 'BANK', 'STANDARD'),
 
@@ -152,3 +153,46 @@ VALUES
 
 ('111000100000000899', 10000000.0, 1, 1000000.0, 1000000.0, 0.0, 0.0, 'AUD',
  2029030500000, 2025030500000, 1, 0.0, 0.0, 7, 'ACTIVE', 'BANK', 'STANDARD');
+
+-- Accounts for Marko Marković (ID: 1)
+DELETE FROM account WHERE ownerid = 1;
+
+-- Standard RSD Current account (matches Jovan's first account)
+INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
+                     daily_spent, monthly_spent, currency_type, expiration_date, created_date,
+                     employeeid, monthly_maintenance_fee, reserved_balance, ownerid,
+                     status, type, subtype)
+VALUES ('111000100000000101', 100000.0, NULL, 10000.0, 100000.0, 0.0, 0.0, 'RSD',
+        1630454400000, 2025030500000, 1, 0.0, 0.0, 1, 'ACTIVE', 'CURRENT', 'STANDARD');
+
+-- RSD Savings account (matches Jovan's second account)
+INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
+                     daily_spent, monthly_spent, currency_type, expiration_date, created_date,
+                     employeeid, monthly_maintenance_fee, reserved_balance, ownerid,
+                     status, type, subtype)
+VALUES ('111000100011000101', 1000000.0, NULL, 0.0, 0.0, 0.0, 0.0, 'RSD',
+        1630454400000, 2025030500000, 2, 0.0, 0.0, 1, 'ACTIVE', 'CURRENT', 'SAVINGS');
+
+-- EUR Foreign Currency account (matches Jovan's third account)
+INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
+                     daily_spent, monthly_spent, currency_type, expiration_date, created_date,
+                     employeeid, monthly_maintenance_fee, reserved_balance, ownerid,
+                     status, type, subtype)
+VALUES ('111000100000000121', 1000.0, NULL, 200.0, 10000.0, 0.0, 0.0, 'EUR',
+        1630454400000, 2025030500000, 1, 0.0, 0.0, 1, 'ACTIVE', 'FOREIGN_CURRENCY', 'STANDARD');
+
+-- EUR Foreign Currency Pension account (matches Jovan's fourth account)
+INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
+                     daily_spent, monthly_spent, currency_type, expiration_date, created_date,
+                     employeeid, monthly_maintenance_fee, reserved_balance, ownerid,
+                     status, type, subtype)
+VALUES ('111000100220000121', 1000.0, NULL, 100.0, 1000.0, 0.0, 0.0, 'EUR',
+        1630454400000, 2025030500000, 1, 0.0, 0.0, 1, 'ACTIVE', 'FOREIGN_CURRENCY', 'PENSION');
+
+-- USD Foreign Currency account (matches Jovan's fifth account)
+INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
+                     daily_spent, monthly_spent, currency_type, expiration_date, created_date,
+                     employeeid, monthly_maintenance_fee, reserved_balance, ownerid,
+                     status, type, subtype)
+VALUES ('111000100000000321', 1000.0, NULL, 200.0, 10000.0, 0.0, 0.0, 'USD',
+        1630454400000, 2025030500000, 1, 0.0, 0.0, 1, 'ACTIVE', 'FOREIGN_CURRENCY', 'STANDARD');
