@@ -86,5 +86,6 @@ public class DtoTest {
         assertNotNull(customerDTO.toString());
         assertNotNull(notificationDTO.toString());
         assertNotNull(exchangePreviewDTO.toString());
+
     }
 }
