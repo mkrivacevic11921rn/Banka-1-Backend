@@ -177,7 +177,7 @@ public class SearchIntegrationTest {
         data = (Map) responseEntity.getBody().get("data");
 
         assertNotNull(data.get("total"), "Odgovor ne sadrži broj redova.");
-        assertEquals(6, data.get("total"));
+        assertEquals(7, data.get("total"));
         assertNotNull(data.get("rows"), "Odgovor ne sadrži redove.");
         assertInstanceOf(List.class, data.get("rows"), "Redovi nisu lista.");
 
