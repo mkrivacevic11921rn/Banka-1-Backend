@@ -14,20 +14,23 @@ var validate = validator.New(validator.WithRequiredStructEnabled())
 
 func OrderToOrderResponse(order types.Order) types.OrderResponse {
 	return types.OrderResponse{
-		ID:             order.ID,
-		UserID:         order.UserID,
-		SecurityID:     order.SecurityID,
-		OrderType:      order.OrderType,
-		Quantity:       order.Quantity,
-		ContractSize:   order.ContractSize,
-		PricePerUnit:   order.PricePerUnit,
-		Direction:      order.Direction,
-		Status:         order.Status,
-		ApprovedBy:     order.ApprovedBy,
-		IsDone:         order.IsDone,
-		LastModified:   order.LastModified,
-		RemainingParts: order.RemainingParts,
-		AfterHours:     order.AfterHours,
+		ID:                order.ID,
+		UserID:            order.UserID,
+		AccountID:         order.AccountID,
+		SecurityID:        order.SecurityID,
+		Quantity:          order.Quantity,
+		ContractSize:      order.ContractSize,
+		StopPricePerUnit:  order.StopPricePerUnit,
+		LimitPricePerUnit: order.LimitPricePerUnit,
+		Direction:         order.Direction,
+		Status:            order.Status,
+		ApprovedBy:        order.ApprovedBy,
+		IsDone:            order.IsDone,
+		LastModified:      order.LastModified,
+		RemainingParts:    order.RemainingParts,
+		AfterHours:        order.AfterHours,
+		AON:               order.AON,
+		Margin:            order.Margin,
 	}
 }
 
@@ -105,18 +108,21 @@ func CreateOrder(c *fiber.Ctx) error {
 	}
 
 	order := types.Order{
-		UserID:         orderRequest.UserID,
-		SecurityID:     orderRequest.SecurityID,
-		OrderType:      orderRequest.OrderType,
-		Quantity:       orderRequest.Quantity,
-		ContractSize:   orderRequest.ContractSize,
-		PricePerUnit:   orderRequest.PricePerUnit,
-		Direction:      orderRequest.Direction,
-		Status:         "pending", // TODO: pribaviti needs approval vrednost preko token-a?
-		ApprovedBy:     nil,
-		IsDone:         false,
-		RemainingParts: &orderRequest.Quantity,
-		AfterHours:     false, // TODO: dodati check za ovo
+		UserID:            orderRequest.UserID,
+		AccountID:         orderRequest.AccountID,
+		SecurityID:        orderRequest.SecurityID,
+		Quantity:          orderRequest.Quantity,
+		ContractSize:      orderRequest.ContractSize,
+		StopPricePerUnit:  orderRequest.StopPricePerUnit,
+		LimitPricePerUnit: orderRequest.LimitPricePerUnit,
+		Direction:         orderRequest.Direction,
+		Status:            "pending", // TODO: pribaviti needs approval vrednost preko token-a?
+		ApprovedBy:        nil,
+		IsDone:            false,
+		RemainingParts:    &orderRequest.Quantity,
+		AfterHours:        false, // TODO: dodati check za ovo
+		AON:               orderRequest.AON,
+		Margin:            orderRequest.Margin,
 	}
 	tx := db.DB.Create(&order)
 	if err := tx.Error; err != nil {
