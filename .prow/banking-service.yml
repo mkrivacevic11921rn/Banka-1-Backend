@@ -53,23 +53,27 @@ presubmits:
               # uploaduje pre JaCoCo coverage report-a zato što JaCoCo coverage report
               # postoji samo ako se svi testovi završe uspešno, što nije slučaj za
               # JUnit report-e.
-              collectJUnitCoverage() {
-                set +e
-
-                junit_source_directory="./target/surefire-reports/"
-                junit_dest_directory="/logs/artifacts/"
-
-                counter=1
-
-                for file in "$junit_source_directory"/*.xml; do
-                  cp "$file" "$junit_dest_directory/junit.$counter.xml"
-                  ((counter++))
-                done
               
-                cp -r ./target/site/jacoco /logs/artifacts/
-                echo "${GCSWEB_URL}/prow-logs/pr-logs/pull/${REPO_OWNER}_${REPO_NAME}/${PULL_NUMBER}/${JOB_NAME}/${BUILD_NUMBER}/artifacts/jacoco/index.html" > /logs/artifacts/coverage.link.txt
-              }
-
+              SERVICE_NAME="banking-service"
+              
+              collectJUnitCoverage() {
+              set +e
+              
+              # For Gradle projects, JUnit reports are in build/test-results/test directory
+              junit_source_directory="./${SERVICE_NAME}/build/test-results/test/"
+              junit_dest_directory="/logs/artifacts/"
+              
+              counter=1
+              
+              for file in "$junit_source_directory"/*.xml; do
+              cp "$file" "$junit_dest_directory/junit.$counter.xml"
+              counter=$((counter+1))
+              done
+              
+              cp -r ./${SERVICE_NAME}/build/reports/jacoco /logs/artifacts/jacoco
+              echo "${GCSWEB_URL}/prow-logs/pr-logs/pull/${REPO_OWNER}_${REPO_NAME}/${PULL_NUMBER}/${JOB_NAME}/${BUILD_NUMBER}/artifacts/jacoco/index.html" > /logs/artifacts/coverage.link.txt
+              }              
+              
               # Pokreće Docker unutar kontejnera u kome se izvršava ova skripta
               # i u kom se pokreću testovi.
               # Docker vam omogućava da koristite Docker Compose i na taj način
@@ -88,14 +92,6 @@ presubmits:
               # testove. Moguće je više puta pokrenuti "docker compose up" za različite
               # Docker Compose servise.
               docker compose -f compose.full.yaml up -d banking-db message-broker
-              
-              # Ovaj sleep obezbeđuje služi da obezbedi dovoljno vremena da se svi
-              # kontejneri pokrenuti iznad pokrenu u potpunosti. Po potreba možete
-              # povećati ili smanjiti interval, ili čak zameniti ovaj sleep nekim
-              # boljim mehanizmom (npr. healthcheck).
-              # sleep 120
-
-              SERVICE_NAME="banking-service"
 
               # trap komanda obezbeđuje da se "collectJUnitCoverage"
               # funkcija izvrši pre samog izlaska iz ove skripte, nezavisno
@@ -111,7 +107,7 @@ presubmits:
               #   - "clean": čisti projekat, npr. ukoliko ste greškom commit-ovali target/ direktorijum
               #   - "test": pokreće sve testove u okviru vaših projekata
               #   - "verify": verifikuje rezultate integracionih testova
-              gradle banking-service:clean banking-service:test
+              gradle ${SERVICE_NAME}:clean ${SERVICE_NAME}:test
           securityContext:
             privileged: true
           imagePullPolicy: Always
