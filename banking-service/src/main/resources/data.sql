@@ -120,8 +120,7 @@ VALUES (3, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 550000.0, 24,
         500000.0, 'Home renovation, attempt 2', 100);
 
 
--- Accounts for Marko Marković (ID: 1) - Aligned with Jovan's accounts
--- Delete previous Marko accounts first to avoid duplicates
+-- Accounts for Marko Marković (ID: 1)
 DELETE FROM account WHERE ownerid = 1;
 
 -- Standard RSD Current account (matches Jovan's first account)
