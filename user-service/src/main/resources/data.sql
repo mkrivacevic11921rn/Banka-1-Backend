@@ -160,4 +160,15 @@ VALUES (7, 'Banka', 'Banka', 'bankabanka@banka1.com', 'bankabanka',
 INSERT INTO customer_permissions (customer_id, permission)
 VALUES (7, 'READ_EMPLOYEE');
 
+-- Customer: DRZAVA (email: drzavadrzava@drzava1.com, password: Drzava12345)
+INSERT INTO customer (id, first_name, last_name, email, username, phone_number,
+                      birth_date, gender, address, salt_password, password)
+VALUES (8, 'Država', 'Država', 'drzavadrzava@drzava1.com', 'drzavadrzava',
+        '+381640000001', '2025-01-01', 'FEMALE', 'Bulevar Država 1',
+        'salt', '$2a$10$vh3TI9CcSeEM7PuxEqQ2GujAZKy1Xw02OtZkjHeOt3Z77/Uqydy2a');
+
+-- Permissions for DRZAVA
+INSERT INTO customer_permissions (customer_id, permission)
+VALUES (8, 'READ_EMPLOYEE');
+
 -- ============== Data Loaded ==============

@@ -19,4 +19,10 @@ public class BankAccountUtils {
                 .orElseThrow(() -> new RuntimeException("Račun banke za valutu " + currencyType + " nije pronađen."));
     }
 
+    public Account getCountryAccountForCurrency(CurrencyType currencyType){
+        return accountRepository
+                .findByTypeAndCurrencyType(AccountType.COUNTRY,currencyType)
+                .orElseThrow(() -> new RuntimeException("Račun drzave za valutu " + currencyType + " nije pronađen."));
+    }
+
 }
