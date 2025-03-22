@@ -33,24 +33,23 @@ public class AuthController {
         description = "Loguje korisnika na sistem i vraća JWT token koji sadrži ID korisnika, rolu i set permisija."
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200",description = "Uspešan login",
-            content = @Content(mediaType = "application/json",
+        @ApiResponse(responseCode = "200",description = "Uspešan login", content = @Content(mediaType = "application/json",
             examples = @ExampleObject(value = """
-                    {
-                      "success": true,
-                      "data": {
-                        "token": "jwt_token"
-                        }
-                    }"""))
-        ),
-        @ApiResponse(responseCode = "400", description = "Neispravni podaci ili korisnik ne postoji",
-            content = @Content(mediaType = "application/json",
-            examples = @ExampleObject(value = """
-                    {
-                      "success": false,
-                      "error": "Korisnik ne postoji."
+                {
+                  "success": true,
+                  "data": {
+                    "token": "jwt_token"
                     }
-                    """))
+                }
+            """))
+        ),
+        @ApiResponse(responseCode = "400", description = "Neispravni podaci ili korisnik ne postoji", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": false,
+                  "error": "Korisnik ne postoji."
+                }
+            """))
         )
     })
     @PostMapping("/login")
@@ -73,13 +72,23 @@ public class AuthController {
         description = "Odjavljuje korisnika i blacklistuje trenutni JWT token."
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Uspešan logout",
-            content = @Content(mediaType = "application/json",
-            examples = @ExampleObject(value = "{ \"success\": true , \"data\": { \"message\": \"Korisnik odjavljen\" } }"))
+        @ApiResponse(responseCode = "200", description = "Uspešan logout", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": true,
+                  "data": {
+                    "message": "Korisnik odjavljen"
+                  }
+                }
+            """))
         ),
-        @ApiResponse(responseCode = "401", description = "Token nije prosleđen ili je neispravan/istekao.",
-            content = @Content(mediaType = "application/json",
-            examples = @ExampleObject(value = "{ \"success\": false, \"error\": \"Token nije prosleđen ili je neispravan/istekao.\" }"))
+        @ApiResponse(responseCode = "401", description = "Token nije prosleđen ili je neispravan/istekao.", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": false,
+                  "error": "Token nije prosleđen ili je neispravan/istekao."
+                }
+            """))
         )
     })
     @PostMapping("/logout")
@@ -102,13 +111,23 @@ public class AuthController {
         description = "Generiše novi JWT token i blacklistuje stari token."
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Uspešno generisan novi token",
-            content = @Content(mediaType = "application/json",
-            examples = @ExampleObject(value = "{ \"success\": true, \"data\": { \"token\": \"new_jwt_token\" } }"))
+        @ApiResponse(responseCode = "200", description = "Uspešno generisan novi token", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": true,
+                  "data": {
+                    "token": "new_jwt_token"
+                  }
+                }
+            """))
         ),
-        @ApiResponse(responseCode = "401", description = "Token nije prosleđen ili je neispravan/istekao.",
-            content = @Content(mediaType = "application/json",
-            examples = @ExampleObject(value = "{ \"success\": false, \"error\": \"Token nije prosleđen ili je neispravan/istekao.\" }"))
+        @ApiResponse(responseCode = "401", description = "Token nije prosleđen ili je neispravan/istekao.", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": false,
+                  "error": "Token nije prosleđen ili je neispravan/istekao."
+                }
+            """))
         )
     })
     @PostMapping("/refresh-token")

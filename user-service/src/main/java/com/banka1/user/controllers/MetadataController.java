@@ -28,19 +28,19 @@ public class MetadataController {
     @GetMapping("/departments")
     @Operation(summary = "Dobavljanje odeljenja", description = "Vraća listu stringova koji korespondiraju vrednostima za sva odeljenja u banci.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200",
-            content = @Content(mediaType = "application/json",
+        @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/json",
             examples = @ExampleObject(value = """
-                    {
-                      "success": true,
-                      "data": {
-                        "list": [
-                          "WORKER",
-                          "HR",
-                          "..."
-                        ]
-                      }
-                    }"""))
+                {
+                  "success": true,
+                  "data": {
+                    "list": [
+                      "WORKER",
+                      "HR",
+                      "..."
+                    ]
+                  }
+                }
+            """))
         )
     })
     public ResponseEntity<?> getAllDepartments() {
@@ -51,19 +51,19 @@ public class MetadataController {
     @GetMapping("/permissions")
     @Operation(summary = "Dobavljanje permisija", description = "Vraća listu stringova koji korespondiraju vrednostima za sve permisije u sistemu.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200",
-            content = @Content(mediaType = "application/json",
+        @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/json",
             examples = @ExampleObject(value = """
-                    {
-                      "success": true,
-                      "data": {
-                        "list": [
-                          "user.employee.create",
-                          "user.employee.view",
-                          "..."
-                        ]
-                      }
-                    }"""))
+                {
+                  "success": true,
+                  "data": {
+                    "list": [
+                      "user.employee.create",
+                      "user.employee.view",
+                      "..."
+                    ]
+                  }
+                }
+            """))
         )
     })
     public ResponseEntity<?> getAllPermissions() {
@@ -74,19 +74,19 @@ public class MetadataController {
     @GetMapping("/positions")
     @Operation(summary = "Dobavljanje pozicija", description = "Vraća listu stringova koji korespondiraju vrednostima za sve pozicije u banci.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200",
-            content = @Content(mediaType = "application/json",
+        @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/json",
             examples = @ExampleObject(value = """
-                    {
-                      "success": true,
-                      "data": {
-                        "list": [
-                          "IT",
-                          "HR",
-                          "..."
-                        ]
-                      }
-                    }"""))
+                {
+                  "success": true,
+                  "data": {
+                    "list": [
+                      "IT",
+                      "HR",
+                      "..."
+                    ]
+                  }
+                }
+            """))
         )
     })
     public ResponseEntity<?> getAllPositions() {

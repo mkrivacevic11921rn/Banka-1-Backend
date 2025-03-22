@@ -31,19 +31,19 @@ public class SetPasswordController {
     @Operation(summary = "Postavljanje lozinke/verfikacija mejla")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Lozinka uspešno postavljena.", content = @Content(mediaType = "application/json",
-                examples = @ExampleObject(value = """
+            examples = @ExampleObject(value = """
                 {
                   "success": true,
                   "message": "Lozinka uspešno postavljena."
                 }
-                """))),
+            """))),
         @ApiResponse(responseCode = "400", description = "Došlo je do greške prilikom postavljanja lozinke", content = @Content(mediaType = "application/json",
-                examples = @ExampleObject(value = """
+            examples = @ExampleObject(value = """
                 {
                   "success": false,
                   "error": "Došlo je do greške prilikom postavljanja lozinke."
                 }
-                """)))
+            """)))
     })
     public ResponseEntity<?> setPassword(@RequestBody SetPasswordRequest dto) {
         try {

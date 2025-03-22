@@ -12,6 +12,8 @@ import com.banka1.user.service.EmployeeService;
 import com.banka1.user.utils.ResponseTemplate;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,6 +39,41 @@ public class EmployeeController {
     @Operation(
         summary = "Dobavljanje informacija o zaposlenom datog ID-a"
     )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200",description = "Uspešno dobijene informacije o zaposlenom", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                   "success": true,
+                   "data": {
+                     "id": 2,
+                     "firstName": "Pera",
+                     "lastName": "Petrovic",
+                     "username": "pera123",
+                     "birthDate": "1990-07-07",
+                     "gender": "MALE",
+                     "email": "pera@banka.com",
+                     "phoneNumber": "+381641001000",
+                     "address": "Knez Mihailova 6",
+                     "position": "MANAGER",
+                     "department": "IT",
+                     "active": true,
+                     "isAdmin": false,
+                     "permissions": [
+                       "user.customer.create"
+                     ]
+                   }
+                 }
+            """))
+        ),
+        @ApiResponse(responseCode = "404", description = "Neispravni podaci ili korisnik ne postoji", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": false,
+                  "error": "Korisnik nije pronadjen."
+                }
+            """))
+        )
+    })
     @GetMapping("/{id}")
     @Authorization(permissions = { Permission.READ_EMPLOYEE }, allowIdFallback = true )
     public ResponseEntity<?> getById(
@@ -58,8 +95,33 @@ public class EmployeeController {
     @Authorization(permissions = { Permission.CREATE_EMPLOYEE }, positions = { Position.HR })
     @Operation(summary = "Kreiranje zaposlenog", description = "Dodaje novog zaposlenog u sistem.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Zaposleni uspešno kreiran"),
-            @ApiResponse(responseCode = "403", description = "Nemaš permisije za ovu akciju")
+        @ApiResponse(responseCode = "201", description = "Zaposleni uspešno kreiran", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                   "success": true,
+                   "data": {
+                     "id": 6,
+                     "message": "Zaposleni uspešno kreiran"
+                   }
+                 }
+            """))
+        ),
+        @ApiResponse(responseCode = "400", description = "Došlo je do greške prilikom kreiranja zaposlenog", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "error": "Došlo je do greške prilikom kreiranja zaposlenog.",
+                  "success": false
+                }
+            """))
+        ),
+        @ApiResponse(responseCode = "403", description = "Nemaš permisije za ovu akciju", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "error": "Nedovoljna autorizacija.",
+                  "success": false
+                }
+            """))
+        )
     })
     public ResponseEntity<?> createEmployee(@RequestBody CreateEmployeeRequest createEmployeeRequest) {
         Employee savedEmployee = null;
@@ -77,28 +139,35 @@ public class EmployeeController {
         return ResponseTemplate.create(ResponseEntity.status(HttpStatus.CREATED), true, data, null);
     }
 
-    @PutMapping("/set-password")
-    @Operation(summary = "Postavljanje lozinke", description = "Postavljanje lozinke i validacija mejla nakon kreiranja musterije")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Uspeh"),
-    })
-    public ResponseEntity<?> setPassword(@RequestBody SetPasswordRequest setPasswordRequest) {
-        System.out.println(setPasswordRequest);
-        try {
-            employeeService.setPassword(setPasswordRequest);
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Lozinka uspešno postavljena"), null);
-        } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
-        }
-    }
-
     @PutMapping("/{id}")
     @Authorization(permissions = { Permission.EDIT_EMPLOYEE }, positions = { Position.HR })
     @Operation(summary = "Ažuriranje zaposlenog", description = "Menja podatke zaposlenog na osnovu ID-a.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Podaci uspešno ažurirani"),
-            @ApiResponse(responseCode = "404", description = "Korisnik nije pronađen"),
-            @ApiResponse(responseCode = "403", description = "Nemaš permisije za ovu akciju")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Podaci uspešno ažurirani", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": true,
+                  "data": {
+                    "message": "Podaci korisnika ažurirani"
+                  }
+                }
+            """))
+        ),
+        @ApiResponse(responseCode = "403", description = "Nemaš permisije za ovu akciju", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "error": "Nedovoljna autorizacija.",
+                  "success": false
+                }
+            """))
+        ),
+        @ApiResponse(responseCode = "404", description = "Zaposleni nije pronađen", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": false,
+                  "error": "Zaposleni nije pronađen"
+                }
+            """)))
     })
     public ResponseEntity<?> updateEmployee(@PathVariable Long id, @RequestBody UpdateEmployeeRequest updateEmployeeRequest) {
         try {
@@ -113,10 +182,32 @@ public class EmployeeController {
     @DeleteMapping("/{id}")
     @Authorization(permissions = { Permission.DELETE_EMPLOYEE }, positions = { Position.HR })
     @Operation(summary = "Brisanje zaposlenog", description = "Briše zaposlenog iz sistema po ID-u.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Korisnik uspešno obrisan"),
-            @ApiResponse(responseCode = "404", description = "Korisnik nije pronađen"),
-            @ApiResponse(responseCode = "403", description = "Nemaš permisije za ovu akciju")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Korisnik uspešno obrisan", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": true,
+                  "data": {
+                    "message": "Korisnik uspešno obrisan"
+                  }
+                }
+            """))
+        ),
+        @ApiResponse(responseCode = "403", description = "Nemaš permisije za ovu akciju", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "error": "Nedovoljna autorizacija.",
+                  "success": false
+                }
+            """))
+        ),
+        @ApiResponse(responseCode = "404", description = "Korisnik nije pronadjen", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": false,
+                  "error": "Korisnik nije pronađen"
+                }
+            """)))
     })
     public ResponseEntity<?> deleteEmployee(@PathVariable Long id) {
         if (!employeeService.existsById(id)) {
@@ -135,14 +226,37 @@ public class EmployeeController {
     @Authorization(permissions = { Permission.SET_EMPLOYEE_PERMISSION }, positions = { Position.HR })
     @Operation(summary = "Ažuriranje permisija zaposlenom", description = "Menja dozvole zaposlenog.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Permisije uspešno ažurirane"),
-            @ApiResponse(responseCode = "404", description = "Korisnik nije pronađen"),
-            @ApiResponse(responseCode = "403", description = "Nemaš permisije za ovu akciju")
+        @ApiResponse(responseCode = "200", description = "Permisije uspešno ažurirane", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": true,
+                  "data": {
+                    "message": "Permisije korisnika ažurirane"
+                  }
+                }
+            """))
+        ),
+        @ApiResponse(responseCode = "403", description = "Nemaš permisije za ovu akciju", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "error": "Nedovoljna autorizacija.",
+                  "success": false
+                }
+            """))
+        ),
+        @ApiResponse(responseCode = "404", description = "Korisnik nije pronadjen", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": false,
+                  "error": "Zaposleni nije pronađen."
+                }
+            """)))
     })
     public ResponseEntity<?> updatePermissions(@PathVariable Long id, @RequestBody UpdatePermissionsRequest updatePermissionsRequest){
 
         if (!employeeService.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Zaposleni sa ID-em " + id + " nije pronađen.");
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, "Zaposleni nije pronađen.");
+//            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Zaposleni sa ID-em " + id + " nije pronađen.");
         }
 
         try {
