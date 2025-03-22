@@ -167,7 +167,7 @@ VALUES (8, 'Država', 'Država', 'drzavadrzava@drzava1.com', 'drzavadrzava',
         '+381640000001', '2025-01-01', 'FEMALE', 'Bulevar Država 1',
         'salt', '$2a$10$vh3TI9CcSeEM7PuxEqQ2GujAZKy1Xw02OtZkjHeOt3Z77/Uqydy2a');
 
--- Permissions for BANKA
+-- Permissions for DRZAVA
 INSERT INTO customer_permissions (customer_id, permission)
 VALUES (8, 'READ_EMPLOYEE');
 
