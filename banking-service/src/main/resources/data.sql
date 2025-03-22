@@ -118,3 +118,37 @@ VALUES (3, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 550000.0, 24,
         EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days') * 1000,
         22000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '30 days') * 1000,
         500000.0, 'Home renovation, attempt 2', 100);
+
+INSERT INTO company (id, name, address, vat_number, company_number)
+VALUES (1, 'Naša Banka', 'Bulevar Banka 1', '111111111', '11111111');
+
+INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
+                     daily_spent, monthly_spent, currency_type, expiration_date, created_date,
+                     employee_id, monthly_maintenance_fee, reserved_balance, ownerid,
+                     status, type, subtype)
+VALUES
+-- RSD - domaća valuta sa većim balansom
+('111000100000000199', 10000000000.0, 1, 10000000.0, 100000000.0, 0.0, 0.0, 'RSD',
+ 2029030500000, 2025030500000, 1, 0.0, 0.0, 7, 'ACTIVE', 'BANK', 'STANDARD'),
+
+-- Ostale valute - 100 miliona
+('111000100000000299', 10000000.0, 1, 1000000.0, 1000000.0, 0.0, 0.0, 'EUR',
+ 2029030500000, 2025030500000, 1, 0.0, 0.0, 7, 'ACTIVE', 'BANK', 'STANDARD'),
+
+('111000100000000399', 10000000.0, 1, 1000000.0, 1000000.0, 0.0, 0.0, 'USD',
+ 2029030500000, 2025030500000, 1, 0.0, 0.0, 7, 'ACTIVE', 'BANK', 'STANDARD'),
+
+('111000100000000499', 10000000.0, 1, 1000000.0, 1000000.0, 0.0, 0.0, 'CHF',
+ 2029030500000, 2025030500000, 1, 0.0, 0.0, 7, 'ACTIVE', 'BANK', 'STANDARD'),
+
+('111000100000000599', 10000000.0, 1, 1000000.0, 1000000.0, 0.0, 0.0, 'GBP',
+ 2029030500000, 2025030500000, 1, 0.0, 0.0, 7, 'ACTIVE', 'BANK', 'STANDARD'),
+
+('111000100000000699', 10000000.0, 1, 1000000.0, 1000000.0, 0.0, 0.0, 'JPY',
+ 2029030500000, 2025030500000, 1, 0.0, 0.0, 7, 'ACTIVE', 'BANK', 'STANDARD'),
+
+('111000100000000799', 10000000.0, 1, 1000000.0, 1000000.0, 0.0, 0.0, 'CAD',
+ 2029030500000, 2025030500000, 1, 0.0, 0.0, 7, 'ACTIVE', 'BANK', 'STANDARD'),
+
+('111000100000000899', 10000000.0, 1, 1000000.0, 1000000.0, 0.0, 0.0, 'AUD',
+ 2029030500000, 2025030500000, 1, 0.0, 0.0, 7, 'ACTIVE', 'BANK', 'STANDARD');
