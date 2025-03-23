@@ -56,10 +56,6 @@ public class CurrencyController {
     })
     public ResponseEntity<?> getExchangeRatesForCurrency(@PathVariable CurrencyType currency) {
         List<ExchangePairDTO> rates = currencyService.getExchangeRatesForBaseCurrency(currency);
-        if (rates.isEmpty()) {
-            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
-                    "No exchange rates available for base currency: " + currency);
-        }
         return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("rates", rates), null);
     }
 }
