@@ -6,6 +6,8 @@ import com.banka1.user.service.ResetPasswordService;
 import com.banka1.user.utils.ResponseMessage;
 import com.banka1.user.utils.ResponseTemplate;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,10 +26,26 @@ public class ResetPasswordController {
     private ResetPasswordService resetPasswordService;
 
     @PutMapping("/")
-    @Operation(summary = "Podnosenje zahteva za resetovanje lozinke")
+    @Operation(summary = "Podnošenje zahteva za resetovanje lozinke")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Zahtev za resetovanje lozinke je uspešno poslat"),
-            @ApiResponse(responseCode = "400", description = "Došlo je do greške prilikom slanja zahteva za resetovanje lozinke")
+        @ApiResponse(responseCode = "201", description = "Zahtev za resetovanje lozinke je uspešno poslat", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": true,
+                  "data": {
+                    "message": "Zahtev za resetovanje lozinke je uspešno poslat."
+                  }
+                }
+            """))
+        ),
+        @ApiResponse(responseCode = "400", description = "Došlo je do greške prilikom slanja zahteva za resetovanje lozinke", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": false,
+                  "error": "Email adresa nije pronadjena."
+                }
+            """))
+        )
     })
     public ResponseEntity<?> requestPasswordReset(@RequestBody ResetPasswordRequest resetPasswordRequest) {
         try {
@@ -42,8 +60,24 @@ public class ResetPasswordController {
     @PostMapping("/")
     @Operation(summary = "Resetovanje lozinke (verifikacija mejla i postavljanje nove lozinke)")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Lozinka je uspešno resetovana"),
-            @ApiResponse(responseCode = "400", description = "Došlo je do greške prilikom resetovanja lozinke")
+        @ApiResponse(responseCode = "200", description = "Lozinka je uspešno resetovana", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": true,
+                  "data": {
+                    "message": "Lozinka je uspešno resetovana"
+                  }
+                }
+            """))
+        ),
+        @ApiResponse(responseCode = "400", description = "Došlo je do greške prilikom resetovanja lozinke", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": false,
+                  "error": "Došlo je do greške prilikom resetovanja lozinke"
+                }
+            """))
+        )
     })
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordConfirmationRequest resetPasswordConfirmationRequest) {
         try {

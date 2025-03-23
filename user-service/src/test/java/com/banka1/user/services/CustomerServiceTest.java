@@ -16,6 +16,7 @@ import com.banka1.common.model.Permission;
 import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.service.CustomerService;
 import com.banka1.user.service.SetPasswordService;
+import org.hibernate.annotations.Any;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -138,11 +139,8 @@ public class CustomerServiceTest {
     void testDeleteCustomerNotFound() {
         when(customerRepository.findById(1L)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(ResponseStatusException.class, () -> {
-            customerService.deleteCustomer(1L);
-        });
-
- //       assertEquals("Korisnik nije pronađen", exception.getMessage());
+        assertFalse(customerService.deleteCustomer(1L));
+        verify(customerRepository, times(0)).delete(any(Customer.class));
     }
 
     @Test
