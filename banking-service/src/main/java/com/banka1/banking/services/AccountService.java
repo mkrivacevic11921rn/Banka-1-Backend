@@ -13,6 +13,7 @@ import com.banka1.banking.models.helper.*;
 import com.banka1.banking.repository.AccountRepository;
 
 import com.banka1.banking.repository.TransactionRepository;
+import com.banka1.banking.utils.ResponseMessage;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -133,7 +134,7 @@ public class AccountService {
 
     public Account updateAccount(Long accountId, UpdateAccountDTO updateAccountDTO) {
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Račun sa ID-jem " + accountId + " nije pronađen"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Korisnik nije pronađen"));
 
         Optional.ofNullable(updateAccountDTO.getDailyLimit()).ifPresent(account::setDailyLimit);
         Optional.ofNullable(updateAccountDTO.getMonthlyLimit()).ifPresent(account::setMonthlyLimit);
