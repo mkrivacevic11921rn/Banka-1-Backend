@@ -40,13 +40,6 @@ public class MessageHelper {
         }
     }
 
-    public String createTextMessage(Object object) {
-        try {
-            return objectMapper.writeValueAsString(object);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Problem with creating text message");
-        }
-    }
 
     private <T> void printViolationsAndThrowException(Set<ConstraintViolation<T>> violations) {
         String concatenatedViolations = violations.stream()
