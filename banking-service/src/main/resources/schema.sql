@@ -62,7 +62,7 @@ create table account
     type                    varchar(255)     not null
         constraint account_type_check
             check ((type)::text = ANY
-                   ((ARRAY ['CURRENT'::character varying, 'FOREIGN_CURRENCY'::character varying, 'BANK'::character varying])::text[]))
+                   ((ARRAY ['CURRENT'::character varying, 'FOREIGN_CURRENCY'::character varying, 'BANK'::character varying, 'COUNTRY'::character varying])::text[]))
 );
 
 alter table account
