@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
 
@@ -132,7 +133,7 @@ public class ExchangeService {
             emailDto.setLastName(lastName);
             emailDto.setType("email");
 
-            jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDto));
+            jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDto).getBytes(StandardCharsets.UTF_8));
             return transfer.getId();
         }
 

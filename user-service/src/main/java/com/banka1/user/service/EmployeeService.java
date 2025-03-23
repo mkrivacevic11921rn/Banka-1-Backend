@@ -19,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Optional;
@@ -79,7 +80,7 @@ public class EmployeeService {
 
         setPasswordService.saveSetPasswordRequest(verificationCode, employee.getId(), false);
 
-        jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
+        jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO).getBytes(StandardCharsets.UTF_8));
 
         return employee;
     }

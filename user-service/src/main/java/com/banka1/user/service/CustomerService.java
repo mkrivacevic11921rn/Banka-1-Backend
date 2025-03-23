@@ -26,6 +26,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.List;
@@ -137,11 +138,11 @@ public class CustomerService {
         // Saving the customer in the database gives it an ID, which can be used to generate the set-password token
         customer = customerRepository.save(customer);
 
-        jmsTemplate.convertAndSend(destinationAccount, messageHelper.createTextMessage(new CreateAccountByEmployeeDTO(new CreateAccountDTO(customerDTO.getAccountInfo(), customer.getId()), employeeId)));
+        jmsTemplate.convertAndSend(destinationAccount, messageHelper.createTextMessage(new CreateAccountByEmployeeDTO(new CreateAccountDTO(customerDTO.getAccountInfo(), customer.getId()), employeeId)).getBytes(StandardCharsets.UTF_8));
 
         setPasswordService.saveSetPasswordRequest(verificationCode, customer.getId(), true);
 
-        jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
+        jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO).getBytes(StandardCharsets.UTF_8));
         return customer;
     }
 

@@ -10,6 +10,8 @@ import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -28,7 +30,7 @@ public class CustomerListener {
         } catch (Exception e) {
             log.error("CustomerListener: ", e);
         }
-        jmsTemplate.convertAndSend(message.getJMSReplyTo(), messageHelper.createTextMessage(customer));
+        jmsTemplate.convertAndSend(message.getJMSReplyTo(), messageHelper.createTextMessage(customer).getBytes(StandardCharsets.UTF_8));
     }
 
     @JmsListener(destination = "${destination.customer.email}", concurrency = "5-10")
@@ -41,7 +43,7 @@ public class CustomerListener {
         } catch (Exception e) {
             log.error("CustomerListener (by email): ", e);
         }
-        jmsTemplate.convertAndSend(message.getJMSReplyTo(), messageHelper.createTextMessage(customer));
+        jmsTemplate.convertAndSend(message.getJMSReplyTo(), messageHelper.createTextMessage(customer).getBytes(StandardCharsets.UTF_8));
     }
 
 }

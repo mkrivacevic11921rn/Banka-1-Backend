@@ -15,6 +15,7 @@ import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.UUID;
@@ -70,7 +71,7 @@ public class ResetPasswordService {
                 "/reset-password?token=" + resetPassword.getToken());
         emailDTO.setType("email");
 
-        jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
+        jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO).getBytes(StandardCharsets.UTF_8));
         resetPasswordRepository.save(resetPassword);
     }
 
