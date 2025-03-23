@@ -48,9 +48,9 @@ public class EmployeeController {
             if (employee == null)
                 return ResponseTemplate.create(ResponseEntity.status(HttpStatusCode.valueOf(404)),
                         false, null, "Korisnik nije pronadjen.");
-            return ResponseTemplate.create(ResponseEntity.ok(), true, employee, null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, employee, null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST),false, null, e.getMessage());
         }
     }
 
@@ -67,7 +67,7 @@ public class EmployeeController {
             savedEmployee = employeeService.createEmployee(createEmployeeRequest);
         } catch (RuntimeException e) {
             log.error("createEmployee: ", e);
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
 
         Map<String, Object> data = new HashMap<>();
@@ -86,9 +86,9 @@ public class EmployeeController {
         System.out.println(setPasswordRequest);
         try {
             employeeService.setPassword(setPasswordRequest);
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Lozinka uspešno postavljena"), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("message", "Lozinka uspešno postavljena"), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -104,10 +104,10 @@ public class EmployeeController {
         try {
             employeeService.updateEmployee(id, updateEmployeeRequest);
         } catch (RuntimeException e) {
-            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND),false,null, "Zaposleni sa ID-em " + id + " nije pronađen.");
         }
 
-        return ResponseTemplate.create(ResponseEntity.ok(), true, "Podaci korisnika ažurirani", null);
+        return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, "Podaci korisnika ažurirani", null);
     }
 
     @DeleteMapping("/{id}")
@@ -125,9 +125,9 @@ public class EmployeeController {
 
         try {
             employeeService.deleteEmployee(id);
-            return ResponseTemplate.create(ResponseEntity.ok(), true, "Korisnik uspešno obrisan", null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, "Korisnik uspešno obrisan", null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -142,14 +142,14 @@ public class EmployeeController {
     public ResponseEntity<?> updatePermissions(@PathVariable Long id, @RequestBody UpdatePermissionsRequest updatePermissionsRequest){
 
         if (!employeeService.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Zaposleni sa ID-em " + id + " nije pronađen.");
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, "Zaposleni sa ID-em " + id + " nije pronađen.");
         }
 
         try {
             employeeService.updatePermissions(id, updatePermissionsRequest);
-            return ResponseTemplate.create(ResponseEntity.ok(), true, "Permisije korisnika ažurirane", null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, "Permisije korisnika ažurirane", null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 }

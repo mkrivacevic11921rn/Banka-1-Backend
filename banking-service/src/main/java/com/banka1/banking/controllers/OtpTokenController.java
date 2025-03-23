@@ -108,11 +108,11 @@ public class OtpTokenController {
             }
 
 
-            return ResponseTemplate.create(ResponseEntity.ok(),
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK),
                     true, Map.of("message", "OTP validan, transakcija izvršena."), null);
 
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 }

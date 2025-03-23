@@ -57,7 +57,7 @@ public class CardController {
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.CREATED), true, Map.of("id", card.getId(), "message", ResponseMessage.CARD_CREATED_SUCCESS.toString()), null);
         } catch (RuntimeException e) {
             log.error("Greška prilikom kreiranja kartice: ", e);
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -71,10 +71,10 @@ public class CardController {
     public ResponseEntity<?> blockCard(@PathVariable("card_id") int cardId, @RequestBody UpdateCardDTO updateCardDTO) {
         try {
             cardService.blockCard(cardId, updateCardDTO);
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", ResponseMessage.CARD_UPDATED_SUCCESS.toString()), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("message", ResponseMessage.CARD_UPDATED_SUCCESS.toString()), null);
         } catch (RuntimeException e) {
             log.error("Greška prilikom ažuriranja kartice: ", e);
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -99,10 +99,10 @@ public class CardController {
     public ResponseEntity<?> activateCard(@PathVariable("card_id") int cardId, @RequestBody UpdateCardDTO updateCardDTO) {
         try {
             cardService.activateCard(cardId, updateCardDTO);
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", ResponseMessage.CARD_UPDATED_SUCCESS.toString()), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("message", ResponseMessage.CARD_UPDATED_SUCCESS.toString()), null);
         } catch (RuntimeException e) {
             log.error("Greška prilikom ažuriranja kartice: ", e);
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -112,10 +112,10 @@ public class CardController {
             if (cards.isEmpty()) {
                 return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, ResponseMessage.CARD_NOT_FOUND.toString());
             }
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("cards", cards), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("cards", cards), null);
         } catch (Exception e) {
             log.error("Greška prilikom trazenja kartica: ", e);
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -130,10 +130,10 @@ public class CardController {
     public ResponseEntity<?> updateCardLimit(@PathVariable("card_id") Long cardId, @RequestBody UpdateCardLimitDTO updateCardLimitDTO) {
         try {
             cardService.updateCardLimit(cardId, updateCardLimitDTO);
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Limit kartice uspešno ažuriran."), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("message", "Limit kartice uspešno ažuriran."), null);
         } catch (RuntimeException e) {
             log.error("Greška prilikom ažuriranja limita kartice: ", e);
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -148,10 +148,10 @@ public class CardController {
     public ResponseEntity<?> updateCardName(@PathVariable("card_id") Long cardId, @RequestBody UpdateCardNameDTO updateCardNameDTO) {
         try {
             cardService.updateCardName(cardId, updateCardNameDTO);
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Naziv kartice uspešno ažuriran."), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("message", "Naziv kartice uspešno ažuriran."), null);
         } catch (RuntimeException e) {
             log.error("Greška prilikom ažuriranja naziva kartice: ", e);
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 }

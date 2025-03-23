@@ -10,10 +10,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/users/reset-password")
@@ -32,10 +34,10 @@ public class ResetPasswordController {
     public ResponseEntity<?> requestPasswordReset(@RequestBody ResetPasswordRequest resetPasswordRequest) {
         try {
             resetPasswordService.requestPasswordReset(resetPasswordRequest);
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", ResponseMessage.PASSWORD_RESET_REQUEST_SUCCESS.toString()), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("message", ResponseMessage.PASSWORD_RESET_REQUEST_SUCCESS.toString()), null);
         } catch (Exception e) {
             System.out.println(e);
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -48,9 +50,11 @@ public class ResetPasswordController {
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordConfirmationRequest resetPasswordConfirmationRequest) {
         try {
             resetPasswordService.resetPassword(resetPasswordConfirmationRequest);
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", ResponseMessage.PASSWORD_RESET_SUCCESS.toString()), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("message", ResponseMessage.PASSWORD_RESET_SUCCESS.toString()), null);
+        } catch (NoSuchElementException e) {
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, e.getMessage());
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 }

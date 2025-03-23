@@ -52,9 +52,9 @@ public class CustomerController {
             if (customer == null)
                 return ResponseTemplate.create(ResponseEntity.status(HttpStatusCode.valueOf(404)),
                         false, null, "Korisnik nije pronadjen.");
-            return ResponseTemplate.create(ResponseEntity.ok(), true, customer, null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, customer, null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -69,7 +69,7 @@ public class CustomerController {
             @RequestBody @Parameter(description = "Customer data for creation") CreateCustomerRequest customerDTO,
             @RequestHeader(value = "Authorization", required = false) String authorization) {
         Customer savedCustomer = customerService.createCustomer(customerDTO, authService.parseToken(authService.getToken(authorization)).get("id", Long.class));
-        return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("customer", savedCustomer), null);
+        return ResponseTemplate.create(ResponseEntity.status(HttpStatus.CREATED), true, Map.of("customer", savedCustomer), null);
     }
 
     @PutMapping("/{id}")
@@ -85,7 +85,7 @@ public class CustomerController {
         Optional<Customer> updatedCustomer = customerService.updateCustomer(id, customerDTO);
 
         if (updatedCustomer.isPresent()) {
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Podaci korisnika ažurirani"), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("message", "Podaci korisnika ažurirani"), null);
         } else {
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, "Korisnik nije pronađen");
         }
@@ -104,7 +104,7 @@ public class CustomerController {
         boolean deleted = customerService.deleteCustomer(id);
 
         if (deleted) {
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Korisnik uspešno obrisan"), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("message", "Korisnik uspešno obrisan"), null);
         } else {
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, "Korisnik nije pronađen");
         }
@@ -124,7 +124,7 @@ public class CustomerController {
         Optional<Customer> updatedCustomer = customerService.updateCustomerPermissions(id, permissionsDto.getPermissions());
 
         if (updatedCustomer.isPresent()) {
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Permisije ažurirane"), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("message", "Permisije ažurirane"), null);
         } else {
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, "Korisnik nije pronađen");
         }
@@ -139,9 +139,9 @@ public class CustomerController {
     public ResponseEntity<?> setPassword(@RequestBody SetPasswordRequest setPasswordRequest) {
         try {
             customerService.setPassword(setPasswordRequest);
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Lozinka uspešno postavljena"), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("message", "Lozinka uspešno postavljena"), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 

@@ -52,7 +52,7 @@ public class AccountController {
             savedAccount = accountService.createAccount(createAccountDTO, authService.parseToken(authService.getToken(authorization)).get("id", Long.class));
         } catch (RuntimeException e) {
 //            log.error("Greška prilikom kreiranja racuna: ", e);
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
 
         if (savedAccount == null) {
@@ -85,7 +85,7 @@ public class AccountController {
         Map<String, Object> response = new HashMap<>();
         response.put("accounts", accounts);
 
-        return ResponseTemplate.create(ResponseEntity.ok(), true, response, null);
+        return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, response, null);
     }
 
     /// pristup imaju zaposleni i vlasnici racuna
@@ -108,7 +108,7 @@ public class AccountController {
         Map<String, Object> response = new HashMap<>();
         response.put("accounts", accounts);
 
-        return ResponseTemplate.create(ResponseEntity.ok(), true, response, null);
+        return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, response, null);
     }
 
     /// pristup imaju samo zaposleni
@@ -130,7 +130,7 @@ public class AccountController {
             return ResponseTemplate.create(ResponseEntity.ok(), true,
                     Map.of( "message", ResponseMessage.UPDATED, "data", updatedAccount), null);
         } catch (RuntimeException e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -151,14 +151,14 @@ public class AccountController {
         try {
             Account updatedAccount = accountService.userUpdateAccount(userId, accountId, updateAccountDTO);
             if (updatedAccount == null) {
-                return ResponseTemplate.create(ResponseEntity.badRequest(), false,
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false,
                         Map.of( "message", ResponseMessage.NOT_THE_OWNER), null);
 
             }
-            return ResponseTemplate.create(ResponseEntity.ok(), true,
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true,
                     Map.of( "message", ResponseMessage.UPDATED, "data", updatedAccount), null);
         } catch (RuntimeException e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -180,7 +180,7 @@ public class AccountController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("transactions", transactions);
-        return ResponseTemplate.create(ResponseEntity.ok(), true, response, null);
+        return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, response, null);
     }
 
 }
