@@ -3,6 +3,7 @@ package com.banka1.banking.services;
 import com.banka1.banking.dto.CreateCardDTO;
 import com.banka1.banking.dto.UpdateCardDTO;
 import com.banka1.banking.dto.UpdateCardLimitDTO;
+import com.banka1.banking.dto.request.UpdateCardNameDTO;
 import com.banka1.banking.mapper.CardMapper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.AuthorizedPerson;
@@ -49,7 +50,10 @@ public class CardService {
                 .orElseThrow(() -> new RuntimeException("Racun nije pronadjen"));
         card.setAccount(account);
 
-        if(account.getSubtype().equals(AccountSubtype.PERSONAL) && cardRepository.findByAccountId(createCardDTO.getAccountID()).isPresent() && cardRepository.findByAccountId(createCardDTO.getAccountID()).get().size() == 2){
+        String cardName = account.getSubtype() + " kartica";
+        card.setCardName(cardName);
+
+        if(!account.getSubtype().equals(AccountSubtype.BUSINESS) && cardRepository.findByAccountId(createCardDTO.getAccountID()).isPresent() && cardRepository.findByAccountId(createCardDTO.getAccountID()).get().size() == 2){
             throw new RuntimeException("Privatni racun moze biti povezan sa najvise dve kartice!");
         }
         else if(account.getSubtype().equals(AccountSubtype.BUSINESS) && cardRepository.findByAccountId(createCardDTO.getAccountID()).isPresent() && cardRepository.findByAccountId(createCardDTO.getAccountID()).get().size() == 5){
@@ -77,16 +81,24 @@ public class CardService {
         return cardRepository.save(card);
     }
 
-    public void updateCard(int cardId, UpdateCardDTO updateCardDTO) {
+    public void blockCard(int cardId, UpdateCardDTO updateCardDTO) {
         Card card = cardRepository.findById((long) cardId)
                 .orElseThrow(() -> new RuntimeException("Kartica nije pronađena"));
 
-        switch (updateCardDTO.getStatus()) {
-            case BLOCKED -> card.setBlocked(true);
-            case UNBLOCKED -> card.setBlocked(false);
-            case ACTIVATED -> card.setActive(true);
-            case DEACTIVATED -> card.setActive(false);
+        card.setBlocked(updateCardDTO.isStatus());
+
+        cardRepository.save(card);
+    }
+
+    public void activateCard(int cardId, UpdateCardDTO updateCardDTO) {
+        Card card = cardRepository.findById((long) cardId)
+                .orElseThrow(() -> new RuntimeException("Kartica nije pronađena"));
+
+        if(card.getActive().equals(false)){
+            throw new RuntimeException("Kartica je deaktivirana i ne moze biti aktivirana");
         }
+
+        card.setActive(updateCardDTO.isStatus());
 
         cardRepository.save(card);
     }
@@ -98,4 +110,13 @@ public class CardService {
         card.setCardLimit(updateCardLimitDTO.getNewLimit());
         cardRepository.save(card);
     }
+
+    public void updateCardName(Long cardId, UpdateCardNameDTO updateCardNameDTO) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new RuntimeException("Kartica nije pronađena"));
+
+        card.setCardName(updateCardNameDTO.getName());
+        cardRepository.save(card);
+    }
+
 }

@@ -5,12 +5,16 @@ import com.banka1.banking.models.helper.InterestType;
 import com.banka1.banking.models.helper.PaymentStatus;
 import com.banka1.banking.models.helper.LoanType;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Loan {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

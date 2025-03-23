@@ -1,12 +1,12 @@
 package com.banka1.user.service;
 
+import com.banka1.common.model.Department;
 import com.banka1.user.DTO.request.*;
 import com.banka1.user.DTO.response.EmployeeResponse;
 import com.banka1.user.DTO.response.EmployeesPageResponse;
 import com.banka1.user.listener.MessageHelper;
 import com.banka1.user.model.Employee;
 import com.banka1.common.model.Position;
-import com.banka1.user.model.helper.Department;
 import com.banka1.user.model.helper.Gender;
 import com.banka1.user.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;

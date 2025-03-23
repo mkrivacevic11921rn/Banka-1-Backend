@@ -94,7 +94,7 @@ public class ExchangeServiceTest {
 //        customerDTO.setPhoneNumber("010101010");
 //        customerDTO.setAddress("MARSALA TULBUHINA");
 
-         customerDTO = new CustomerDTO(10L,"Marko","Markovic",0101L,"test@test.com","0101010101","MARSALA TULBUHINA");
+         customerDTO = new CustomerDTO(10L,"Marko","Markovic","2025-01-01","test@test.com","0101010101","MARSALA TULBUHINA");
 
 
         ReflectionTestUtils.setField(exchangeService, "destinationEmail", "test-destination");

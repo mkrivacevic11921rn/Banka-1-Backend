@@ -27,7 +27,7 @@ public class CustomerResponse {
     private String username;
 
     @NonNull
-    private Long birthDate;
+    private String birthDate;
 
     @NonNull
     private Gender gender;

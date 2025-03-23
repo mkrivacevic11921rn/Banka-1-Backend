@@ -24,7 +24,7 @@ func Init() {
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true, // Tabele u jednini
 		},
-		Logger: logger.Default.LogMode(logger.Info), // Loguje SQL upite
+		Logger: logger.Default.LogMode(logger.Silent), // Logovanje
 	}
 
 	// Inicijalizacija baze
@@ -84,5 +84,11 @@ func migrate(db *gorm.DB) {
 		&types.Portfolio{},
 		&types.Tax{},
 		&types.Exchange{},
+		&types.Listing{},
+		&types.ListingDailyPriceInfo{},
+		&types.Stock{},
+		&types.ForexPair{},
+		&types.FuturesContract{},
+		&types.Option{},
 	)
 }

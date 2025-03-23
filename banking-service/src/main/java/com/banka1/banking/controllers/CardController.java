@@ -4,6 +4,7 @@ import com.banka1.banking.aspect.CardAuthorization;
 import com.banka1.banking.dto.CreateCardDTO;
 import com.banka1.banking.dto.UpdateCardDTO;
 import com.banka1.banking.dto.UpdateCardLimitDTO;
+import com.banka1.banking.dto.request.UpdateCardNameDTO;
 import com.banka1.banking.models.Card;
 import com.banka1.banking.services.CardService;
 import com.banka1.banking.utils.ResponseMessage;
@@ -60,7 +61,7 @@ public class CardController {
         }
     }
 
-    @PatchMapping("/{card_id}")
+    @PostMapping("/{card_id}")
     @Operation(summary = "Blokiranje i deblokiranje kartice", description = "Blokiranje i deblokiranje kartice")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Kartica uspešno ažurirana"),
@@ -68,13 +69,19 @@ public class CardController {
     })
     @CardAuthorization
     public ResponseEntity<?> blockCard(@PathVariable("card_id") int cardId, @RequestBody UpdateCardDTO updateCardDTO) {
-        return updateCardStatus(cardId, updateCardDTO);
+        try {
+            cardService.blockCard(cardId, updateCardDTO);
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", ResponseMessage.CARD_UPDATED_SUCCESS.toString()), null);
+        } catch (RuntimeException e) {
+            log.error("Greška prilikom ažuriranja kartice: ", e);
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
     }
 
     @GetMapping("/admin/{account_id}")
     @Operation(summary = "Pregled svih kartica od strane zaposlenog", description = "Pregled svih kartica za traženi račun od strane zaposlenog")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Lista kartica za određeni račun."),
+            @ApiResponse(responseCode = "200", description = "L ista kartica za određeni račun."),
             @ApiResponse(responseCode = "404", description = "Nema kartica za traženi račun.")
     })
     @CardAuthorization(employeeOnlyOperation = true)
@@ -82,7 +89,7 @@ public class CardController {
         return getCards(accountId);
     }
 
-    @PatchMapping("/admin/{card_id}")
+    @PostMapping("/admin/{card_id}")
     @Operation(summary = "Aktivacija i deaktivacija kartice od strane zaposlenog", description = "Aktivacija i deaktivacija kartice od strane zaposlenog")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Kartica uspešno ažurirana"),
@@ -90,7 +97,13 @@ public class CardController {
     })
     @CardAuthorization(employeeOnlyOperation = true)
     public ResponseEntity<?> activateCard(@PathVariable("card_id") int cardId, @RequestBody UpdateCardDTO updateCardDTO) {
-        return updateCardStatus(cardId, updateCardDTO);
+        try {
+            cardService.activateCard(cardId, updateCardDTO);
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", ResponseMessage.CARD_UPDATED_SUCCESS.toString()), null);
+        } catch (RuntimeException e) {
+            log.error("Greška prilikom ažuriranja kartice: ", e);
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
     }
 
     private ResponseEntity<?> getCards(int account_id) {
@@ -106,17 +119,7 @@ public class CardController {
         }
     }
 
-    private ResponseEntity<?> updateCardStatus(int card_id, UpdateCardDTO updateCardDTO) {
-        try {
-            cardService.updateCard(card_id, updateCardDTO);
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", ResponseMessage.CARD_UPDATED_SUCCESS.toString()), null);
-        } catch (RuntimeException e) {
-            log.error("Greška prilikom ažuriranja kartice: ", e);
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
-        }
-    }
-
-    @PatchMapping("/{card_id}/limit")
+    @PostMapping("/{card_id}/limit")
     @Operation(summary = "Promena limita kartice", description = "Omogućava korisniku da promeni limit kartice.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Limit kartice uspešno promenjen."),
@@ -130,6 +133,24 @@ public class CardController {
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Limit kartice uspešno ažuriran."), null);
         } catch (RuntimeException e) {
             log.error("Greška prilikom ažuriranja limita kartice: ", e);
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
+    }
+
+    @PostMapping("/{card_id}/name")
+    @Operation(summary = "Promena naziva kartice", description = "Omogućava korisniku da promeni naziv kartice.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Naziv kartice uspešno promenjen."),
+            @ApiResponse(responseCode = "400", description = "Nevalidni podaci."),
+            @ApiResponse(responseCode = "404", description = "Kartica nije pronađena.")
+    })
+    @CardAuthorization
+    public ResponseEntity<?> updateCardName(@PathVariable("card_id") Long cardId, @RequestBody UpdateCardNameDTO updateCardNameDTO) {
+        try {
+            cardService.updateCardName(cardId, updateCardNameDTO);
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Naziv kartice uspešno ažuriran."), null);
+        } catch (RuntimeException e) {
+            log.error("Greška prilikom ažuriranja naziva kartice: ", e);
             return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
     }
