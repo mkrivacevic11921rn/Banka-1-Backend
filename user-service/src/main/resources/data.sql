@@ -13,7 +13,7 @@ INSERT INTO employee (id, first_name, last_name, email, password, is_admin, phon
                       birth_date, gender, department, position, active, address,
                       salt_password, username)
 VALUES (1, 'Admin', 'Admin', 'admin@admin.com',
-        '$2a$10$SULXYOl/FBnYXZLeCCTbGe8eZkbyrpT8D9f6cqxpvLfVRqGPHRAc2', TRUE, '1234567890',
+        '$2a$12$kQjtxwqw9hBDCW6Lypc8eO9UC1kNqpGAfbQKc8voUl2bNeM.e.8Hy', TRUE, '1234567890',
         '2000-01-01', 'MALE', 'HR', 'DIRECTOR', TRUE, 'Admin Address',
         'salt', 'admin123');
 
