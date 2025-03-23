@@ -16,3 +16,11 @@ Feature: Authentication and authorization
     When Jovana logs in with the valid credentials jovana.jovanovic@banka.com and Jovan@12345
     And Jovana tries to view the details of the employee with the ID 1
     Then the request is not authorized
+
+  Scenario: User requests a password reset
+    Given a user with email "admin@admin.com" is an employee
+    When the user requests a password reset
+    Then a password reset email should be sent
+    And the email should contain a reset link
+
+

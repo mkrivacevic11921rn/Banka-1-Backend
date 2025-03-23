@@ -71,7 +71,6 @@ public class ResetPasswordService {
         emailDTO.setType("email");
 
         jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
-
         resetPasswordRepository.save(resetPassword);
     }
 

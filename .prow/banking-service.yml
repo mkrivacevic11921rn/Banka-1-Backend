@@ -24,7 +24,7 @@ presubmits:
     # od "pom.xml" ili "docker-compose.yml" fajlova.
     # Direktorijumi su naznačeni sa "/" na kraju naziva direktorijuma,
     # npr. "banking-service/".
-    run_if_changed: "(banking-service/|compose.local.yaml|build.gradle.kts|settings.gradle.kts|.prow/)"
+    run_if_changed: "(banking-service/|compose.yaml|build.gradle.kts|settings.gradle.kts|.prow/)"
     decorate: true
     spec:
       containers:
