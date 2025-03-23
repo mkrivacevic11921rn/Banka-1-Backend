@@ -17,11 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 
-
-//  MISLIM DA SVE VEZANO ZA TRANSAKCIJE TREBA PREBACITI U OVAJ SERVIS
-// OSTAVIO SAM DA SE OBRADA TRANSAKCIJA POZIVA IZ TRANSFER SERVISA SADA ZBOG TESTOVA ALI PROMENITI ZA SLEDECI SPRINT
-// TREBA DODATI OBRADU DEVIZNOG PLACANJA I MENJACNICE
-
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -34,6 +29,9 @@ public class TransactionService {
 
     @Transactional
     public String processTransfer(Long transferId) {
+        throw new RuntimeException("processTransfer called from TransactionService, use TransferService instead");
+
+        /*
         Transfer transfer = transferRepository.findById(transferId)
                 .orElseThrow(() -> new RuntimeException("Transfer not found"));
 
@@ -49,11 +47,14 @@ public class TransactionService {
             default:
                 throw new RuntimeException("Invalid transfer type");
         }
+         */
     }
 
 
     @Transactional
     public String processInternalTransfer(Long transferId) {
+        throw new RuntimeException("processInternalTransfer called from TransactionService, use TransferService instead");
+        /*
         Transfer transfer = transferRepository.findById(transferId).orElseThrow(() -> new RuntimeException("Transfer not found"));
 
         // Provera statusa i tipa transfera
@@ -112,11 +113,14 @@ public class TransactionService {
         } catch (Exception e) {
             throw new RuntimeException("Transaction failed, rollback initiated", e);
         }
-
+         */
     }
 
     @Transactional
     public String processExternalTransfer(Long transferId) {
+        throw new RuntimeException("processExternalTransfer called from TransactionService, use TransferService instead");
+
+        /*
         Transfer transfer = transferRepository.findById(transferId)
                 .orElseThrow(() -> new RuntimeException("Transfer not found"));
 
@@ -173,6 +177,7 @@ public class TransactionService {
             transferRepository.save(transfer);
             throw new RuntimeException("Transfer processing failed", e);
         }
+         */
     }
 
     @Transactional

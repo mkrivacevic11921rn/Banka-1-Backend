@@ -16,6 +16,7 @@ import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.repository.CurrencyRepository;
 import com.banka1.banking.repository.ExchangePairRepository;
 import com.banka1.banking.repository.TransferRepository;
+import com.banka1.banking.utils.ExcludeFromGeneratedJacocoReport;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
@@ -137,6 +138,15 @@ public class ExchangeService {
         }
 
         return null;
+    }
+
+    @ExcludeFromGeneratedJacocoReport("Wrapper method")
+    public Map<String, Object> calculatePreviewExchangeAutomatic(String fromCurrency, String toCurrency, Double amount) {
+        try {
+            return calculatePreviewExchange(fromCurrency, toCurrency, amount);
+        } catch(Exception ignored) {
+            return calculatePreviewExchangeForeign(fromCurrency, toCurrency, amount);
+        }
     }
 
     public Map<String, Object> calculatePreviewExchange(String fromCurrency, String toCurrency, Double amount) {

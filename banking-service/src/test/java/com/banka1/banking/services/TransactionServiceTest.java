@@ -94,6 +94,7 @@ public class TransactionServiceTest {
         externalTransfer.setToCurrency(currency);
     }
 
+    /*
     @Test
     void testProcessTransfer_Internal() {
         when(transferRepository.findById(1L)).thenReturn(Optional.of(internalTransfer));
@@ -145,6 +146,7 @@ public class TransactionServiceTest {
         assertThrows(RuntimeException.class, () -> transactionService.processExternalTransfer(2L));
         assertEquals(TransferStatus.FAILED, externalTransfer.getStatus());
     }
+     */
 
     @Test
     void testGetTransactionsByUserId() {

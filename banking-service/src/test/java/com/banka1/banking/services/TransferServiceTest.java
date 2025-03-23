@@ -7,6 +7,7 @@ import com.banka1.banking.dto.NotificationDTO;
 import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Currency;
+import com.banka1.banking.models.Transaction;
 import com.banka1.banking.models.Transfer;
 import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.models.helper.TransferStatus;
@@ -28,6 +29,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import javax.jms.TextMessage;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -61,11 +63,25 @@ public class TransferServiceTest {
     @Mock
     private OtpTokenService otpTokenService;
 
+    @Mock
+    private BankAccountUtils bankAccountUtils;
+
+    @Mock
+    private ExchangeService exchangeService;
+
     @InjectMocks
     private TransferService transferService;
 
     private Account fromAccount;
     private Account toAccount;
+    private Transfer internalTransfer;
+    private Transfer externalTransfer;
+    private Transfer exchangeTransfer;
+    private Transfer foreignTransfer;
+    private Account fromAccountForeign;
+    private Account toAccountForeign;
+    private Account bankAccountUSD;
+    private Account bankAccountEUR;
     private Currency usdCurrency;
     private Currency eurCurrency;
     private CustomerDTO customerDTO;
@@ -90,6 +106,34 @@ public class TransferServiceTest {
         toAccount.setBalance(500.0);
         toAccount.setCurrencyType(CurrencyType.USD);
 
+        fromAccountForeign = new Account();
+        fromAccountForeign.setId(2L);
+        fromAccountForeign.setOwnerID(100L);
+        fromAccountForeign.setAccountNumber("223456789");
+        fromAccountForeign.setBalance(1000.0);
+        fromAccountForeign.setCurrencyType(CurrencyType.EUR);
+
+        toAccountForeign = new Account();
+        toAccountForeign.setId(3L);
+        toAccountForeign.setOwnerID(200L);
+        toAccountForeign.setAccountNumber("987654322");
+        toAccountForeign.setBalance(500.0);
+        toAccountForeign.setCurrencyType(CurrencyType.EUR);
+
+        bankAccountEUR = new Account();
+        bankAccountEUR.setId(100L);
+        bankAccountEUR.setOwnerID(1L);
+        bankAccountEUR.setAccountNumber("111111111");
+        bankAccountEUR.setBalance(1000000.0);
+        bankAccountEUR.setCurrencyType(CurrencyType.EUR);
+
+        bankAccountUSD = new Account();
+        bankAccountUSD.setId(100L);
+        bankAccountUSD.setOwnerID(1L);
+        bankAccountUSD.setAccountNumber("111111112");
+        bankAccountUSD.setBalance(1000000.0);
+        bankAccountUSD.setCurrencyType(CurrencyType.USD);
+
         // Setup currencies
         usdCurrency = new Currency();
         usdCurrency.setCode(CurrencyType.USD);
@@ -112,6 +156,104 @@ public class TransferServiceTest {
         pendingTransfer.setAmount(100.0);
         pendingTransfer.setStatus(TransferStatus.PENDING);
         pendingTransfer.setCreatedAt(System.currentTimeMillis() - 1000); // Created 1 second ago
+
+        // Setup internal transfer
+        internalTransfer = new Transfer();
+        internalTransfer.setId(1L);
+        internalTransfer.setFromAccountId(fromAccount);
+        internalTransfer.setToAccountId(toAccount);
+        internalTransfer.setAmount(100.0);
+        internalTransfer.setStatus(TransferStatus.PENDING);
+        internalTransfer.setType(TransferType.INTERNAL);
+        internalTransfer.setFromCurrency(usdCurrency);
+        internalTransfer.setToCurrency(usdCurrency);
+
+        // Setup external transfer
+        externalTransfer = new Transfer();
+        externalTransfer.setId(2L);
+        externalTransfer.setFromAccountId(fromAccount);
+        externalTransfer.setToAccountId(toAccount);
+        externalTransfer.setAmount(100.0);
+        externalTransfer.setStatus(TransferStatus.PENDING);
+        externalTransfer.setType(TransferType.EXTERNAL);
+        externalTransfer.setFromCurrency(usdCurrency);
+        externalTransfer.setToCurrency(usdCurrency);
+
+        foreignTransfer = new Transfer();
+        foreignTransfer.setId(3L);
+        foreignTransfer.setFromAccountId(fromAccount);
+        foreignTransfer.setToAccountId(toAccountForeign);
+        foreignTransfer.setAmount(100.0);
+        foreignTransfer.setStatus(TransferStatus.PENDING);
+        foreignTransfer.setType(TransferType.FOREIGN);
+        foreignTransfer.setFromCurrency(usdCurrency);
+        foreignTransfer.setToCurrency(eurCurrency);
+
+        exchangeTransfer = new Transfer();
+        exchangeTransfer.setId(4L);
+        exchangeTransfer.setFromAccountId(fromAccountForeign);
+        exchangeTransfer.setToAccountId(fromAccount);
+        exchangeTransfer.setAmount(100.0);
+        exchangeTransfer.setStatus(TransferStatus.PENDING);
+        exchangeTransfer.setType(TransferType.EXCHANGE);
+        exchangeTransfer.setFromCurrency(eurCurrency);
+        exchangeTransfer.setToCurrency(usdCurrency);
+    }
+
+    @Test
+    void testCreateInternalTransfer_Success() {
+        toAccount.setOwnerID(100L);
+
+        InternalTransferDTO dto = new InternalTransferDTO();
+        dto.setFromAccountId(fromAccount.getId());
+        dto.setToAccountId(toAccount.getId());
+        dto.setAmount(100.0);
+
+        // Setup mocks
+        when(accountRepository.findById(fromAccount.getId())).thenReturn(Optional.of(fromAccount));
+        when(accountRepository.findById(toAccount.getId())).thenReturn(Optional.of(toAccount));
+        when(currencyRepository.findByCode(CurrencyType.USD)).thenReturn(Optional.of(usdCurrency));
+        when(userServiceCustomer.getCustomerById(100L)).thenReturn(customerDTO);
+        when(transferRepository.saveAndFlush(any(Transfer.class))).thenAnswer(invocation -> {
+            Transfer t = invocation.getArgument(0);
+            t.setId(1L);
+            return t;
+        });
+        when(otpTokenService.generateOtp(1L)).thenReturn("123456");
+
+        // Execute
+        Long result = transferService.createInternalTransfer(dto);
+
+        // Verify
+        assertEquals(1L, result);
+
+        // Verify transfer was created and saved
+        ArgumentCaptor<Transfer> transferCaptor = ArgumentCaptor.forClass(Transfer.class);
+        verify(transferRepository).saveAndFlush(transferCaptor.capture());
+
+        Transfer savedTransfer = transferCaptor.getValue();
+        assertEquals(fromAccount, savedTransfer.getFromAccountId());
+        assertEquals(toAccount, savedTransfer.getToAccountId());
+        assertEquals(100.0, savedTransfer.getAmount());
+        assertEquals(TransferStatus.PENDING, savedTransfer.getStatus());
+        assertEquals(usdCurrency, savedTransfer.getFromCurrency());
+        assertEquals(usdCurrency, savedTransfer.getToCurrency());
+
+        // Verify OTP was generated and set
+        verify(otpTokenService).generateOtp(1L);
+        verify(transferRepository).save(transferCaptor.capture());
+        assertEquals("123456", transferCaptor.getValue().getOtp());
+
+        // Verify notification was sent
+        ArgumentCaptor<NotificationDTO> notificationCaptor = ArgumentCaptor.forClass(NotificationDTO.class);
+        verify(messageHelper).createTextMessage(notificationCaptor.capture());
+
+        NotificationDTO sentNotification = notificationCaptor.getValue();
+        assertEquals("Verifikacija", sentNotification.getSubject());
+        assertEquals("john.doe@example.com", sentNotification.getEmail());
+        assertTrue(sentNotification.getMessage().contains("123456"));
+        assertEquals("John", sentNotification.getFirstName());
+        assertEquals("Doe", sentNotification.getLastName());
     }
 
     @Test
@@ -310,5 +452,107 @@ public class TransferServiceTest {
         when(transferRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThrows(RuntimeException.class, () -> transferService.findById(999L));
+    }
+
+    @Test
+    void testProcessTransfer_Internal() {
+        when(transferRepository.findById(1L)).thenReturn(Optional.of(internalTransfer));
+        when(accountRepository.save(any(Account.class))).thenReturn(null);
+        when(transactionRepository.save(any(Transaction.class))).thenReturn(null);
+
+        String result = transferService.processTransfer(1L);
+
+        assertEquals("Transfer completed successfully", result);
+        assertEquals(TransferStatus.COMPLETED, internalTransfer.getStatus());
+        assertEquals(900.0, fromAccount.getBalance());
+        assertEquals(600.0, toAccount.getBalance());
+        verify(transactionRepository, times(1)).save(any(Transaction.class));
+    }
+
+    @Test
+    void testProcessTransfer_Exchange() {
+        when(transferRepository.findById(4L)).thenReturn(Optional.of(exchangeTransfer));
+        when(accountRepository.save(any(Account.class))).thenReturn(null);
+        when(transactionRepository.save(any(Transaction.class))).thenReturn(null);
+
+        when(exchangeService.calculatePreviewExchangeAutomatic(anyString(), anyString(), any())).thenReturn(
+                Map.of(
+                        "finalAmount", 90.0
+                )
+        );
+        when(bankAccountUtils.getBankAccountForCurrency(eurCurrency.getCode())).thenReturn(bankAccountEUR);
+        when(bankAccountUtils.getBankAccountForCurrency(usdCurrency.getCode())).thenReturn(bankAccountUSD);
+
+        String result = transferService.processTransfer(4L);
+
+        assertEquals("Transfer completed successfully", result);
+        assertEquals(TransferStatus.COMPLETED, exchangeTransfer.getStatus());
+        assertEquals(900.0, fromAccountForeign.getBalance());
+        assertEquals(1090.0, fromAccount.getBalance());
+        assertEquals(1000100.0, bankAccountEUR.getBalance());
+        assertEquals(999910.0, bankAccountUSD.getBalance());
+        verify(transactionRepository, times(1)).save(any(Transaction.class));
+    }
+
+    @Test
+    void testProcessTransfer_External() {
+        when(transferRepository.findById(2L)).thenReturn(Optional.of(externalTransfer));
+        when(accountRepository.save(any(Account.class))).thenReturn(null);
+        when(transactionRepository.save(any(Transaction.class))).thenReturn(null);
+
+        String result = transferService.processTransfer(2L);
+
+        assertEquals("Transfer completed successfully", result);
+        assertEquals(TransferStatus.COMPLETED, externalTransfer.getStatus());
+        assertEquals(900.0, fromAccount.getBalance());
+        assertEquals(600.0, toAccount.getBalance());
+        verify(transactionRepository, times(1)).save(any(Transaction.class));
+    }
+
+    @Test
+    void testProcessTransfer_Foreign() {
+        when(transferRepository.findById(3L)).thenReturn(Optional.of(foreignTransfer));
+        when(accountRepository.save(any(Account.class))).thenReturn(null);
+        when(transactionRepository.save(any(Transaction.class))).thenReturn(null);
+
+        when(exchangeService.calculatePreviewExchangeAutomatic(anyString(), anyString(), any())).thenReturn(
+                Map.of(
+                        "finalAmount", 90.0
+                )
+        );
+        when(bankAccountUtils.getBankAccountForCurrency(eurCurrency.getCode())).thenReturn(bankAccountEUR);
+        when(bankAccountUtils.getBankAccountForCurrency(usdCurrency.getCode())).thenReturn(bankAccountUSD);
+
+        String result = transferService.processTransfer(3L);
+
+        assertEquals("Transfer completed successfully", result);
+        assertEquals(TransferStatus.COMPLETED, foreignTransfer.getStatus());
+        assertEquals(900.0, fromAccount.getBalance());
+        assertEquals(590.0, toAccountForeign.getBalance());
+        assertEquals(1000100.0, bankAccountUSD.getBalance());
+        assertEquals(999910.0, bankAccountEUR.getBalance());
+        verify(transactionRepository, times(1)).save(any(Transaction.class));
+    }
+
+    @Test
+    void testProcessInternalTransfer_InsufficientFunds() {
+        fromAccount.setBalance(50.0);
+        internalTransfer.setAmount(100.0);
+
+        when(transferRepository.findById(1L)).thenReturn(Optional.of(internalTransfer));
+
+        assertThrows(RuntimeException.class, () -> transferService.processInternalTransfer(1L));
+        assertEquals(TransferStatus.FAILED, internalTransfer.getStatus());
+    }
+
+    @Test
+    void testProcessExternalTransfer_InsufficientFunds() {
+        fromAccount.setBalance(50.0);
+        externalTransfer.setAmount(100.0);
+
+        when(transferRepository.findById(2L)).thenReturn(Optional.of(externalTransfer));
+
+        assertThrows(RuntimeException.class, () -> transferService.processExternalTransfer(2L));
+        assertEquals(TransferStatus.FAILED, externalTransfer.getStatus());
     }
 }

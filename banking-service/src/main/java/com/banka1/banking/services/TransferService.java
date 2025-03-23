@@ -12,10 +12,6 @@ import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.repository.CurrencyRepository;
 import com.banka1.banking.repository.TransactionRepository;
 import com.banka1.banking.repository.TransferRepository;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -46,10 +42,14 @@ public class TransferService {
 
     private final UserServiceCustomer userServiceCustomer;
 
+    private final ExchangeService exchangeService;
+
     private final OtpTokenService otpTokenService;
 
+    private final BankAccountUtils bankAccountUtils;
 
-    public TransferService(AccountRepository accountRepository, TransferRepository transferRepository, TransactionRepository transactionRepository, CurrencyRepository currencyRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("${destination.email}") String destinationEmail, UserServiceCustomer userServiceCustomer, OtpTokenService otpTokenService) {
+
+    public TransferService(AccountRepository accountRepository, TransferRepository transferRepository, TransactionRepository transactionRepository, CurrencyRepository currencyRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("${destination.email}") String destinationEmail, UserServiceCustomer userServiceCustomer, ExchangeService exchangeService, OtpTokenService otpTokenService, BankAccountUtils bankAccountUtils) {
         this.accountRepository = accountRepository;
         this.transferRepository = transferRepository;
         this.transactionRepository = transactionRepository;
@@ -58,7 +58,9 @@ public class TransferService {
         this.messageHelper = messageHelper;
         this.destinationEmail = destinationEmail;
         this.userServiceCustomer = userServiceCustomer;
+        this.exchangeService = exchangeService;
         this.otpTokenService = otpTokenService;
+        this.bankAccountUtils = bankAccountUtils;
     }
 
     @Transactional
@@ -67,18 +69,33 @@ public class TransferService {
                 .orElseThrow(() -> new RuntimeException("Transfer not found"));
 
         System.out.println("Transfer type: " + transfer.getType());
-        switch (transfer.getType()) {
-            case INTERNAL:
-                return processInternalTransfer(transferId);
-            case EXTERNAL: case FOREIGN:
-                return processExternalTransfer(transferId);
-            case EXCHANGE:
-                throw new RuntimeException("Exchange transfer not implemented");
-            default:
-                throw new RuntimeException("Invalid transfer type");
-        }
+        return switch (transfer.getType()) {
+            case INTERNAL, EXCHANGE -> processInternalTransfer(transferId);
+            case EXTERNAL, FOREIGN -> processExternalTransfer(transferId);
+            default -> throw new RuntimeException("Invalid transfer type");
+        };
     }
 
+    // To be called after the initial amount is stripped from the account initiating the transfer
+    // Completes a transfer between two accounts of differing currency types
+    @Transactional
+    private void performCurrencyExchangeTransfer(Transfer transfer, Account fromAccount, Account toAccount) {
+        Account toBankAccount = bankAccountUtils.getBankAccountForCurrency(fromAccount.getCurrencyType());
+        Account fromBankAccount = bankAccountUtils.getBankAccountForCurrency(toAccount.getCurrencyType());
+
+        toBankAccount.setBalance(toBankAccount.getBalance() + transfer.getAmount());
+
+        Map<String, Object> exchange = exchangeService.calculatePreviewExchangeAutomatic(
+                transfer.getFromCurrency().toString(),
+                transfer.getToCurrency().toString(),
+                transfer.getAmount()
+        );
+
+        Double exchangedAmount = (Double) exchange.get("finalAmount");
+
+        fromBankAccount.setBalance(fromBankAccount.getBalance() - exchangedAmount);
+        toAccount.setBalance(toAccount.getBalance() + exchangedAmount);
+    }
 
     @Transactional
     public String processInternalTransfer(Long transferId) {
@@ -89,7 +106,7 @@ public class TransferService {
             throw new RuntimeException("Transfer is not in pending state");
         }
 
-        if (!transfer.getType().equals(TransferType.INTERNAL)) {
+        if (!transfer.getType().equals(TransferType.INTERNAL) && !transfer.getType().equals(TransferType.EXCHANGE)) {
             throw new RuntimeException("Invalid transfer type for this process");
         }
 
@@ -106,7 +123,13 @@ public class TransferService {
         try{
             // Azuriranje balansa
             fromAccount.setBalance(fromAccount.getBalance() - transfer.getAmount());
-            toAccount.setBalance(toAccount.getBalance() + transfer.getAmount());
+
+            if(transfer.getType().equals(TransferType.INTERNAL))
+                toAccount.setBalance(toAccount.getBalance() + transfer.getAmount());
+            else {
+                performCurrencyExchangeTransfer(transfer, fromAccount, toAccount);
+            }
+
             accountRepository.save(fromAccount);
             accountRepository.save(toAccount);
 
@@ -120,6 +143,7 @@ public class TransferService {
             debitTransaction.setDescription("Debit transaction for transfer " + transferId);
             debitTransaction.setTransfer(transfer);
 
+            /*
             Transaction creditTransaction = new Transaction();
             creditTransaction.setFromAccountId(fromAccount);
             creditTransaction.setToAccountId(toAccount);
@@ -128,9 +152,10 @@ public class TransferService {
             creditTransaction.setTimestamp(System.currentTimeMillis());
             creditTransaction.setDescription("Credit transaction for transfer " + transferId);
             creditTransaction.setTransfer(transfer);
+             */
 
             transactionRepository.save(debitTransaction);
-            transactionRepository.save(creditTransaction);
+            // transactionRepository.save(creditTransaction);
 
             transfer.setStatus(TransferStatus.COMPLETED);
             transfer.setCompletedAt(System.currentTimeMillis());
@@ -152,6 +177,10 @@ public class TransferService {
             throw new RuntimeException("Transfer is not in pending state");
         }
 
+        if (!transfer.getType().equals(TransferType.EXTERNAL) && !transfer.getType().equals(TransferType.FOREIGN)) {
+            throw new RuntimeException("Invalid transfer type for this process");
+        }
+
         Account fromAccount = transfer.getFromAccountId();
         Account toAccount = transfer.getToAccountId();
         Double amount = transfer.getAmount();
@@ -165,9 +194,14 @@ public class TransferService {
 
         try {
             fromAccount.setBalance(fromAccount.getBalance() - amount);
-            accountRepository.save(fromAccount);
 
-            toAccount.setBalance(toAccount.getBalance() + amount);
+            if(transfer.getType().equals(TransferType.EXTERNAL))
+                toAccount.setBalance(toAccount.getBalance() + transfer.getAmount());
+            else {
+                performCurrencyExchangeTransfer(transfer, fromAccount, toAccount);
+            }
+
+            accountRepository.save(fromAccount);
             accountRepository.save(toAccount);
 
             Transaction debitTransaction = new Transaction();
@@ -180,6 +214,7 @@ public class TransferService {
             debitTransaction.setTransfer(transfer);
             transactionRepository.save(debitTransaction);
 
+            /*
             Transaction creditTransaction = new Transaction();
             creditTransaction.setFromAccountId(fromAccount);
             creditTransaction.setToAccountId(toAccount);
@@ -189,6 +224,7 @@ public class TransferService {
             creditTransaction.setDescription("Credit transaction for transfer " + transfer.getId());
             creditTransaction.setTransfer(transfer);
             transactionRepository.save(creditTransaction);
+             */
 
             transfer.setStatus(TransferStatus.COMPLETED);
             transfer.setCompletedAt(Instant.now().toEpochMilli());
