@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,12 +37,15 @@ public class TransactionController {
     @AccountAuthorization
     public ResponseEntity<?> getAllTransactions(@RequestHeader(value = "Authorization", required = false) String authorization, @PathVariable Long userId) {
         try {
+            if (!transactionService.userExists(userId)) {
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, "Korisnik ne postoji.");
+            }
             List<Transaction> transactions = transactionService.getTransactionsByUserId(userId);
             Map<String, Object> response = new HashMap<>();
             response.put("data", transactions);
-            return ResponseTemplate.create(ResponseEntity.ok(), true, response, null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, response, null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -57,9 +61,9 @@ public class TransactionController {
             List<Transaction> transactions = transactionService.getTransactionsByUserId(userId);
             Map<String, Object> response = new HashMap<>();
             response.put("data", transactions);
-            return ResponseTemplate.create(ResponseEntity.ok(), true, response, null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, response, null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 }

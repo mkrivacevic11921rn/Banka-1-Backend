@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -100,9 +101,9 @@ public class AuthController {
     ) @RequestHeader(value = "Authorization", required = false) String authorization) {
         try {
             blackListTokenService.blacklistToken(authService.getToken(authorization));
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", ResponseMessage.LOGOUT_SUCCESS.toString()), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("message", ResponseMessage.LOGOUT_SUCCESS.toString()), null);
         } catch(Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -141,9 +142,9 @@ public class AuthController {
             String oldToken = authService.getToken(authorization);
             String newToken = authService.recreateToken(oldToken);
             blackListTokenService.blacklistToken(oldToken);
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("token", newToken), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("token", newToken), null);
         } catch(Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 }
