@@ -71,7 +71,7 @@ public class ResetPasswordService {
                 "/reset-password?token=" + resetPassword.getToken());
         emailDTO.setType("email");
 
-        jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO).getBytes(StandardCharsets.UTF_8));
+        jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
         resetPasswordRepository.save(resetPassword);
     }
 

@@ -7,10 +7,12 @@ import jakarta.mail.Session;
 import jakarta.mail.Transport;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeUtility;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Properties;
 
 @Service
@@ -57,13 +59,19 @@ public class EmailService {
             Message message = new MimeMessage(session);
             message.setFrom(new InternetAddress(fromEmail));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(emailDto.getEmail()));
-            message.setSubject(emailDto.getSubject());
-            message.setText(emailDto.getMessage());
+//            message.setSubject(emailDto.getSubject());
+//            message.setText(emailDto.getMessage());
+
+            // Ensure subject is properly encoded in UTF-8
+            message.setSubject(MimeUtility.encodeText(emailDto.getSubject(), "UTF-8", "B"));
+
+            // Set content type to HTML with UTF-8 encoding (if applicable)
+            message.setContent(emailDto.getMessage(), "text/plain; charset=UTF-8");
 
             Transport.send(message);
 
             System.out.println("Email sent successfully to " + emailDto.getEmail());
-        } catch (MessagingException e) {
+        } catch (MessagingException | UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
     }

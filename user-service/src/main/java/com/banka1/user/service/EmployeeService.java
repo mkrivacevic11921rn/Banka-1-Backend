@@ -80,7 +80,7 @@ public class EmployeeService {
 
         setPasswordService.saveSetPasswordRequest(verificationCode, employee.getId(), false);
 
-        jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO).getBytes(StandardCharsets.UTF_8));
+        jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
 
         return employee;
     }

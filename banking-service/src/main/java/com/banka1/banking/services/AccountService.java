@@ -21,7 +21,6 @@ import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -109,7 +108,7 @@ public class AccountService {
         emailDTO.setLastName(owner.getLastName());
         emailDTO.setType("email");
 
-        jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO).getBytes(StandardCharsets.UTF_8));
+        jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
 
         return account;
     }

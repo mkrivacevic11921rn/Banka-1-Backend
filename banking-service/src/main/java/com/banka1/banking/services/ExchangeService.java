@@ -133,7 +133,7 @@ public class ExchangeService {
             emailDto.setLastName(lastName);
             emailDto.setType("email");
 
-            jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDto).getBytes(StandardCharsets.UTF_8));
+            jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDto));
             return transfer.getId();
         }
 

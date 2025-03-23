@@ -213,7 +213,7 @@ public class LoanService {
                 emailDTO.setEmail(customer.getEmail());
 
                 System.out.println("Sending loan notification for loan " + loanId + " to user ID " + customer.getEmail());
-                jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO).getBytes(StandardCharsets.UTF_8));
+                jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
 
             } catch (Exception e) {
 	            log.warn("Failed to send notification: {}", e.getMessage());

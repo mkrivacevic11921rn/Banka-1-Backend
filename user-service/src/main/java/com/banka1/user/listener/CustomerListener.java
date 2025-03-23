@@ -30,7 +30,7 @@ public class CustomerListener {
         } catch (Exception e) {
             log.error("CustomerListener: ", e);
         }
-        jmsTemplate.convertAndSend(message.getJMSReplyTo(), messageHelper.createTextMessage(customer).getBytes(StandardCharsets.UTF_8));
+        jmsTemplate.convertAndSend(message.getJMSReplyTo(), messageHelper.createTextMessage(customer));
     }
 
     @JmsListener(destination = "${destination.customer.email}", concurrency = "5-10")
@@ -43,7 +43,7 @@ public class CustomerListener {
         } catch (Exception e) {
             log.error("CustomerListener (by email): ", e);
         }
-        jmsTemplate.convertAndSend(message.getJMSReplyTo(), messageHelper.createTextMessage(customer).getBytes(StandardCharsets.UTF_8));
+        jmsTemplate.convertAndSend(message.getJMSReplyTo(), messageHelper.createTextMessage(customer));
     }
 
 }
