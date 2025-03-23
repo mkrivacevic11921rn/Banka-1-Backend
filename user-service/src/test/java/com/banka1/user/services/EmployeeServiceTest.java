@@ -258,4 +258,42 @@ class EmployeeServiceTest {
             AssertionErrors.assertNotNull("Error", e);
         }
     }
+
+    @Test
+    void testCreateEmployee_MissingFields() {
+        CreateEmployeeRequest dto = new CreateEmployeeRequest();
+
+        when(modelMapper.map(any(CreateEmployeeRequest.class), eq(Employee.class))).thenReturn(new Employee());
+
+        assertThrows(RuntimeException.class, () -> employeeService.createEmployee(dto));
+    }
+
+    @Test
+    void testUpdatePermissions_EmployeeNotFound() {
+        UpdatePermissionsRequest dto = new UpdatePermissionsRequest();
+        dto.setPermissions(List.of(Permission.READ_EMPLOYEE));
+
+        when(employeeRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> employeeService.updatePermissions(1L, dto));
+    }
+
+    @Test
+    void testDeleteEmployee_EmployeeNotFound() {
+        when(employeeRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> employeeService.deleteEmployee(1L));
+    }
+
+
+
+    @Test
+    void testSearchInvalidPageSize() {
+        assertThrows(IllegalArgumentException.class, () -> employeeService.search(0, 0, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty()));
+    }
+
+    @Test
+    void testFindById_NullInput() {
+        assertThrows(IllegalArgumentException.class, () -> employeeService.findById(null));
+    }
 }
