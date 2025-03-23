@@ -77,11 +77,6 @@ public class AccountController {
     public ResponseEntity<?> getAllAccounts() {
         List<Account> accounts = accountService.getAllAccounts();
 
-        if (accounts == null || accounts.isEmpty()) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND),
-                        false, null, ResponseMessage.ACCOUNTS_NOT_FOUND.toString());
-        }
-
         Map<String, Object> response = new HashMap<>();
         response.put("accounts", accounts);
 
@@ -94,16 +89,12 @@ public class AccountController {
             description = "Vraća sve račune vezane za određenog korisnika.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Računi uspešno dohvaćeni"),
-            @ApiResponse(responseCode = "404", description = "Nema računa za datog korisnika")
+            @ApiResponse(responseCode = "404", description = "Korisnik ne postoji")
     })
     @AccountAuthorization
     public ResponseEntity<?> getAccountsByOwner(@PathVariable Long userId) {
-        List<Account> accounts = accountService.getAccountsByOwnerId(userId);
 
-        if (accounts == null || accounts.isEmpty()) {
-            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND),
-                    false, null, ResponseMessage.ACCOUNTS_NOT_FOUND.toString());
-        }
+        List<Account> accounts = accountService.getAccountsByOwnerId(userId);
 
         Map<String, Object> response = new HashMap<>();
         response.put("accounts", accounts);
@@ -167,17 +158,17 @@ public class AccountController {
             description = "Vraća sve transakcije za izabrani račun.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Transakcije uspešno dohvaćene"),
-            @ApiResponse(responseCode = "404", description = "Račun nije pronađen ili nema transakcija")
+            @ApiResponse(responseCode = "404", description = "Račun nije pronađen")
     })
     @AccountAuthorization
     public ResponseEntity<?> getTransactionsForAccount(@PathVariable Long accountId) {
-        List<Transaction> transactions = accountService.getTransactionsForAccount(accountId);
 
-        if (transactions.isEmpty()) {
-            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND),
-                    false, null, ResponseMessage.TRANSACTIONS_NOT_FOUND.toString());
+        // Proveri da li račun postoji
+        if (accountService.findById(accountId) == null) {
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, "Račun sa ID-jem " + accountId + " nije pronađen.");
         }
 
+        List<Transaction> transactions = accountService.getTransactionsForAccount(accountId);
         Map<String, Object> response = new HashMap<>();
         response.put("transactions", transactions);
         return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, response, null);

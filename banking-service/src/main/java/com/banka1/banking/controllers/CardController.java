@@ -109,9 +109,6 @@ public class CardController {
     private ResponseEntity<?> getCards(int account_id) {
         try {
             List<Card> cards = cardService.findAllByAccountId(account_id);
-            if (cards.isEmpty()) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, ResponseMessage.CARD_NOT_FOUND.toString());
-            }
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("cards", cards), null);
         } catch (Exception e) {
             log.error("Greška prilikom trazenja kartica: ", e);

@@ -78,9 +78,6 @@ public class LoanController {
     public ResponseEntity<?> getPendingLoans() {
         try {
             List<Loan> loans = loanService.getPendingLoans();
-            if (loans.isEmpty()) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, ResponseMessage.NO_DATA.toString());
-            }
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("loans", loans), null);
         } catch (Exception e) {
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
@@ -100,14 +97,6 @@ public class LoanController {
             @PathVariable("user_id") Long userId) {
         try {
             List<Loan> loans = loanService.getAllUserLoans(userId);
-            if (loans == null) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
-                        ResponseMessage.ACCOUNTS_NOT_FOUND.toString());
-            }
-            else if (loans.isEmpty()) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
-                        ResponseMessage.NO_DATA.toString());
-            }
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("loans", loans), null);
         } catch (Exception e) {
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
@@ -126,14 +115,7 @@ public class LoanController {
         try {
             Long ownerId = authService.parseToken(authService.getToken(authorization)).get("id", Long.class);
             List<Loan> loans = loanService.getAllUserLoans(ownerId);
-            if (loans == null) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
-                        ResponseMessage.ACCOUNTS_NOT_FOUND.toString());
-            }
-            else if (loans.isEmpty()) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
-                        ResponseMessage.NO_DATA.toString());
-            }
+
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("loans", loans), null);
         } catch (Exception e) {
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
@@ -152,10 +134,6 @@ public class LoanController {
             @RequestHeader(value = "Authorization", required = false) String authorization) {
         try {
             List<Loan> loans = loanService.getAllLoans();
-            if (loans == null || loans.isEmpty()) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
-                        ResponseMessage.NO_DATA.toString());
-            }
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("loans", loans), null);
         } catch (Exception e) {
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
@@ -254,10 +232,6 @@ public class LoanController {
     public ResponseEntity<?> getUserInstallments(@PathVariable("user_id") Long userId) {
         try {
             List<Installment> installments = loanService.getUserInstallments(userId);
-            if (installments.isEmpty()) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
-                        ResponseMessage.NO_DATA.toString());
-            }
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("installments", installments), null);
         } catch (Exception e) {
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
@@ -276,10 +250,6 @@ public class LoanController {
         try {
             Long userId = authService.parseToken(authService.getToken(authorization)).get("id", Long.class);
             List<Installment> installments = loanService.getUserInstallments(userId);
-            if (installments.isEmpty()) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
-                        ResponseMessage.NO_DATA.toString());
-            }
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("installments", installments), null);
         } catch (Exception e) {
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
@@ -291,7 +261,7 @@ public class LoanController {
             description = "broj ukupnih rata - broj placenih rata")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "lista kredita."),
-            @ApiResponse(responseCode = "404", description = "nema kredita na cekanju.")
+            @ApiResponse(responseCode = "404", description = "Korisnik nije vlasnik kredita ili kredit ne postoji.")
     })
     public ResponseEntity<?> getRemainingInstallments(
             @PathVariable("loan_id") Long loanId,
@@ -303,6 +273,11 @@ public class LoanController {
                 return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
                         ResponseMessage.NOT_THE_OWNER.toString());
             }
+            // Ako je broj preostalih rata 0, vraćamo HTTP 200 OK sa praznom listom
+            if (num == 0) {
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("remaining_number", 0), "Sve rate su plaćene.");
+            }
+
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("remaining_number", num), null);
         } catch (Exception e) {
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
