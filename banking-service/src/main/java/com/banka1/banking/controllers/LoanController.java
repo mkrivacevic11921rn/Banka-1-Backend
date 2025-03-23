@@ -202,23 +202,22 @@ public class LoanController {
             // Validate required fields
             if (loanUpdateDTO == null || loanUpdateDTO.getApproved() == null) {
                 return ResponseTemplate.create(ResponseEntity.badRequest(), false,
-                        Map.of("message", "Approved status must be provided"), null);
+                        null, "Approved status must be provided");
             }
             
             Loan updatedLoan = loanService.updateLoanRequest(loanId, loanUpdateDTO);
             if (updatedLoan == null) {
                 return ResponseTemplate.create(ResponseEntity.badRequest(), false,
-                        Map.of("message", ResponseMessage.LOAN_NOT_FOUND), null);
+                        null, ResponseMessage.LOAN_NOT_FOUND.getMessage());
             }
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true,
                     Map.of("message", ResponseMessage.UPDATED, "data", updatedLoan), null);
         } catch (HttpMessageNotReadableException e) {
             // Specific handling for JSON parsing errors
-            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false,
-                    Map.of("message", "Failed to parse request body. Please check JSON format."), null);
+            return ResponseTemplate.create(ResponseEntity.badRequest(), false,
+                    null, "Failed to parse request body. Please check JSON format.");
         } catch (RuntimeException e) {
-            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false,
-                    Map.of("message", e.getMessage()), null);
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
     }
     @GetMapping("/admin/{user_id}/installments")
@@ -296,7 +295,7 @@ public class LoanController {
             loanService.processLoanPayments();
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("cron", "success"), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, Map.of("cron", "failed"), e.getMessage());
+            return ResponseTemplate.create(ResponseEntity.badRequest(), false, null, e.getMessage());
         }
     }
 

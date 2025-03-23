@@ -1,6 +1,7 @@
 package com.banka1.banking.services;
 
 import com.banka1.banking.dto.CustomerDTO;
+import com.banka1.banking.dto.MoneyTransferDTO;
 import com.banka1.banking.dto.NotificationDTO;
 import com.banka1.banking.dto.request.CreateLoanDTO;
 import com.banka1.banking.dto.request.LoanUpdateDTO;
@@ -16,6 +17,7 @@ import com.banka1.banking.repository.InstallmentsRepository;
 import com.banka1.banking.repository.LoanRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsTemplate;
@@ -34,26 +36,20 @@ import java.util.List;
 @Service
 @EnableScheduling
 @Slf4j
+@RequiredArgsConstructor
 public class LoanService {
     private final LoanRepository loanRepository;
     private final JmsTemplate jmsTemplate;
     private final MessageHelper messageHelper;
-	private final String destinationEmail;
     private final AccountRepository accountRepository;
     private final UserServiceCustomer userServiceCustomer;
     private final InstallmentsRepository installmentsRepository;
     private final TransactionService transactionService;
+    private final BankAccountUtils bankAccountUtils;
+    private final TransferService transferService;
 
-    public LoanService(LoanRepository loanRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("${destination.email}") String destinationEmail, AccountRepository accountRepository, UserServiceCustomer userServiceCustomer, InstallmentsRepository installmentsRepository, TransactionService transactionService) {
-        this.loanRepository = loanRepository;
-        this.jmsTemplate = jmsTemplate;
-        this.messageHelper = messageHelper;
-	    this.destinationEmail = destinationEmail;
-        this.accountRepository = accountRepository;
-        this.userServiceCustomer = userServiceCustomer;
-        this.installmentsRepository = installmentsRepository;
-        this.transactionService = transactionService;
-    }
+    @Value("${destination.email}")
+    private String destinationEmail;
 
     public Loan createLoan(@Valid CreateLoanDTO createLoanDTO) {
         System.out.println("===== DEBUG START =====");
@@ -183,24 +179,49 @@ public class LoanService {
             }
 
             // Save the updated loan first
-            Loan savedLoan = loanRepository.save(loan);
+            loan = loanRepository.save(loan);
 
             // Direct DB approach to get user email
             Account acc = loan.getAccount();
             sendLoanNotification(acc, emailMessage, loanId);
 
-            System.out.println("Loan " + loanId + " status updated to: " +
-                    (loanUpdateDTO.getApproved() ? "APPROVED" : "DENIED"));
+            log.info("Loan {} status updated to: {}", loanId, loanUpdateDTO.getApproved() ? "APPROVED" : "DENIED");
 
-//            acc.setBalance(acc.getBalance() + loan.getLoanAmount());
+            var customer = userServiceCustomer.getCustomerById(acc.getOwnerID());
 
-            return savedLoan;
+            if(loanUpdateDTO.getApproved()) {
+                var bankAccount = bankAccountUtils.getBankAccountForCurrency(loan.getCurrencyType());
+                var transferDTO = new MoneyTransferDTO(
+                        bankAccount.getAccountNumber(),
+                        acc.getAccountNumber(),
+                        loan.getLoanAmount(),
+                        customer.getFirstName() + " "  + customer.getLastName(),
+                        customer.getAddress(),
+                        "271",
+                        "Kredit ID " + loan.getId(),
+                        "Kredit"
+                );
+
+                if (!transferService.validateMoneyTransfer(transferDTO)) {
+                    log.error("Kreiran nevalidan transfer");
+                    throw new RuntimeException("Interna greska: kreirani transfer nije bio validan.");
+                }
+
+                var transfer = transferService.createMoneyTransferEntity(
+                        bankAccount,
+                        acc,
+                        transferDTO);
+
+                transferService.processExternalTransfer(transfer.getId());
+            }
+
+            return loan;
         } catch (Exception e) {
             log.warn("Error updating loan: " + e.getMessage());
             throw new RuntimeException("Error updating loan: " + e.getMessage());
         }
     }
-    // FIXME should actually do something
+
     private void sendLoanNotification(Account acc, String emailMessage, Long loanId) {
         try {
             NotificationDTO emailDTO = new NotificationDTO();
