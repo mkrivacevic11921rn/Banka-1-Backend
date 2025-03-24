@@ -150,15 +150,26 @@ public class TransactionServiceTest {
     void testGetTransactionsByUserId() {
         Long userId = 1L;
         List<Account> accounts = Arrays.asList(fromAccount);
-        List<Transaction> expectedTransactions = Arrays.asList(new Transaction(), new Transaction());
+
+        // Kreiramo 2 transakcije sa ISTIM transferId-em (simulacija debit i credit transakcije)
+        Transaction tx1 = new Transaction();
+        tx1.setTransfer(internalTransfer);
+
+        Transaction tx2 = new Transaction();
+        tx2.setTransfer(internalTransfer); // isti transfer!
+
+        List<Transaction> mockedTransactions = Arrays.asList(tx1, tx2);
 
         when(accountRepository.findByOwnerID(userId)).thenReturn(accounts);
-        when(transactionRepository.findByFromAccountIdIn(accounts)).thenReturn(expectedTransactions);
+        when(transactionRepository.findByFromAccountIdInOrToAccountIdIn(accounts, accounts))
+                .thenReturn(mockedTransactions);
 
         List<Transaction> actualTransactions = transactionService.getTransactionsByUserId(userId);
 
-        assertEquals(expectedTransactions, actualTransactions);
+        // Očekujemo da backend vrati SAMO 1 transakciju jer su obe bile za isti transfer
+        assertEquals(1, actualTransactions.size());
     }
+
 
     @Test
     void testCalculateInstallment_WithInterest() {
