@@ -186,6 +186,7 @@ public class ExchangeService {
         double provision;
         if (fromCurrency.equalsIgnoreCase("RSD")) {
             provision = fee * 1 / exchangeRate;
+            exchangeRate = 1 / exchangeRate;
         }else {
             provision = fee;
         }
