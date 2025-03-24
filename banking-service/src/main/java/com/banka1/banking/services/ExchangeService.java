@@ -181,9 +181,10 @@ public class ExchangeService {
 
         double provision;
         if (fromCurrency.equalsIgnoreCase("RSD")) {
-            provision = fee;
-        }else {
             provision = fee * 1 / exchangeRate;
+
+        }else {
+            provision = fee;
         }
 
         return Map.of(
@@ -248,7 +249,7 @@ public class ExchangeService {
         double finalAmount = amountInTargetCurrency - secondFee;
         double totalFee = firstFee + secondFee;
 
-
+        secondExchangeRate = 1 / secondExchangeRate;
         return Map.of(
                 "firstExchangeRate", firstExchangeRate,
                 "secondExchangeRate", secondExchangeRate,
