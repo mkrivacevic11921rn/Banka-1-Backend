@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 //  MISLIM DA SVE VEZANO ZA TRANSAKCIJE TREBA PREBACITI U OVAJ SERVIS
@@ -31,6 +33,7 @@ public class TransactionService {
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
     private final CurrencyRepository currencyRepository;
+    private final double fee = 0.02;
 
     @Transactional
     public String processTransfer(Long transferId) {
@@ -128,6 +131,10 @@ public class TransactionService {
         Account toAccount = transfer.getToAccountId();
         Double amount = transfer.getAmount();
 
+        if (amount <= 0) {
+            throw new RuntimeException("You cant add negative amount");
+        }
+
         if (fromAccount.getBalance() < amount) {
             transfer.setStatus(TransferStatus.FAILED);
             transfer.setNote("Insufficient balance");
@@ -178,8 +185,18 @@ public class TransactionService {
     @Transactional
     public List<Transaction> getTransactionsByUserId(Long userId) {
         List<Account> accounts = accountRepository.findByOwnerID(userId);
-        List<Transaction> transactions = transactionRepository.findByFromAccountIdIn(accounts);
-        return transactions;
+        List<Transaction> allTransactions = transactionRepository.findByFromAccountIdInOrToAccountIdIn(accounts, accounts);
+
+        // Mapiranje po transfer.id da bi izbegli duplikate za interni transfer
+        Map<Long, Transaction> transferToTransaction = new HashMap<>();
+
+        for (Transaction tx : allTransactions) {
+            Long transferId = tx.getTransfer().getId();
+            // Ako već postoji u mapi, preskačemo (čuvamo samo jednu po transferu)
+            transferToTransaction.putIfAbsent(transferId, tx);
+        }
+
+        return transferToTransaction.values().stream().toList();
     }
 
     public Double calculateInstallment(Double loanAmount, Double annualInterestRate, Integer numberOfInstallments) {

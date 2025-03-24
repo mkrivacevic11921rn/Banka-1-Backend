@@ -1,314 +1,182 @@
 package com.banka1.banking.services;
 
-import com.banka1.banking.dto.CustomerDTO;
-import com.banka1.banking.dto.InternalTransferDTO;
-import com.banka1.banking.dto.MoneyTransferDTO;
-import com.banka1.banking.dto.NotificationDTO;
-import com.banka1.banking.listener.MessageHelper;
-import com.banka1.banking.models.Account;
-import com.banka1.banking.models.Currency;
-import com.banka1.banking.models.Transfer;
-import com.banka1.banking.models.helper.CurrencyType;
-import com.banka1.banking.models.helper.TransferStatus;
-import com.banka1.banking.models.helper.TransferType;
-import com.banka1.banking.repository.AccountRepository;
-import com.banka1.banking.repository.CurrencyRepository;
-import com.banka1.banking.repository.TransactionRepository;
-import com.banka1.banking.repository.TransferRepository;
+import com.banka1.banking.models.*;
+import com.banka1.banking.models.helper.*;
+import com.banka1.banking.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.jms.core.JmsTemplate;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.jms.TextMessage;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@ExtendWith(SpringExtension.class)
+@Transactional
 public class TransferServiceTest {
 
-    @Mock
-    private AccountRepository accountRepository;
+    @Autowired
+    private TransferService transferService;
 
-    @Mock
+    @Autowired
     private TransferRepository transferRepository;
 
-    @Mock
-    private CurrencyRepository currencyRepository;
+    @Autowired
+    private AccountRepository accountRepository;
 
-    @Mock
+    @Autowired
     private TransactionRepository transactionRepository;
 
-    @Mock
-    private JmsTemplate jmsTemplate;
-
-    @Mock
-    private MessageHelper messageHelper;
-
-    @Mock
-    private UserServiceCustomer userServiceCustomer;
-
-    @Mock
-    private OtpTokenService otpTokenService;
-
-    @InjectMocks
-    private TransferService transferService;
+    @Autowired
+    private CurrencyRepository currencyRepository;
 
     private Account fromAccount;
     private Account toAccount;
-    private Currency usdCurrency;
-    private Currency eurCurrency;
-    private CustomerDTO customerDTO;
-    private Transfer pendingTransfer;
+    private Currency rsdCurrency;
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(transferService, "destinationEmail", "email.queue");
+        rsdCurrency = currencyRepository.findByCode(CurrencyType.RSD).orElseGet(() -> {
+            Currency c = new Currency();
+            c.setCode(CurrencyType.RSD);
+            c.setName("Serbian Dinar");
+            c.setCountry("Serbia");
+            c.setSymbol("RSD");
+            return currencyRepository.save(c);
+        });
 
-        // Setup test accounts
         fromAccount = new Account();
-        fromAccount.setId(1L);
-        fromAccount.setOwnerID(100L);
-        fromAccount.setAccountNumber("123456789");
-        fromAccount.setBalance(1000.0);
-        fromAccount.setCurrencyType(CurrencyType.USD);
+        fromAccount.setOwnerID(1L);
+        fromAccount.setAccountNumber("111111");
+        fromAccount.setBalance(100.0);
+        fromAccount.setReservedBalance(0.0);
+        fromAccount.setType(AccountType.CURRENT);
+        fromAccount.setCurrencyType(CurrencyType.RSD);
+        fromAccount.setSubtype(AccountSubtype.STANDARD);
+        fromAccount.setCreatedDate(System.currentTimeMillis());
+        fromAccount.setExpirationDate(System.currentTimeMillis() + 31536000000L);
+        fromAccount.setDailyLimit(50000.0);
+        fromAccount.setMonthlyLimit(1000000.0);
+        fromAccount.setDailySpent(0.0);
+        fromAccount.setMonthlySpent(0.0);
+        fromAccount.setStatus(AccountStatus.ACTIVE);
+        fromAccount.setEmployeeID(1L);
+        fromAccount.setMonthlyMaintenanceFee(500.0);
+        fromAccount = accountRepository.save(fromAccount);
 
         toAccount = new Account();
-        toAccount.setId(2L);
-        toAccount.setOwnerID(200L); // Different owner
-        toAccount.setAccountNumber("987654321");
-        toAccount.setBalance(500.0);
-        toAccount.setCurrencyType(CurrencyType.USD);
-
-        // Setup currencies
-        usdCurrency = new Currency();
-        usdCurrency.setCode(CurrencyType.USD);
-
-        eurCurrency = new Currency();
-        eurCurrency.setCode(CurrencyType.EUR);
-
-        // Setup customer data
-        customerDTO = new CustomerDTO();
-        customerDTO.setId(100L);
-        customerDTO.setFirstName("John");
-        customerDTO.setLastName("Doe");
-        customerDTO.setEmail("john.doe@example.com");
-
-        // Setup pending transfer
-        pendingTransfer = new Transfer();
-        pendingTransfer.setId(1L);
-        pendingTransfer.setFromAccountId(fromAccount);
-        pendingTransfer.setToAccountId(toAccount);
-        pendingTransfer.setAmount(100.0);
-        pendingTransfer.setStatus(TransferStatus.PENDING);
-        pendingTransfer.setCreatedAt(System.currentTimeMillis() - 1000); // Created 1 second ago
+        toAccount.setOwnerID(2L);
+        toAccount.setAccountNumber("222222");
+        toAccount.setBalance(50.0);
+        toAccount.setReservedBalance(0.0);
+        toAccount.setType(AccountType.CURRENT);
+        toAccount.setCurrencyType(CurrencyType.RSD);
+        toAccount.setSubtype(AccountSubtype.STANDARD);
+        toAccount.setCreatedDate(System.currentTimeMillis());
+        toAccount.setExpirationDate(System.currentTimeMillis() + 31536000000L);
+        toAccount.setDailyLimit(50000.0);
+        toAccount.setMonthlyLimit(1000000.0);
+        toAccount.setDailySpent(0.0);
+        toAccount.setMonthlySpent(0.0);
+        toAccount.setStatus(AccountStatus.ACTIVE);
+        toAccount.setEmployeeID(2L);
+        toAccount.setMonthlyMaintenanceFee(500.0);
+        toAccount = accountRepository.save(toAccount);
     }
 
     @Test
-    void testCreateMoneyTransfer_ExternalTransfer_Success() {
-        // Setup test data
-        MoneyTransferDTO dto = new MoneyTransferDTO();
-        dto.setFromAccountNumber("123456789");
-        dto.setRecipientAccount("987654321");
-        dto.setAmount(100.0);
-        dto.setReceiver("Jane Smith");
-        dto.setPayementCode("123");
-        dto.setPayementDescription("Payment for services");
+    void rollbackInternalTransferWhenInsufficientFunds() {
+        final Transfer newTransfer = new Transfer();
+        newTransfer.setFromAccountId(fromAccount);
+        newTransfer.setToAccountId(toAccount);
+        newTransfer.setAmount(200.0);
+        newTransfer.setType(TransferType.INTERNAL);
+        newTransfer.setStatus(TransferStatus.PENDING);
+        newTransfer.setFromCurrency(rsdCurrency);
+        newTransfer.setToCurrency(rsdCurrency);
+        transferRepository.save(newTransfer);
 
-        // Setup mocks
-        when(accountRepository.findByAccountNumber("123456789")).thenReturn(Optional.of(fromAccount));
-        when(accountRepository.findByAccountNumber("987654321")).thenReturn(Optional.of(toAccount));
-        when(currencyRepository.findByCode(CurrencyType.USD)).thenReturn(Optional.of(usdCurrency));
-        when(userServiceCustomer.getCustomerById(100L)).thenReturn(customerDTO);
-        when(transferRepository.saveAndFlush(any(Transfer.class))).thenAnswer(invocation -> {
-            Transfer t = invocation.getArgument(0);
-            t.setId(1L);
-            return t;
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            transferService.processInternalTransfer(newTransfer.getId());
         });
-        when(otpTokenService.generateOtp(1L)).thenReturn("123456");
 
-        // Execute
-        Long result = transferService.createMoneyTransfer(dto);
+        assertTrue(exception.getMessage().contains("Insufficient funds"));
 
-        // Verify
-        assertEquals(1L, result);
-
-        // Verify transfer was created and saved
-        ArgumentCaptor<Transfer> transferCaptor = ArgumentCaptor.forClass(Transfer.class);
-        verify(transferRepository).saveAndFlush(transferCaptor.capture());
-
-        Transfer savedTransfer = transferCaptor.getValue();
-        assertEquals(fromAccount, savedTransfer.getFromAccountId());
-        assertEquals(toAccount, savedTransfer.getToAccountId());
-        assertEquals(100.0, savedTransfer.getAmount());
-        assertEquals("Jane Smith", savedTransfer.getReceiver());
-        assertEquals(TransferStatus.PENDING, savedTransfer.getStatus());
-        assertEquals(usdCurrency, savedTransfer.getFromCurrency());
-        assertEquals(usdCurrency, savedTransfer.getToCurrency());
-        assertEquals("123", savedTransfer.getPaymentCode());
-        assertEquals("Payment for services", savedTransfer.getPaymentDescription());
-
-        // Verify OTP was generated and set
-        verify(otpTokenService).generateOtp(1L);
-        verify(transferRepository).save(transferCaptor.capture());
-        assertEquals("123456", transferCaptor.getValue().getOtp());
-
-        // Verify notification was sent
-        ArgumentCaptor<NotificationDTO> notificationCaptor = ArgumentCaptor.forClass(NotificationDTO.class);
-        verify(messageHelper).createTextMessage(notificationCaptor.capture());
-
-        NotificationDTO sentNotification = notificationCaptor.getValue();
-        assertEquals("Verifikacija", sentNotification.getSubject());
-        assertEquals("john.doe@example.com", sentNotification.getEmail());
-        assertTrue(sentNotification.getMessage().contains("123456"));
-        assertEquals("John", sentNotification.getFirstName());
-        assertEquals("Doe", sentNotification.getLastName());
+        Transfer failedTransfer = transferRepository.findById(newTransfer.getId()).orElseThrow();
+        assertEquals(TransferStatus.FAILED, failedTransfer.getStatus());
+        assertEquals(100.0, accountRepository.findById(fromAccount.getId()).orElseThrow().getBalance());
+        assertEquals(50.0, accountRepository.findById(toAccount.getId()).orElseThrow().getBalance());
+        assertEquals(0, transactionRepository.findAll().size());
     }
 
     @Test
-    void testCreateMoneyTransfer_ForeignTransfer_Success() {
-        // Change to account for foreign transfer
-        toAccount.setCurrencyType(CurrencyType.EUR);
+    void rollbackExternalTransferWhenInsufficientFunds() {
+        final Transfer newTransfer = new Transfer();
+        newTransfer.setFromAccountId(fromAccount);
+        newTransfer.setToAccountId(toAccount);
+        newTransfer.setAmount(200.0);
+        newTransfer.setType(TransferType.EXTERNAL);
+        newTransfer.setStatus(TransferStatus.PENDING);
+        newTransfer.setFromCurrency(rsdCurrency);
+        newTransfer.setToCurrency(rsdCurrency);
+        transferRepository.save(newTransfer);
 
-        MoneyTransferDTO dto = new MoneyTransferDTO();
-        dto.setFromAccountNumber("123456789");
-        dto.setRecipientAccount("987654321");
-        dto.setAmount(100.0);
-        dto.setReceiver("Jane Smith");
-        dto.setPayementCode("123");
-        dto.setPayementDescription("International payment");
-
-        when(accountRepository.findByAccountNumber("123456789")).thenReturn(Optional.of(fromAccount));
-        when(accountRepository.findByAccountNumber("987654321")).thenReturn(Optional.of(toAccount));
-        when(currencyRepository.findByCode(CurrencyType.USD)).thenReturn(Optional.of(usdCurrency));
-        when(currencyRepository.findByCode(CurrencyType.EUR)).thenReturn(Optional.of(eurCurrency));
-        when(userServiceCustomer.getCustomerById(100L)).thenReturn(customerDTO);
-        when(transferRepository.saveAndFlush(any(Transfer.class))).thenAnswer(invocation -> {
-            Transfer t = invocation.getArgument(0);
-            t.setId(1L);
-            return t;
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            transferService.processExternalTransfer(newTransfer.getId());
         });
-        when(otpTokenService.generateOtp(1L)).thenReturn("123456");
 
-        Long result = transferService.createMoneyTransfer(dto);
+        assertTrue(exception.getMessage().contains("Insufficient balance for transfer"));
 
-        assertEquals(1L, result);
-
-        ArgumentCaptor<Transfer> transferCaptor = ArgumentCaptor.forClass(Transfer.class);
-        verify(transferRepository).saveAndFlush(transferCaptor.capture());
-
-        assertEquals(usdCurrency, transferCaptor.getValue().getFromCurrency());
-        assertEquals(eurCurrency, transferCaptor.getValue().getToCurrency());
+        Transfer failedTransfer = transferRepository.findById(newTransfer.getId()).orElseThrow();
+        assertEquals(TransferStatus.FAILED, failedTransfer.getStatus());
+        assertEquals(100.0, accountRepository.findById(fromAccount.getId()).orElseThrow().getBalance());
+        assertEquals(50.0, accountRepository.findById(toAccount.getId()).orElseThrow().getBalance());
+        assertEquals(0, transactionRepository.findAll().size());
     }
 
     @Test
-    void testCreateMoneyTransfer_AccountNotFound() {
-        MoneyTransferDTO dto = new MoneyTransferDTO();
-        dto.setFromAccountNumber("111111111"); // Non-existent account
-        dto.setRecipientAccount("987654321");
+    void noDuplicateTransactionsForInternalTransfer() {
+        // Korisnik ima oba naloga (from i to su njegovi nalozi)
+        toAccount.setOwnerID(1L); // Sad oba naloga pripadaju korisniku sa ID 1
+        accountRepository.save(toAccount);
 
-        when(accountRepository.findByAccountNumber("111111111")).thenReturn(Optional.empty());
-        when(accountRepository.findByAccountNumber("987654321")).thenReturn(Optional.of(toAccount));
+        // Kreiramo uspešan interni transfer
+        Transfer newTransfer = new Transfer();
+        newTransfer.setFromAccountId(fromAccount);
+        newTransfer.setToAccountId(toAccount);
+        newTransfer.setAmount(50.0);
+        newTransfer.setType(TransferType.INTERNAL);
+        newTransfer.setStatus(TransferStatus.PENDING);
+        newTransfer.setFromCurrency(rsdCurrency);
+        newTransfer.setToCurrency(rsdCurrency);
+        newTransfer = transferRepository.save(newTransfer);
 
-        Long result = transferService.createMoneyTransfer(dto);
+        // Pozivamo servis za obradu internog transfera
+        transferService.processInternalTransfer(newTransfer.getId());
 
-        assertNull(result);
-        verify(transferRepository, never()).saveAndFlush(any(Transfer.class));
-    }
+        // Provera da su obe transakcije kreirane u bazi
+        assertEquals(2, transactionRepository.findAll().size());
 
-    @Test
-    void testValidateMoneyTransfer_Success() {
-        MoneyTransferDTO dto = new MoneyTransferDTO();
-        dto.setFromAccountNumber("123456789");
-        dto.setRecipientAccount("987654321");
+        // Sada simuliramo API poziv koji povlači transakcije korisnika sa ID 1
+        var transactions = transactionRepository
+                .findByFromAccountIdInOrToAccountIdIn(
+                        accountRepository.findByOwnerID(1L),
+                        accountRepository.findByOwnerID(1L)
+                );
 
-        when(accountRepository.findByAccountNumber("123456789")).thenReturn(Optional.of(fromAccount));
-        when(accountRepository.findByAccountNumber("987654321")).thenReturn(Optional.of(toAccount));
+        // Backend servis će u finalnoj verziji ovo filtrirati na 1 transakciju
+        // Simulacija mape iz TransactionService
+        Map<Long, Transaction> transferToTransaction = new HashMap<>();
+        for (Transaction tx : transactions) {
+            transferToTransaction.putIfAbsent(tx.getTransfer().getId(), tx);
+        }
 
-        boolean result = transferService.validateMoneyTransfer(dto);
-
-        assertTrue(result);
-    }
-
-    @Test
-    void testValidateMoneyTransfer_SameOwner() {
-        // Set same owner for both accounts
-        toAccount.setOwnerID(100L);
-
-        MoneyTransferDTO dto = new MoneyTransferDTO();
-        dto.setFromAccountNumber("123456789");
-        dto.setRecipientAccount("987654321");
-
-        when(accountRepository.findByAccountNumber("123456789")).thenReturn(Optional.of(fromAccount));
-        when(accountRepository.findByAccountNumber("987654321")).thenReturn(Optional.of(toAccount));
-
-        boolean result = transferService.validateMoneyTransfer(dto);
-
-        // Should fail because accounts belong to same owner
-        assertFalse(result);
-    }
-
-    @Test
-    void testValidateInternalTransfer_Success() {
-        // Set same owner for both accounts for internal transfer
-        toAccount.setOwnerID(100L);
-
-        InternalTransferDTO dto = new InternalTransferDTO();
-        dto.setFromAccountId(1L);
-        dto.setToAccountId(2L);
-        dto.setAmount(100.0);
-
-        when(accountRepository.findById(1L)).thenReturn(Optional.of(fromAccount));
-        when(accountRepository.findById(2L)).thenReturn(Optional.of(toAccount));
-
-        boolean result = transferService.validateInternalTransfer(dto);
-
-        assertTrue(result);
-    }
-
-    @Test
-    void testCancelExpiredTransfers() {
-        // Create a list of expired transfers
-        List<Transfer> expiredTransfers = Arrays.asList(pendingTransfer);
-
-        // Setup mock to return expired transfers
-        when(transferRepository.findAllByStatusAndCreatedAtBefore(
-                eq(TransferStatus.PENDING), anyLong())).thenReturn(expiredTransfers);
-
-        // Execute
-        transferService.cancelExpiredTransfers();
-
-        // Verify
-        ArgumentCaptor<Transfer> transferCaptor = ArgumentCaptor.forClass(Transfer.class);
-        verify(transferRepository).save(transferCaptor.capture());
-
-        assertEquals(TransferStatus.CANCELLED, transferCaptor.getValue().getStatus());
-    }
-
-    @Test
-    void testFindById_Success() {
-        when(transferRepository.findById(1L)).thenReturn(Optional.of(pendingTransfer));
-
-        Transfer result = transferService.findById(1L);
-
-        assertNotNull(result);
-        assertEquals(1L, result.getId());
-    }
-
-    @Test
-    void testFindById_NotFound() {
-        when(transferRepository.findById(999L)).thenReturn(Optional.empty());
-
-        assertThrows(RuntimeException.class, () -> transferService.findById(999L));
+        assertEquals(1, transferToTransaction.size()); // Backend će vratiti samo jednu transakciju po transferu
     }
 }

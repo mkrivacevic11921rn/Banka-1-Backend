@@ -13,4 +13,5 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByFromAccountId(Account fromAccountId);
     List<Transaction> findByToAccountId(Account toAccountId);
     List<Transaction> findByFromAccountIdIn(List<Account> fromAccountId);
+    List<Transaction> findByFromAccountIdInOrToAccountIdIn(List<Account> fromAccounts, List<Account> toAccounts);
 }
