@@ -111,7 +111,7 @@ tasks.named('test') {
 tasks.named('bootBuildImage', BootBuildImage) {
     builder = "paketobuildpacks/builder-jammy-base"
 
-    buildpacks = ["urn:cnb:builder:paketo-buildpacks/java", "gcr.io/paketo-buildpacks/health-checker:latest"]
+    buildpacks = ["urn:cnb:builder:paketo-buildpacks/java", "urn:cnb:builder:paketo-buildpacks/health-checker"]
     environment["BP_HEALTH_CHECKER_ENABLED"] = "true"
     createdDate = "now"
 }
