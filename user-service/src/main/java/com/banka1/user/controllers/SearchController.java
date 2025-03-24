@@ -8,6 +8,10 @@ import com.banka1.user.service.EmployeeService;
 import com.banka1.user.utils.ResponseTemplate;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +34,46 @@ public class SearchController {
             summary = "Pretraga svih zaposlenih",
             description = "Vraca sve zaposlene koji zadovoljavaju (opcioni) filter, sortirani po zadatom polju. Rezultati se vracaju podeljeni na stranice."
     )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Uspešna pretraga", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                   "success": true,
+                   "data": {
+                     "total": 1,
+                     "rows": [
+                       {
+                         "id": 5,
+                         "firstName": "Pera",
+                         "lastName": "Petrovic",
+                         "username": "pera123",
+                         "birthDate": "2000-10-10",
+                         "gender": "MALE",
+                         "email": "pera@banka.com",
+                         "phoneNumber": "+381601001001",
+                         "address": "Knez Mihailova 6",
+                         "position": "WORKER",
+                         "department": "AGENT",
+                         "active": true,
+                         "isAdmin": false,
+                         "permissions": [
+                           "user.customer.view"
+                         ]
+                       }
+                     ]
+                   }
+                 }
+            """))
+        ),
+        @ApiResponse(responseCode = "400", description = "Neuspešna pretraga", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": false,
+                  "error": "Specificirano polje za filtriranje ali nije specificirana vrednost."
+                }
+            """))
+        )
+    })
     @GetMapping("employees")
     @Authorization(permissions = {Permission.LIST_EMPLOYEE})
     public ResponseEntity<?> searchEmployees(
@@ -79,6 +123,42 @@ public class SearchController {
             summary = "Pretraga svih musterija",
             description = "Vraca sve musterije koji zadovoljavaju (opcioni) filter, sortirani po zadatom polju. Rezultati se vracaju podeljeni na stranice."
     )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Uspešna pretraga", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                    "success": true,
+                    "data": {
+                      "total": 1,
+                      "rows": [
+                        {
+                          "id": 1,
+                          "firstName": "Pera",
+                          "lastName": "Petrovic",
+                          "username": "pera123",
+                          "birthDate": "2005-12-12",
+                          "gender": "MALE",
+                          "email": "pera@banka.com",
+                          "phoneNumber": "+381641001002",
+                          "address": "Knez Mihailova 6",
+                          "permissions": [
+                            "user.employee.view"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+            """))
+        ),
+        @ApiResponse(responseCode = "400", description = "Neuspešna pretraga", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": false,
+                  "error": "Specificirano polje za filtriranje ali nije specificirana vrednost."
+                }
+            """))
+        )
+    })
     @GetMapping("customers")
     @Authorization(permissions = { Permission.LIST_CUSTOMER })
     public ResponseEntity<?> searchCustomers(

@@ -19,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Optional;
@@ -31,7 +32,6 @@ import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatc
 public class EmployeeService {
     private final SetPasswordService setPasswordService;
     private final EmployeeRepository employeeRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
     private final JmsTemplate jmsTemplate;
     private final ModelMapper modelMapper;
     private final MessageHelper messageHelper;
@@ -83,19 +83,6 @@ public class EmployeeService {
         jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
 
         return employee;
-    }
-
-    public void setPassword(SetPasswordRequest setPasswordRequest) {
-        Employee employee = employeeRepository.findByVerificationCode(setPasswordRequest.getToken())
-                .orElseThrow(() -> new RuntimeException("Korisnik nije pronađen"));
-
-        var salt = generateSalt();
-        var hashed = passwordEncoder.encode(setPasswordRequest.getPassword() + salt);
-        employee.setPassword(hashed);
-        employee.setSaltPassword(salt);
-        employee.setVerificationCode(null);
-
-        employeeRepository.save(employee);
     }
 
     public Employee updateEmployee(Long id, UpdateEmployeeRequest updateEmployeeRequest) {
@@ -212,11 +199,5 @@ public class EmployeeService {
                 employeePage.getTotalElements(),
                 employeePage.stream().map(EmployeeService::getEmployeeResponse).toList()
         );
-    }
-
-    private String generateSalt() {
-        byte[] saltBytes = new byte[16];
-        new SecureRandom().nextBytes(saltBytes);
-        return Base64.getEncoder().encodeToString(saltBytes);
     }
 }

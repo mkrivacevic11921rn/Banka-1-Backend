@@ -126,7 +126,7 @@ class ResetPasswordServiceTest {
                 resetPasswordService.requestPasswordReset(request));
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-        assertEquals("Email not found.", exception.getReason());
+        assertEquals("Email adresa nije pronadjena.", exception.getReason());
     }
 
     @Test
@@ -195,7 +195,7 @@ class ResetPasswordServiceTest {
                 resetPasswordService.resetPassword(request));
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-        assertEquals("Token not found.", exception.getReason());
+        assertEquals("Token nije pronadjen.", exception.getReason());
     }
 
     @Test
@@ -217,7 +217,7 @@ class ResetPasswordServiceTest {
                 resetPasswordService.resetPassword(request));
 
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
-        assertEquals("Token expired.", exception.getReason());
+        assertEquals("Token je istekao.", exception.getReason());
     }
 
     @Test
@@ -239,6 +239,6 @@ class ResetPasswordServiceTest {
                 resetPasswordService.resetPassword(request));
 
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
-        assertEquals("Token already used.", exception.getReason());
+        assertEquals("Token je već iskorišćen.", exception.getReason());
     }
 }
