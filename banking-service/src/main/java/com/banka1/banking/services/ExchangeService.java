@@ -2,7 +2,6 @@ package com.banka1.banking.services;
 
 import com.banka1.banking.dto.CustomerDTO;
 import com.banka1.banking.dto.ExchangeMoneyTransferDTO;
-import com.banka1.banking.dto.InternalTransferDTO;
 import com.banka1.banking.dto.NotificationDTO;
 import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
@@ -20,7 +19,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
 
