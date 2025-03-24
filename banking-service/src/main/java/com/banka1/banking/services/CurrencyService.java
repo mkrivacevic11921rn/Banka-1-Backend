@@ -35,7 +35,8 @@ public class CurrencyService {
         this.currencyRepository = currencyRepository;
     }
 
-    @Scheduled(cron = "0 0 0 * * ?") // Pokrece se svaku dan u 00:00
+    @Scheduled(cron = "0 * * * * *")
+//    @Scheduled(cron = "0 0 0 * * ?") // Pokrece se svaku dan u 00:00
     public void fetchExchangeRates() {
         Map<String, Double> rates = getExchangeRatesFromApi();
 
