@@ -154,6 +154,7 @@ public class ExchangeService {
             throw new RuntimeException("Ova funkcija podržava samo konverzije između RSD i druge valute.");
         }
 
+
         CurrencyType base = parseCurrency(isToRSD ? fromCurrency : "RSD");
         CurrencyType target = parseCurrency(isToRSD ? "RSD" : toCurrency);
 
@@ -173,17 +174,22 @@ public class ExchangeService {
             exchangeRate = 1 / reverseOpt.get().getExchangeRate();
         }
 
+
+
         double convertedAmount = amount * exchangeRate;
         double fee = convertedAmount * 0.01;
+        if (fromCurrency.equalsIgnoreCase("RSD") && toCurrency.equalsIgnoreCase("RSD")) {
+            fee = 0.0;
+        }
         double finalAmount = convertedAmount - fee;
 
         double provision;
         if (fromCurrency.equalsIgnoreCase("RSD")) {
             provision = fee * 1 / exchangeRate;
-
         }else {
             provision = fee;
         }
+
 
         return Map.of(
                 "exchangeRate", exchangeRate,
