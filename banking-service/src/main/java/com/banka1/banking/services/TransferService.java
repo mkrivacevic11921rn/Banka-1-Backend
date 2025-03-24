@@ -79,7 +79,7 @@ public class TransferService {
     // To be called after the initial amount is stripped from the account initiating the transfer
     // Completes a transfer between two accounts of differing currency types
     @Transactional
-    private void performCurrencyExchangeTransfer(Transfer transfer, Account fromAccount, Account toAccount) {
+    private Map<String, Object> performCurrencyExchangeTransfer(Transfer transfer, Account fromAccount, Account toAccount) {
         Account toBankAccount = bankAccountUtils.getBankAccountForCurrency(fromAccount.getCurrencyType());
         Account fromBankAccount = bankAccountUtils.getBankAccountForCurrency(toAccount.getCurrencyType());
 
@@ -95,6 +95,70 @@ public class TransferService {
 
         fromBankAccount.setBalance(fromBankAccount.getBalance() - exchangedAmount);
         toAccount.setBalance(toAccount.getBalance() + exchangedAmount);
+
+        Currency fromCurrency = currencyRepository.getByCode(fromAccount.getCurrencyType());
+        Currency toCurrency = currencyRepository.getByCode(toAccount.getCurrencyType());
+
+        Transfer transferToBank = new Transfer();
+        transferToBank.setFromAccountId(fromAccount);
+        transferToBank.setToAccountId(toBankAccount);
+        transferToBank.setAmount(transfer.getAmount());
+        transferToBank.setStatus(TransferStatus.COMPLETED);
+        transferToBank.setType(TransferType.EXTERNAL);
+        transferToBank.setPaymentDescription("Promena valute");
+        transferToBank.setReceiver(toBankAccount.getCompany().getName());
+        transferToBank.setFromCurrency(fromCurrency);
+        transferToBank.setToCurrency(fromCurrency);
+        transferToBank.setCreatedAt(System.currentTimeMillis());
+
+        CustomerDTO receiver = userServiceCustomer.getCustomerById(toAccount.getOwnerID());
+
+        Transfer transferFromBank = new Transfer();
+        transferFromBank.setFromAccountId(fromBankAccount);
+        transferFromBank.setToAccountId(toAccount);
+        transferFromBank.setAmount(exchangedAmount);
+        transferFromBank.setStatus(TransferStatus.COMPLETED);
+        transferFromBank.setType(TransferType.EXTERNAL);
+        transferFromBank.setPaymentDescription("Promena valute");
+        transferFromBank.setReceiver(receiver.getFirstName() + " " + receiver.getLastName());
+        transferFromBank.setFromCurrency(toCurrency);
+        transferFromBank.setToCurrency(toCurrency);
+        transferFromBank.setCreatedAt(System.currentTimeMillis());
+
+        Transaction transactionToBank = new Transaction();
+        transactionToBank.setBankOnly(true);
+        transactionToBank.setFromAccountId(fromAccount);
+        transactionToBank.setToAccountId(toBankAccount);
+        transactionToBank.setAmount(transfer.getAmount());
+        transactionToBank.setCurrency(fromCurrency);
+        transactionToBank.setFinalAmount(transfer.getAmount());
+        transactionToBank.setFee(0.0);
+        transactionToBank.setTimestamp(System.currentTimeMillis());
+        transactionToBank.setDescription("Debit transaction for transfer " + transferToBank.getId());
+        transactionToBank.setTransfer(transferToBank);
+
+        Transaction transactionFromBank = new Transaction();
+        transactionFromBank.setBankOnly(true);
+        transactionFromBank.setFromAccountId(fromBankAccount);
+        transactionFromBank.setToAccountId(toAccount);
+        transactionFromBank.setAmount(transfer.getAmount());
+        transactionFromBank.setCurrency(toCurrency);
+        transactionToBank.setFinalAmount(exchangedAmount);
+        transactionToBank.setFee(0.0);
+        transactionFromBank.setTimestamp(System.currentTimeMillis());
+        transactionFromBank.setDescription("Debit transaction for transfer " + transferFromBank.getId());
+        transactionFromBank.setTransfer(transferFromBank);
+
+        transferRepository.save(transferToBank);
+        transferRepository.save(transferFromBank);
+
+        transactionRepository.save(transactionToBank);
+        transactionRepository.save(transactionFromBank);
+
+        accountRepository.save(fromBankAccount);
+        accountRepository.save(toBankAccount);
+
+        return exchange;
     }
 
     @Transactional
@@ -123,11 +187,12 @@ public class TransferService {
         try{
             // Azuriranje balansa
             fromAccount.setBalance(fromAccount.getBalance() - transfer.getAmount());
+            Map<String, Object> exchangeMap = null;
 
             if(transfer.getType().equals(TransferType.INTERNAL))
                 toAccount.setBalance(toAccount.getBalance() + transfer.getAmount());
             else {
-                performCurrencyExchangeTransfer(transfer, fromAccount, toAccount);
+                exchangeMap = performCurrencyExchangeTransfer(transfer, fromAccount, toAccount);
             }
 
             accountRepository.save(fromAccount);
@@ -139,23 +204,18 @@ public class TransferService {
             debitTransaction.setToAccountId(toAccount);
             debitTransaction.setAmount(transfer.getAmount());
             debitTransaction.setCurrency(transfer.getFromCurrency());
+            if(exchangeMap != null) {
+                debitTransaction.setFee((Double) exchangeMap.get("totalFee"));
+                debitTransaction.setFinalAmount((Double) exchangeMap.get("finalAmount"));
+            } else {
+                debitTransaction.setFee(0.0);
+                debitTransaction.setFinalAmount(transfer.getAmount());
+            }
             debitTransaction.setTimestamp(System.currentTimeMillis());
             debitTransaction.setDescription("Debit transaction for transfer " + transferId);
             debitTransaction.setTransfer(transfer);
 
-            /*
-            Transaction creditTransaction = new Transaction();
-            creditTransaction.setFromAccountId(fromAccount);
-            creditTransaction.setToAccountId(toAccount);
-            creditTransaction.setAmount(transfer.getAmount());
-            creditTransaction.setCurrency(transfer.getToCurrency());
-            creditTransaction.setTimestamp(System.currentTimeMillis());
-            creditTransaction.setDescription("Credit transaction for transfer " + transferId);
-            creditTransaction.setTransfer(transfer);
-             */
-
             transactionRepository.save(debitTransaction);
-            // transactionRepository.save(creditTransaction);
 
             transfer.setStatus(TransferStatus.COMPLETED);
             transfer.setCompletedAt(System.currentTimeMillis());
@@ -194,11 +254,12 @@ public class TransferService {
 
         try {
             fromAccount.setBalance(fromAccount.getBalance() - amount);
+            Map<String, Object> exchangeMap = null;
 
             if(transfer.getType().equals(TransferType.EXTERNAL))
                 toAccount.setBalance(toAccount.getBalance() + transfer.getAmount());
             else {
-                performCurrencyExchangeTransfer(transfer, fromAccount, toAccount);
+                exchangeMap = performCurrencyExchangeTransfer(transfer, fromAccount, toAccount);
             }
 
             accountRepository.save(fromAccount);
@@ -209,22 +270,17 @@ public class TransferService {
             debitTransaction.setToAccountId(toAccount);
             debitTransaction.setAmount(amount);
             debitTransaction.setCurrency(transfer.getFromCurrency());
+            if(exchangeMap != null) {
+                debitTransaction.setFee((Double) exchangeMap.get("totalFee"));
+                debitTransaction.setFinalAmount((Double) exchangeMap.get("finalAmount"));
+            } else {
+                debitTransaction.setFee(0.0);
+                debitTransaction.setFinalAmount(transfer.getAmount());
+            }
             debitTransaction.setTimestamp(Instant.now().toEpochMilli());
             debitTransaction.setDescription("Debit transaction for transfer " + transfer.getId());
             debitTransaction.setTransfer(transfer);
             transactionRepository.save(debitTransaction);
-
-            /*
-            Transaction creditTransaction = new Transaction();
-            creditTransaction.setFromAccountId(fromAccount);
-            creditTransaction.setToAccountId(toAccount);
-            creditTransaction.setAmount(amount);
-            creditTransaction.setCurrency(transfer.getToCurrency());
-            creditTransaction.setTimestamp(Instant.now().toEpochMilli());
-            creditTransaction.setDescription("Credit transaction for transfer " + transfer.getId());
-            creditTransaction.setTransfer(transfer);
-            transactionRepository.save(creditTransaction);
-             */
 
             transfer.setStatus(TransferStatus.COMPLETED);
             transfer.setCompletedAt(Instant.now().toEpochMilli());

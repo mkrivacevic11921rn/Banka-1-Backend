@@ -5,10 +5,7 @@ import com.banka1.banking.dto.InternalTransferDTO;
 import com.banka1.banking.dto.MoneyTransferDTO;
 import com.banka1.banking.dto.NotificationDTO;
 import com.banka1.banking.listener.MessageHelper;
-import com.banka1.banking.models.Account;
-import com.banka1.banking.models.Currency;
-import com.banka1.banking.models.Transaction;
-import com.banka1.banking.models.Transfer;
+import com.banka1.banking.models.*;
 import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.models.helper.TransferStatus;
 import com.banka1.banking.models.helper.TransferType;
@@ -85,11 +82,16 @@ public class TransferServiceTest {
     private Currency usdCurrency;
     private Currency eurCurrency;
     private CustomerDTO customerDTO;
+    private CustomerDTO customerDTO2;
     private Transfer pendingTransfer;
+    private Company bankCompany;
 
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(transferService, "destinationEmail", "email.queue");
+
+        bankCompany = new Company();
+        bankCompany.setName("Banka");
 
         // Setup test accounts
         fromAccount = new Account();
@@ -126,6 +128,7 @@ public class TransferServiceTest {
         bankAccountEUR.setAccountNumber("111111111");
         bankAccountEUR.setBalance(1000000.0);
         bankAccountEUR.setCurrencyType(CurrencyType.EUR);
+        bankAccountEUR.setCompany(bankCompany);
 
         bankAccountUSD = new Account();
         bankAccountUSD.setId(100L);
@@ -133,6 +136,7 @@ public class TransferServiceTest {
         bankAccountUSD.setAccountNumber("111111112");
         bankAccountUSD.setBalance(1000000.0);
         bankAccountUSD.setCurrencyType(CurrencyType.USD);
+        bankAccountUSD.setCompany(bankCompany);
 
         // Setup currencies
         usdCurrency = new Currency();
@@ -147,6 +151,12 @@ public class TransferServiceTest {
         customerDTO.setFirstName("John");
         customerDTO.setLastName("Doe");
         customerDTO.setEmail("john.doe@example.com");
+
+        customerDTO2 = new CustomerDTO();
+        customerDTO2.setId(200L);
+        customerDTO2.setFirstName("Jane");
+        customerDTO2.setLastName("Doe");
+        customerDTO2.setEmail("jane.doe@example.com");
 
         // Setup pending transfer
         pendingTransfer = new Transfer();
@@ -474,6 +484,7 @@ public class TransferServiceTest {
         when(transferRepository.findById(4L)).thenReturn(Optional.of(exchangeTransfer));
         when(accountRepository.save(any(Account.class))).thenReturn(null);
         when(transactionRepository.save(any(Transaction.class))).thenReturn(null);
+        when(userServiceCustomer.getCustomerById(100L)).thenReturn(customerDTO);
 
         when(exchangeService.calculatePreviewExchangeAutomatic(anyString(), anyString(), any())).thenReturn(
                 Map.of(
@@ -491,7 +502,7 @@ public class TransferServiceTest {
         assertEquals(1090.0, fromAccount.getBalance());
         assertEquals(1000100.0, bankAccountEUR.getBalance());
         assertEquals(999910.0, bankAccountUSD.getBalance());
-        verify(transactionRepository, times(1)).save(any(Transaction.class));
+        verify(transactionRepository, times(3)).save(any(Transaction.class));
     }
 
     @Test
@@ -514,6 +525,7 @@ public class TransferServiceTest {
         when(transferRepository.findById(3L)).thenReturn(Optional.of(foreignTransfer));
         when(accountRepository.save(any(Account.class))).thenReturn(null);
         when(transactionRepository.save(any(Transaction.class))).thenReturn(null);
+        when(userServiceCustomer.getCustomerById(200L)).thenReturn(customerDTO2);
 
         when(exchangeService.calculatePreviewExchangeAutomatic(anyString(), anyString(), any())).thenReturn(
                 Map.of(
@@ -531,7 +543,7 @@ public class TransferServiceTest {
         assertEquals(590.0, toAccountForeign.getBalance());
         assertEquals(1000100.0, bankAccountUSD.getBalance());
         assertEquals(999910.0, bankAccountEUR.getBalance());
-        verify(transactionRepository, times(1)).save(any(Transaction.class));
+        verify(transactionRepository, times(3)).save(any(Transaction.class));
     }
 
     @Test

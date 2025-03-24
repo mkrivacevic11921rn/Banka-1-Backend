@@ -248,6 +248,9 @@ drop table if exists transaction cascade;
 create table transaction
 (
     amount          double precision not null,
+    final_amount    double precision not null,
+    fee             double precision not null,
+    bank_only       boolean          not null,
     currency_id     bigint           not null
         constraint fklcx7g8g7x4fyns9k6vesu3n9n
             references currency,
