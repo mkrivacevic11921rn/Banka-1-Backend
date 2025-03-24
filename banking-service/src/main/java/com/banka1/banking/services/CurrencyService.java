@@ -49,10 +49,10 @@ public class CurrencyService {
                 if (rates.containsKey(currencyCode)) {
                     // Dohvatanje valute iz baze
                     Currency baseCurrency = currencyRepository.findByCode(CurrencyType.RSD)
-                            .orElseThrow(() -> new RuntimeException("Base currency RSD not found in database"));
+                            .orElseThrow(() -> new RuntimeException("Kurs za valutu RSD nije pronađen"));
 
                     Currency targetCurrency = currencyRepository.findByCode(currencyType)
-                            .orElseThrow(() -> new RuntimeException("Target currency " + currencyCode + " not found in database"));
+                            .orElseThrow(() -> new RuntimeException("Kurs za " + currencyCode + " nije pronađen"));
 
                     // Kreiranje kursnog para
                     ExchangePair exchangePair = new ExchangePair();
@@ -66,7 +66,7 @@ public class CurrencyService {
                 }
             }
         } else {
-            System.out.println("No exchange rates available from API.");
+            System.out.println("Nije pronadjen nijedan kurs");
         }
     }
 
@@ -108,7 +108,7 @@ public class CurrencyService {
 
         // Ako kurs za traženu valutu ne postoji, bacamo grešku
         if (baseCurrencyRateOpt.isEmpty()) {
-            throw new RuntimeException("Exchange rate for base currency " + baseCurrency + " not found");
+            throw new RuntimeException("Kurs za traženu valutu " + baseCurrency + " ne postoji");
         }
 
         double baseCurrencyRate = baseCurrencyRateOpt.get().getExchangeRate();
