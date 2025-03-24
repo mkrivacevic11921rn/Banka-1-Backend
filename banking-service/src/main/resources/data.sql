@@ -1,5 +1,4 @@
 -- Delete previous data
--- Delete previous data
 TRUNCATE TABLE installment CASCADE;
 TRUNCATE TABLE loan CASCADE;
 TRUNCATE TABLE receiver CASCADE;
@@ -94,47 +93,47 @@ VALUES (11,'111000111225344510', 2500.0, NULL, 500.0, 500.0, 0.0, 0.0, 'RSD',
 
 
 -- User accounts - Jovan (ID: 3)
-INSERT INTO account (id,account_number, balance, company_id, daily_limit, monthly_limit,
+INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
                      daily_spent, monthly_spent, currency_type, expiration_date, created_date,
                      employeeid, monthly_maintenance_fee, reserved_balance, ownerid,
                      status, type, subtype)
-VALUES (12,'111000100000040110', 100000.0, NULL, 10000.0, 100000.0, 0.0, 0.0, 'RSD',
+VALUES ('111000100000000110', 100000.0, NULL, 10000.0, 100000.0, 0.0, 0.0, 'RSD',
         1630454400000, 2025030500000, 1, 0.0, 0.0, 3, 'ACTIVE', 'CURRENT', 'STANDARD');
 
-INSERT INTO account (id,account_number, balance, company_id, daily_limit, monthly_limit,
+INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
                      daily_spent, monthly_spent, currency_type, expiration_date, created_date,
                      employeeid, monthly_maintenance_fee, reserved_balance, ownerid,
                      status, type, subtype)
-VALUES (13,'111000100011040110', 1000000.0, NULL, 0.0, 0.0, 0.0, 0.0, 'RSD',
+VALUES ('111000100011000110', 1000000.0, NULL, 0.0, 0.0, 0.0, 0.0, 'RSD',
         1630454400000, 2025030500000, 2, 0.0, 0.0, 3, 'ACTIVE', 'CURRENT', 'SAVINGS');
 
-INSERT INTO account (id,account_number, balance, company_id, daily_limit, monthly_limit,
+INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
                      daily_spent, monthly_spent, currency_type, expiration_date, created_date,
                      employeeid, monthly_maintenance_fee, reserved_balance, ownerid,
                      status, type, subtype)
-VALUES (14,'111000104000000120', 1000.0, NULL, 200.0, 10000.0, 0.0, 0.0, 'EUR',
+VALUES ('111000100000000120', 1000.0, NULL, 200.0, 10000.0, 0.0, 0.0, 'EUR',
         1630454400000, 2025030500000, 1, 0.0, 0.0, 3, 'ACTIVE', 'FOREIGN_CURRENCY', 'STANDARD');
 
-INSERT INTO account (id,account_number, balance, company_id, daily_limit, monthly_limit,
+INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
                      daily_spent, monthly_spent, currency_type, expiration_date, created_date,
                      employeeid, monthly_maintenance_fee, reserved_balance, ownerid,
                      status, type, subtype)
-VALUES (15,'111000100220400120', 1000.0, NULL, 100.0, 1000.0, 0.0, 0.0, 'EUR',
+VALUES ('111000100220000120', 1000.0, NULL, 100.0, 1000.0, 0.0, 0.0, 'EUR',
         1630454400000, 2025030500000, 1, 0.0, 0.0, 3, 'ACTIVE', 'FOREIGN_CURRENCY', 'PENSION');
 
-INSERT INTO account (id,account_number, balance, company_id, daily_limit, monthly_limit,
+INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
                      daily_spent, monthly_spent, currency_type, expiration_date, created_date,
                      employeeid, monthly_maintenance_fee, reserved_balance, ownerid,
                      status, type, subtype)
-VALUES (16,'111000100000400320', 1000.0, NULL, 200.0, 10000.0, 0.0, 0.0, 'USD',
+VALUES ('111000100000000320', 1000.0, NULL, 200.0, 10000.0, 0.0, 0.0, 'USD',
         1630454400000, 2025030500000, 1, 0.0, 0.0, 3, 'ACTIVE', 'FOREIGN_CURRENCY', 'STANDARD');
 
 -- User accounts - Nemanja (ID: 4)
-INSERT INTO account (id,account_number, balance, company_id, daily_limit, monthly_limit,
+INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
                      daily_spent, monthly_spent, currency_type, expiration_date, created_date,
                      employeeid, monthly_maintenance_fee, reserved_balance, ownerid,
                      status, type, subtype)
-VALUES (17,'111000100040000210', 100000.0, NULL, 10000.0, 100000.0, 0.0, 0.0, 'RSD',
+VALUES ('111000100000000210', 100000.0, NULL, 10000.0, 100000.0, 0.0, 0.0, 'RSD',
         1630454400000, 2025030500000, 1, 0.0, 0.0, 4, 'ACTIVE', 'CURRENT', 'STANDARD');
 
 -- User accounts - Nikola (ID: 5)
@@ -186,6 +185,25 @@ INSERT INTO receiver (owner_account_id, account_number, first_name, last_name)
 VALUES (3, '111000100366112220', 'Jelena', 'Jovanovic');
 
 -- Loans
+INSERT INTO loan (number_of_installments, loan_type, currency_type, interest_type,
+                  payment_status, nominal_rate, effective_rate, loan_amount, duration,
+                  created_date, allowed_date, monthly_payment, next_payment_date,
+                  remaining_amount, loan_reason, account_id)
+VALUES (3, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 500000.0, 24,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days') * 1000,
+        22000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '30 days') * 1000,
+        500000.0, 'Home renovation', 100);
+
+INSERT INTO loan (number_of_installments, loan_type, currency_type, interest_type,
+                  payment_status, nominal_rate, effective_rate, loan_amount, duration,
+                  created_date, allowed_date, monthly_payment, next_payment_date,
+                  remaining_amount, loan_reason, account_id)
+VALUES (3, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 550000.0, 24,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days') * 1000,
+        22000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '30 days') * 1000,
+        500000.0, 'Home renovation, attempt 2', 100);
 
 -- User accounts - Marko (ID: 1)
 INSERT INTO loan (number_of_installments, loan_type, currency_type, interest_type,
@@ -195,8 +213,8 @@ INSERT INTO loan (number_of_installments, loan_type, currency_type, interest_typ
 VALUES (3, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 500000.0, 24,
         EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
         EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days') * 1000,
-        166666.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '30 days') * 1000,
-        500000.0, 'Home renovation', 1);
+        22000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '30 days') * 1000,
+        500000.0, 'Home renovation', 100);
 
 -- User accounts - Anastasija (ID: 2)
 INSERT INTO loan (number_of_installments, loan_type, currency_type, interest_type,
@@ -246,11 +264,11 @@ INSERT INTO loan (number_of_installments, loan_type, currency_type, interest_typ
                   payment_status, nominal_rate, effective_rate, loan_amount, duration,
                   created_date, allowed_date, monthly_payment, next_payment_date,
                   remaining_amount, loan_reason, account_id)
-VALUES (12, 'CASH', 'RSD', 'FIXED', 'DENIED', 5.5, 6.0, 120000.0, 24,
+VALUES (3, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 550000.0, 24,
         EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
         EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days') * 1000,
-        10000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '30 days') * 1000,
-        0.0, 'Starting a Business ', 5);
+        22000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '30 days') * 1000,
+        500000.0, 'Home renovation, attempt 2', 100);
 
 -- User accounts - Jelena  (ID: 6)
 INSERT INTO loan (number_of_installments, loan_type, currency_type, interest_type,
@@ -273,7 +291,6 @@ INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_l
                      status, type, subtype)
 VALUES ('111000100000000101', 100000.0, NULL, 10000.0, 100000.0, 0.0, 0.0, 'RSD',
         1630454400000, 2025030500000, 1, 0.0, 0.0, 1, 'ACTIVE', 'CURRENT', 'STANDARD');
-
 -- RSD Savings account (matches Jovan's second account)
 INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
                      daily_spent, monthly_spent, currency_type, expiration_date, created_date,
@@ -305,7 +322,6 @@ INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_l
                      status, type, subtype)
 VALUES ('111000100000000321', 1000.0, NULL, 200.0, 10000.0, 0.0, 0.0, 'USD',
         1630454400000, 2025030500000, 1, 0.0, 0.0, 1, 'ACTIVE', 'FOREIGN_CURRENCY', 'STANDARD');
-
 -- ID: 1
 INSERT INTO card(ACTIVE, BLOCKED, CARD_LIMIT, ACCOUNT_ID, AUTHORIZED_PERSON_ID, CREATED_AT, EXPIRATION_DATE, CARD_BRAND, CARD_CVV, CARD_NAME, CARD_NUMBER, CARD_TYPE)
 VALUES (TRUE,FALSE,1000.0,1,NULL,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*365,'VISA',180,'BANKA',4098745621983456,'DEBIT');
@@ -338,22 +354,22 @@ INSERT INTO card(ACTIVE, BLOCKED, CARD_LIMIT, ACCOUNT_ID, AUTHORIZED_PERSON_ID, 
 VALUES (TRUE,FALSE,300000.0,11,NULL,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*365,'VISA',966,'BANKA',4002783468102943,'DEBIT');
 --ID:12
 INSERT INTO card(ACTIVE, BLOCKED, CARD_LIMIT, ACCOUNT_ID, AUTHORIZED_PERSON_ID, CREATED_AT, EXPIRATION_DATE, CARD_BRAND, CARD_CVV, CARD_NAME, CARD_NUMBER, CARD_TYPE)
-VALUES (TRUE,FALSE,450000.0,12,NULL,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*365,'MASTERCARD',670,'BANKA',5123456789012346,'DEBIT');
+VALUES (TRUE,FALSE,450000.0,100,NULL,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*365,'MASTERCARD',670,'BANKA',5123456789012346,'DEBIT');
 --ID:13
 INSERT INTO card(ACTIVE, BLOCKED, CARD_LIMIT, ACCOUNT_ID, AUTHORIZED_PERSON_ID, CREATED_AT, EXPIRATION_DATE, CARD_BRAND, CARD_CVV, CARD_NAME, CARD_NUMBER, CARD_TYPE)
-VALUES (TRUE,FALSE,34500.0,13,NULL,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*365,'MASTERCARD',234,'BANKA',5234567890123457,'DEBIT');
+VALUES (TRUE,FALSE,34500.0,101,NULL,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*365,'MASTERCARD',234,'BANKA',5234567890123457,'DEBIT');
 --ID:14
 INSERT INTO card(ACTIVE, BLOCKED, CARD_LIMIT, ACCOUNT_ID, AUTHORIZED_PERSON_ID, CREATED_AT, EXPIRATION_DATE, CARD_BRAND, CARD_CVV, CARD_NAME, CARD_NUMBER, CARD_TYPE)
-VALUES (TRUE,FALSE,56700.0,14,NULL,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*365,'MASTERCARD',235,'BANKA',5345678901234568,'DEBIT');
+VALUES (TRUE,FALSE,56700.0,102,NULL,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*365,'MASTERCARD',235,'BANKA',5345678901234568,'DEBIT');
 --ID:15
 INSERT INTO card(ACTIVE, BLOCKED, CARD_LIMIT, ACCOUNT_ID, AUTHORIZED_PERSON_ID, CREATED_AT, EXPIRATION_DATE, CARD_BRAND, CARD_CVV, CARD_NAME, CARD_NUMBER, CARD_TYPE)
-VALUES (TRUE,FALSE,3400.0,15,NULL,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*365,'MASTERCARD',236,'BANKA',5456789012345679,'DEBIT');
+VALUES (TRUE,FALSE,3400.0,103,NULL,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*365,'MASTERCARD',236,'BANKA',5456789012345679,'DEBIT');
 --ID:16
 INSERT INTO card(ACTIVE, BLOCKED, CARD_LIMIT, ACCOUNT_ID, AUTHORIZED_PERSON_ID, CREATED_AT, EXPIRATION_DATE, CARD_BRAND, CARD_CVV, CARD_NAME, CARD_NUMBER, CARD_TYPE)
-VALUES (TRUE,FALSE,13000.0,16,NULL,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*365,'DINA_CARD',444,'BANKA',9891123456789012,'DEBIT');
+VALUES (TRUE,FALSE,13000.0,104,NULL,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*365,'DINA_CARD',444,'BANKA',9891123456789012,'DEBIT');
 --ID:17
 INSERT INTO card(ACTIVE, BLOCKED, CARD_LIMIT, ACCOUNT_ID, AUTHORIZED_PERSON_ID, CREATED_AT, EXPIRATION_DATE, CARD_BRAND, CARD_CVV, CARD_NAME, CARD_NUMBER, CARD_TYPE)
-VALUES (TRUE,FALSE,23000.0,17,NULL,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*365,'DINA_CARD',445,'BANKA',9891567890123456,'DEBIT');
+VALUES (TRUE,FALSE,23000.0,105,NULL,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*365,'DINA_CARD',445,'BANKA',9891567890123456,'DEBIT');
 --ID:18
 INSERT INTO card(ACTIVE, BLOCKED, CARD_LIMIT, ACCOUNT_ID, AUTHORIZED_PERSON_ID, CREATED_AT, EXPIRATION_DATE, CARD_BRAND, CARD_CVV, CARD_NAME, CARD_NUMBER, CARD_TYPE)
 VALUES (TRUE,FALSE,33000.0,18,NULL,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*365,'DINA_CARD',466,'BANKA',9891987654321098,'DEBIT');
@@ -370,23 +386,25 @@ VALUES (TRUE,FALSE,34000.0,21,NULL,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
 
 --- TRANSFERI I TRANSAKCIJE
 
+INSERT INTO transfer(amount, completed_at, created_at, from_account_id, from_currency_id, to_account_id, to_currency_id, adress, note, otp, payment_code, payment_description, payment_reference, receiver, status, type)
+VALUES (1000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*2, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000, 100, 1, 20, 1, 'Ustanicka 1', 'Payment for services', '123', '234', 'Payment for services', '94', 'Jelena Jovanovic', 'COMPLETED', 'INTERNAL');
 
 -- Jovan (ID:3 Racun:1 ) -> Jelena (ID:6)
 INSERT INTO transfer(amount, completed_at, created_at, from_account_id, from_currency_id, to_account_id, to_currency_id, adress, note, otp, payment_code, payment_description, payment_reference, receiver, status, type)
-VALUES (1000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*2, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000, 12, 1, 20, 1, 'Ustanicka 1', 'Payment for services', '123', '234', 'Payment for services', '94', 'Jelena Jovanovic', 'COMPLETED', 'INTERNAL');
+VALUES (1000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*2, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000, 100, 1, 20, 1, 'Ustanicka 1', 'Payment for services', '123', '234', 'Payment for services', '94', 'Jelena Jovanovic', 'COMPLETED', 'INTERNAL');
 
 INSERT INTO transaction(amount, currency_id, from_account_id, loan_id, timestamp, to_account_id,transfer_id, description)
-VALUES (1000.0,1,12,null,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,20,1,'Payment for services');
+VALUES (1000.0,1,100,null,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,20,2,'Payment for services');
 INSERT INTO transaction(amount, currency_id, from_account_id, loan_id, timestamp, to_account_id,transfer_id, description)
-VALUES (1000.0,1,12,null,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,20,1,'Payment for services');
+VALUES (1000.0,1,100,null,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,20,2,'Payment for services');
 
 -- Anastasija -> Jovan
 INSERT INTO transfer(amount, completed_at, created_at, from_account_id, from_currency_id, to_account_id, to_currency_id, adress, note, otp, payment_code, payment_description, payment_reference, receiver, status, type)
-VALUES (30000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*2, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000, 11, 1, 12, 1, 'Milana Mijalkovica 1', 'Payment for shopping', '233', '234', 'Payment for shopping', '95', null, 'COMPLETED', 'INTERNAL');
+VALUES (30000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*2, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000, 11, 1, 100, 1, 'Milana Mijalkovica 1', 'Payment for shopping', '233', '234', 'Payment for shopping', '95', null, 'COMPLETED', 'INTERNAL');
 
 INSERT INTO transaction(amount, currency_id, from_account_id, loan_id, timestamp, to_account_id,transfer_id, description)
-VALUES (30000.0,1,11,null,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,12,2,'Payment for shopping');
+VALUES (30000.0,1,11,null,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,100,3,'Payment for shopping');
 INSERT INTO transaction(amount, currency_id, from_account_id, loan_id, timestamp, to_account_id,transfer_id, description)
-VALUES (1000.0,1,11,null,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,12,2,'Payment for shopping');
+VALUES (1000.0,1,11,null,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,100,3,'Payment for shopping');
 
 
