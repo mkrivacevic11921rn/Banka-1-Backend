@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -54,9 +55,9 @@ public class ReceiverController {
             ) ReceiverDTO receiverDTO) {
         try {
             Receiver receiver = receiverService.createReceiver(receiverDTO);
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Primalac uspešno dodat", "data", receiver), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("message", "Primalac uspešno dodat", "data", receiver), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -79,8 +80,11 @@ public class ReceiverController {
     public ResponseEntity<?> getReceivers(
             @Parameter(description = "ID naloga korisnika", required = true, example = "2")
             @PathVariable Long accountId) {
+        if (!receiverService.accountExists(accountId)) {
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, "Nalog ne postoji.");
+        }
         List<Receiver> receivers = receiverService.getReceiversByAccountId(accountId);
-        return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("receivers", receivers), null);
+        return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("receivers", receivers), null);
     }
 
     @Operation(
@@ -110,9 +114,9 @@ public class ReceiverController {
             ) ReceiverDTO receiverDTO) {
         try {
             Receiver updatedReceiver = receiverService.updateReceiver(id, receiverDTO);
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Primalac uspešno ažuriran", "receiver", updatedReceiver), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("message", "Primalac uspešno ažuriran", "receiver", updatedReceiver), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -136,7 +140,7 @@ public class ReceiverController {
             @Parameter(description = "ID primaoca", required = true, example = "1")
             @PathVariable("id") Long receiverId) {
         receiverService.deleteReceiver(receiverId);
-        return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Primalac uspešno obrisan"), null);
+        return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("message", "Primalac uspešno obrisan"), null);
     }
 }
 

@@ -74,4 +74,8 @@ public class ReceiverService {
         receiverRepository.deleteById(id);
     }
 
+    public boolean accountExists(Long id){
+        return receiverRepository.existsById(id);
+    }
+
 }

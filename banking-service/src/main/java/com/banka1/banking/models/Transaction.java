@@ -23,6 +23,15 @@ public class Transaction {
     @Column(nullable = false)
     private Double amount;
 
+    @Column(nullable = false)
+    private Double finalAmount;
+
+    @Column(nullable = false)
+    private Double fee;
+
+    @Column(nullable = false)
+    private Boolean bankOnly = false;
+
     @ManyToOne
     @JoinColumn(name = "currency_id", nullable = false)
     private Currency currency;

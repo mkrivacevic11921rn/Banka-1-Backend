@@ -77,7 +77,8 @@ public class AccountController {
         try {
             savedAccount = accountService.createAccount(createAccountDTO, authService.parseToken(authService.getToken(authorization)).get("id", Long.class));
         } catch (RuntimeException e) {
-            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, ResponseMessage.USER_NOT_FOUND.getMessage());
+
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -149,15 +150,10 @@ public class AccountController {
     public ResponseEntity<?> getAllAccounts() {
         List<Account> accounts = accountService.getAllAccounts();
 
-        if (accounts == null || accounts.isEmpty()) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND),
-                        false, null, ResponseMessage.ACCOUNTS_NOT_FOUND.toString());
-        }
-
         Map<String, Object> response = new HashMap<>();
         response.put("accounts", accounts);
 
-        return ResponseTemplate.create(ResponseEntity.ok(), true, response, null);
+        return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, response, null);
     }
 
     /// pristup imaju zaposleni i vlasnici racuna
@@ -203,7 +199,7 @@ public class AccountController {
                 }
             """))
         ),
-        @ApiResponse(responseCode = "404", description = "Nema računa za datog korisnika", content = @Content(mediaType = "application/json",
+        @ApiResponse(responseCode = "404", description = "Korisnik ne postoji", content = @Content(mediaType = "application/json",
             examples = @ExampleObject(value = """
                 {
                    "success": false,
@@ -214,17 +210,13 @@ public class AccountController {
     })
     @AccountAuthorization
     public ResponseEntity<?> getAccountsByOwner(@PathVariable Long userId) {
-        List<Account> accounts = accountService.getAccountsByOwnerId(userId);
 
-        if (accounts == null || accounts.isEmpty()) {
-            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND),
-                    false, null, ResponseMessage.ACCOUNTS_NOT_FOUND.toString());
-        }
+        List<Account> accounts = accountService.getAccountsByOwnerId(userId);
 
         Map<String, Object> response = new HashMap<>();
         response.put("accounts", accounts);
 
-        return ResponseTemplate.create(ResponseEntity.ok(), true, response, null);
+        return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, response, null);
     }
 
     /// pristup imaju samo zaposleni
@@ -294,7 +286,7 @@ public class AccountController {
             return ResponseTemplate.create(ResponseEntity.ok(), true,
                     Map.of( "message", ResponseMessage.UPDATED, "data", updatedAccount), null);
         } catch (RuntimeException e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -355,14 +347,14 @@ public class AccountController {
         try {
             Account updatedAccount = accountService.userUpdateAccount(userId, accountId, updateAccountDTO);
             if (updatedAccount == null) {
-                return ResponseTemplate.create(ResponseEntity.badRequest(), false,
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false,
                         Map.of( "message", ResponseMessage.NOT_THE_OWNER), null);
 
             }
-            return ResponseTemplate.create(ResponseEntity.ok(), true,
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true,
                     Map.of( "message", ResponseMessage.UPDATED, "data", updatedAccount), null);
         } catch (RuntimeException e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -390,7 +382,7 @@ public class AccountController {
                 }
             """))
         ),
-        @ApiResponse(responseCode = "404", description = "Račun nije pronađen ili nema transakcija", content = @Content(mediaType = "application/json",
+        @ApiResponse(responseCode = "404", description = "Račun nije pronađen", content = @Content(mediaType = "application/json",
             examples = @ExampleObject(value = """
                 {
                    "success": false,
@@ -401,16 +393,16 @@ public class AccountController {
     })
     @AccountAuthorization
     public ResponseEntity<?> getTransactionsForAccount(@PathVariable Long accountId) {
-        List<Transaction> transactions = accountService.getTransactionsForAccount(accountId);
 
-        if (transactions.isEmpty()) {
-            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND),
-                    false, null, ResponseMessage.TRANSACTIONS_NOT_FOUND.toString());
+        // Proveri da li račun postoji
+        if (accountService.findById(accountId) == null) {
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, "Račun sa ID-jem " + accountId + " nije pronađen.");
         }
 
+        List<Transaction> transactions = accountService.getTransactionsForAccount(accountId);
         Map<String, Object> response = new HashMap<>();
         response.put("transactions", transactions);
-        return ResponseTemplate.create(ResponseEntity.ok(), true, response, null);
+        return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, response, null);
     }
 
 }

@@ -3,13 +3,10 @@ package com.banka1.banking.services;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Installment;
 import com.banka1.banking.models.Transaction;
-import com.banka1.banking.models.Transfer;
-import com.banka1.banking.models.helper.TransferStatus;
-import com.banka1.banking.models.helper.TransferType;
+import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.repository.CurrencyRepository;
 import com.banka1.banking.repository.TransactionRepository;
-import com.banka1.banking.repository.TransferRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,15 +21,17 @@ import java.util.Map;
 // OSTAVIO SAM DA SE OBRADA TRANSAKCIJA POZIVA IZ TRANSFER SERVISA SADA ZBOG TESTOVA ALI PROMENITI ZA SLEDECI SPRINT
 // TREBA DODATI OBRADU DEVIZNOG PLACANJA I MENJACNICE
 
+import java.util.Objects;
+
+
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class TransactionService {
-
-    private final TransferRepository transferRepository;
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
     private final CurrencyRepository currencyRepository;
+    private final BankAccountUtils bankAccountUtils;
     private final double fee = 0.02;
 
     @Transactional
@@ -197,6 +196,11 @@ public class TransactionService {
         }
 
         return transferToTransaction.values().stream().toList();
+
+        List<Transaction> transactions = transactionRepository.findByFromAccountIdIn(accounts);
+        if(!Objects.equals(bankAccountUtils.getBankAccountForCurrency(CurrencyType.RSD).getOwnerID(), userId))
+            transactions.removeIf(Transaction::getBankOnly);
+        return transactions;
     }
 
     public Double calculateInstallment(Double loanAmount, Double annualInterestRate, Integer numberOfInstallments) {
@@ -228,7 +232,9 @@ public class TransactionService {
                 Transaction transaction = new Transaction();
                 transaction.setFromAccountId(customerAccount);
                 transaction.setToAccountId(bankAccount);
+                transaction.setFinalAmount(amount);
                 transaction.setAmount(amount);
+                transaction.setFee(0.0);
                 transaction.setCurrency(currencyRepository.getByCode(customerAccount.getCurrencyType()));
                 transaction.setTimestamp(Instant.now().getEpochSecond());
                 transaction.setDescription("Installment for loan " + installment.getLoan());
@@ -240,5 +246,9 @@ public class TransactionService {
                 return true;
             }
         return false;
+    }
+
+    public boolean userExists(Long id){
+        return transactionRepository.existsById(id);
     }
 }

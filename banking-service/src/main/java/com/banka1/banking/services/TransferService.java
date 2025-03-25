@@ -12,10 +12,7 @@ import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.repository.CurrencyRepository;
 import com.banka1.banking.repository.TransactionRepository;
 import com.banka1.banking.repository.TransferRepository;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -29,6 +26,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class TransferService {
 
     private final AccountRepository accountRepository;
@@ -47,10 +45,14 @@ public class TransferService {
 
     private final UserServiceCustomer userServiceCustomer;
 
+    private final ExchangeService exchangeService;
+
     private final OtpTokenService otpTokenService;
 
+    private final BankAccountUtils bankAccountUtils;
 
-    public TransferService(AccountRepository accountRepository, TransferRepository transferRepository, TransactionRepository transactionRepository, CurrencyRepository currencyRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("${destination.email}") String destinationEmail, UserServiceCustomer userServiceCustomer, OtpTokenService otpTokenService) {
+
+    public TransferService(AccountRepository accountRepository, TransferRepository transferRepository, TransactionRepository transactionRepository, CurrencyRepository currencyRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("${destination.email}") String destinationEmail, UserServiceCustomer userServiceCustomer, ExchangeService exchangeService, OtpTokenService otpTokenService, BankAccountUtils bankAccountUtils) {
         this.accountRepository = accountRepository;
         this.transferRepository = transferRepository;
         this.transactionRepository = transactionRepository;
@@ -59,7 +61,9 @@ public class TransferService {
         this.messageHelper = messageHelper;
         this.destinationEmail = destinationEmail;
         this.userServiceCustomer = userServiceCustomer;
+        this.exchangeService = exchangeService;
         this.otpTokenService = otpTokenService;
+        this.bankAccountUtils = bankAccountUtils;
     }
 
     @Transactional
@@ -68,18 +72,97 @@ public class TransferService {
                 .orElseThrow(() -> new RuntimeException("Transfer not found"));
 
         System.out.println("Transfer type: " + transfer.getType());
-        switch (transfer.getType()) {
-            case INTERNAL:
-                return processInternalTransfer(transferId);
-            case EXTERNAL: case FOREIGN:
-                return processExternalTransfer(transferId);
-            case EXCHANGE:
-                throw new RuntimeException("Exchange transfer not implemented");
-            default:
-                throw new RuntimeException("Invalid transfer type");
-        }
+        return switch (transfer.getType()) {
+            case INTERNAL, EXCHANGE -> processInternalTransfer(transferId);
+            case EXTERNAL, FOREIGN -> processExternalTransfer(transferId);
+            default -> throw new RuntimeException("Invalid transfer type");
+        };
     }
 
+    // To be called after the initial amount is stripped from the account initiating the transfer
+    // Completes a transfer between two accounts of differing currency types
+    @Transactional
+    private Map<String, Object> performCurrencyExchangeTransfer(Transfer transfer, Account fromAccount, Account toAccount) {
+        Account toBankAccount = bankAccountUtils.getBankAccountForCurrency(fromAccount.getCurrencyType());
+        Account fromBankAccount = bankAccountUtils.getBankAccountForCurrency(toAccount.getCurrencyType());
+
+        toBankAccount.setBalance(toBankAccount.getBalance() + transfer.getAmount());
+
+        Map<String, Object> exchange = exchangeService.calculatePreviewExchangeAutomatic(
+                transfer.getFromCurrency().getCode().toString(),
+                transfer.getToCurrency().getCode().toString(),
+                transfer.getAmount()
+        );
+
+        Double exchangedAmount = (Double) exchange.get("finalAmount");
+
+        fromBankAccount.setBalance(fromBankAccount.getBalance() - exchangedAmount);
+        toAccount.setBalance(toAccount.getBalance() + exchangedAmount);
+
+        Currency fromCurrency = currencyRepository.getByCode(fromAccount.getCurrencyType());
+        Currency toCurrency = currencyRepository.getByCode(toAccount.getCurrencyType());
+
+        Transfer transferToBank = new Transfer();
+        transferToBank.setFromAccountId(fromAccount);
+        transferToBank.setToAccountId(toBankAccount);
+        transferToBank.setAmount(transfer.getAmount());
+        transferToBank.setStatus(TransferStatus.COMPLETED);
+        transferToBank.setType(TransferType.EXTERNAL);
+        transferToBank.setPaymentDescription("Promena valute");
+        transferToBank.setReceiver(toBankAccount.getCompany().getName());
+        transferToBank.setFromCurrency(fromCurrency);
+        transferToBank.setToCurrency(fromCurrency);
+        transferToBank.setCreatedAt(System.currentTimeMillis());
+
+        CustomerDTO receiver = userServiceCustomer.getCustomerById(toAccount.getOwnerID());
+
+        Transfer transferFromBank = new Transfer();
+        transferFromBank.setFromAccountId(fromBankAccount);
+        transferFromBank.setToAccountId(toAccount);
+        transferFromBank.setAmount(exchangedAmount);
+        transferFromBank.setStatus(TransferStatus.COMPLETED);
+        transferFromBank.setType(TransferType.EXTERNAL);
+        transferFromBank.setPaymentDescription("Promena valute");
+        transferFromBank.setReceiver(receiver.getFirstName() + " " + receiver.getLastName());
+        transferFromBank.setFromCurrency(toCurrency);
+        transferFromBank.setToCurrency(toCurrency);
+        transferFromBank.setCreatedAt(System.currentTimeMillis());
+
+        Transaction transactionToBank = new Transaction();
+        transactionToBank.setBankOnly(true);
+        transactionToBank.setFromAccountId(fromAccount);
+        transactionToBank.setToAccountId(toBankAccount);
+        transactionToBank.setAmount(transfer.getAmount());
+        transactionToBank.setCurrency(fromCurrency);
+        transactionToBank.setFinalAmount(transfer.getAmount());
+        transactionToBank.setFee(0.0);
+        transactionToBank.setTimestamp(System.currentTimeMillis());
+        transactionToBank.setDescription("Exchange transaction");
+        transactionToBank.setTransfer(transferToBank);
+
+        Transaction transactionFromBank = new Transaction();
+        transactionFromBank.setBankOnly(true);
+        transactionFromBank.setFromAccountId(fromBankAccount);
+        transactionFromBank.setToAccountId(toAccount);
+        transactionFromBank.setAmount(exchangedAmount);
+        transactionFromBank.setCurrency(toCurrency);
+        transactionFromBank.setFinalAmount(exchangedAmount);
+        transactionFromBank.setFee(0.0);
+        transactionFromBank.setTimestamp(System.currentTimeMillis());
+        transactionFromBank.setDescription("Exchange transaction");
+        transactionFromBank.setTransfer(transferFromBank);
+
+        transferRepository.save(transferToBank);
+        transferRepository.save(transferFromBank);
+
+        transactionRepository.save(transactionToBank);
+        transactionRepository.save(transactionFromBank);
+
+        accountRepository.save(fromBankAccount);
+        accountRepository.save(toBankAccount);
+
+        return exchange;
+    }
 
     @Transactional
     public String processInternalTransfer(Long transferId) {
@@ -90,7 +173,7 @@ public class TransferService {
             throw new RuntimeException("Transfer is not in pending state");
         }
 
-        if (!transfer.getType().equals(TransferType.INTERNAL)) {
+        if (!transfer.getType().equals(TransferType.INTERNAL) && !transfer.getType().equals(TransferType.EXCHANGE)) {
             throw new RuntimeException("Invalid transfer type for this process");
         }
 
@@ -107,7 +190,14 @@ public class TransferService {
         try{
             // Azuriranje balansa
             fromAccount.setBalance(fromAccount.getBalance() - transfer.getAmount());
-            toAccount.setBalance(toAccount.getBalance() + transfer.getAmount());
+            Map<String, Object> exchangeMap = null;
+
+            if(transfer.getType().equals(TransferType.INTERNAL))
+                toAccount.setBalance(toAccount.getBalance() + transfer.getAmount());
+            else {
+                exchangeMap = performCurrencyExchangeTransfer(transfer, fromAccount, toAccount);
+            }
+
             accountRepository.save(fromAccount);
             accountRepository.save(toAccount);
 
@@ -117,21 +207,18 @@ public class TransferService {
             debitTransaction.setToAccountId(toAccount);
             debitTransaction.setAmount(transfer.getAmount());
             debitTransaction.setCurrency(transfer.getFromCurrency());
+            if(exchangeMap != null) {
+                debitTransaction.setFee((Double) exchangeMap.get("fee"));
+                debitTransaction.setFinalAmount((Double) exchangeMap.get("finalAmount"));
+            } else {
+                debitTransaction.setFee(0.0);
+                debitTransaction.setFinalAmount(transfer.getAmount());
+            }
             debitTransaction.setTimestamp(System.currentTimeMillis());
             debitTransaction.setDescription("Debit transaction for transfer " + transferId);
             debitTransaction.setTransfer(transfer);
 
-            Transaction creditTransaction = new Transaction();
-            creditTransaction.setFromAccountId(fromAccount);
-            creditTransaction.setToAccountId(toAccount);
-            creditTransaction.setAmount(transfer.getAmount());
-            creditTransaction.setCurrency(transfer.getToCurrency());
-            creditTransaction.setTimestamp(System.currentTimeMillis());
-            creditTransaction.setDescription("Credit transaction for transfer " + transferId);
-            creditTransaction.setTransfer(transfer);
-
             transactionRepository.save(debitTransaction);
-            transactionRepository.save(creditTransaction);
 
             transfer.setStatus(TransferStatus.COMPLETED);
             transfer.setCompletedAt(System.currentTimeMillis());
@@ -153,6 +240,10 @@ public class TransferService {
             throw new RuntimeException("Transfer is not in pending state");
         }
 
+        if (!transfer.getType().equals(TransferType.EXTERNAL) && !transfer.getType().equals(TransferType.FOREIGN)) {
+            throw new RuntimeException("Invalid transfer type for this process");
+        }
+
         Account fromAccount = transfer.getFromAccountId();
         Account toAccount = transfer.getToAccountId();
         Double amount = transfer.getAmount();
@@ -166,9 +257,15 @@ public class TransferService {
 
         try {
             fromAccount.setBalance(fromAccount.getBalance() - amount);
-            accountRepository.save(fromAccount);
+            Map<String, Object> exchangeMap = null;
 
-            toAccount.setBalance(toAccount.getBalance() + amount);
+            if(transfer.getType().equals(TransferType.EXTERNAL))
+                toAccount.setBalance(toAccount.getBalance() + transfer.getAmount());
+            else {
+                exchangeMap = performCurrencyExchangeTransfer(transfer, fromAccount, toAccount);
+            }
+
+            accountRepository.save(fromAccount);
             accountRepository.save(toAccount);
 
             Transaction debitTransaction = new Transaction();
@@ -176,20 +273,18 @@ public class TransferService {
             debitTransaction.setToAccountId(toAccount);
             debitTransaction.setAmount(amount);
             debitTransaction.setCurrency(transfer.getFromCurrency());
+            if(exchangeMap != null) {
+                log.info(exchangeMap.toString());
+                debitTransaction.setFee((Double) exchangeMap.get("fee"));
+                debitTransaction.setFinalAmount((Double) exchangeMap.get("finalAmount"));
+            } else {
+                debitTransaction.setFee(0.0);
+                debitTransaction.setFinalAmount(transfer.getAmount());
+            }
             debitTransaction.setTimestamp(Instant.now().toEpochMilli());
             debitTransaction.setDescription("Debit transaction for transfer " + transfer.getId());
             debitTransaction.setTransfer(transfer);
             transactionRepository.save(debitTransaction);
-
-            Transaction creditTransaction = new Transaction();
-            creditTransaction.setFromAccountId(fromAccount);
-            creditTransaction.setToAccountId(toAccount);
-            creditTransaction.setAmount(amount);
-            creditTransaction.setCurrency(transfer.getToCurrency());
-            creditTransaction.setTimestamp(Instant.now().toEpochMilli());
-            creditTransaction.setDescription("Credit transaction for transfer " + transfer.getId());
-            creditTransaction.setTransfer(transfer);
-            transactionRepository.save(creditTransaction);
 
             transfer.setStatus(TransferStatus.COMPLETED);
             transfer.setCompletedAt(Instant.now().toEpochMilli());
@@ -199,6 +294,7 @@ public class TransferService {
         } catch (Exception e) {
             transfer.setStatus(TransferStatus.FAILED);
             transfer.setNote("Error during processing: " + e.getMessage());
+            log.error(e.getMessage());
             transferRepository.save(transfer);
             throw new RuntimeException("Transfer processing failed", e);
         }
@@ -332,7 +428,7 @@ public class TransferService {
             transfer.setReceiver(moneyTransferDTO.getReceiver());
             transfer.setAdress(moneyTransferDTO.getAdress() != null ? moneyTransferDTO.getAdress() : "N/A");
             transfer.setStatus(TransferStatus.PENDING);
-            transfer.setType(fromCurrency.equals(toCurrency) ? TransferType.FOREIGN : TransferType.EXTERNAL);
+            transfer.setType(fromCurrency.equals(toCurrency) ? TransferType.EXTERNAL : TransferType.FOREIGN);
             transfer.setFromCurrency(fromCurrency);
             transfer.setToCurrency(toCurrency);
             transfer.setPaymentCode(moneyTransferDTO.getPayementCode());
