@@ -6,6 +6,9 @@ import com.banka1.notification.listener.helper.MessageHelper;
 import com.banka1.notification.model.Notification;
 import com.banka1.notification.model.helper.UserType;
 import com.banka1.notification.repository.NotificationRepository;
+import com.banka1.notification.sender.EmailSender;
+import com.banka1.notification.sender.FirebaseSender;
+import com.banka1.notification.sender.NotificationSender;
 import com.banka1.notification.service.EmailService;
 import jakarta.jms.JMSException;
 import jakarta.jms.Message;
@@ -17,7 +20,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +40,10 @@ public class NotificationApplicationTests {
 	@Mock
 	private MessageHelper messageHelper;
 	@Mock
-	private EmailService emailService;
+	private EmailSender emailSender;
+
+	@Mock
+	private FirebaseSender firebaseSender;
 
 	@Autowired
 	private NotificationRepository notificationRepository;
@@ -52,14 +57,14 @@ public class NotificationApplicationTests {
 	@BeforeEach
 	void setUp() throws JMSException {
 
-		notificationListener = new NotificationListener(messageHelper, emailService);
+		notificationListener = new NotificationListener(messageHelper, emailSender, firebaseSender);
 		notificationDTO = new NotificationDTO();
 		notificationDTO.setEmail("test@example.com");
 		notificationDTO.setSubject("Test Subject");
 		notificationDTO.setMessage("Test Message");
 		notificationDTO.setFirstName("John");
 		notificationDTO.setLastName("Doe");
-		notificationDTO.setType("EMAIL");
+		notificationDTO.setType("email");
 		notificationDTO.setUserId(12345L);
 		notificationDTO.setUserType(UserType.CUSTOMER);
 
@@ -68,7 +73,7 @@ public class NotificationApplicationTests {
 
 		notificationListener.onActivationMessage(message);
 
-		verify(emailService, times(1)).sendEmail(any(NotificationDTO.class));
+		verify(emailSender, times(1)).sendToCustomer(any(NotificationDTO.class));
 
 	}
 
@@ -89,7 +94,7 @@ public class NotificationApplicationTests {
 		notificationRepository.save(notification);
 
 		// Then: Verify that the email service was called
-		verify(emailService, times(2)).sendEmail(any(NotificationDTO.class));
+		verify(emailSender, times(2)).sendToCustomer(any(NotificationDTO.class));
 
 		// Then: Check if the notification is saved in the database
 		Optional<Notification> savedNotification = notificationRepository.findAll()
