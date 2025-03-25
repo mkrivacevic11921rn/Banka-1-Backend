@@ -27,29 +27,28 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
 public class LoanRequestSteps {
-    
+
     @LocalServerPort
     private int port;
-    
-    @Autowired
+
     private RestTemplate restTemplate;
-    
+
     private String token;
     private ResponseEntity<?> responseEntity;
     private HttpStatusCodeException exception;
     private Map<String, Object> loanRequestData;
-    
+
     @Before
     public void setup() {
         restTemplate = new RestTemplate();
         restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
         exception = null;
     }
-    
+
     private String getBaseUrl() {
         return "http://localhost:" + port;
     }
-    
+
     @SuppressWarnings({ "unchecked", "null" })
     @Given("customer is logged into the banking portal")
     public void customerIsLoggedIntoBankingPortal() {
@@ -57,30 +56,30 @@ public class LoanRequestSteps {
         Map<String, String> loginData = new HashMap<>();
         loginData.put("email", "jpavlovic6521rn@raf.rs");
         loginData.put("password", "Jov@njovan1");
-        
+
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(
-                     "http://localhost:8081/api/auth/login", loginData, Map.class);
-            
+                    "http://localhost:8081/api/auth/login", loginData, Map.class);
+
             token = (String) ((Map<String, Object>) response.getBody().get("data")).get("token");
             assertNotNull(token, "Token should be generated during login");
         } catch (RestClientException e) {
             fail("Login failed: " + e.getMessage());
         }
     }
-    
+
     @And("customer navigates to the loans portal")
     public void customerNavigatesToLoansPortal() {
         // This is a UI action that we're simulating for API testing
         // No actual API call needed for this step
     }
-    
+
     @When("customer presses the Apply for Loan button")
     public void customerPressesApplyForLoanButton() {
         // Initialize loan request data to prepare for form filling
         loanRequestData = new HashMap<>();
     }
-    
+
     @And("customer fills out the loan request form")
     public void customerFillsOutLoanRequestForm() {
         loanRequestData.put("accountId", 100);
@@ -95,7 +94,7 @@ public class LoanRequestSteps {
         loanRequestData.put("phoneNumber", "063457732");
         loanRequestData.put("salaryAmount", 89000);
     }
-    
+
     @And("customer fills out the loan request form with missing required information")
     public void customerFillsOutLoanRequestFormWithMissingInfo() {
         loanRequestData.put("accountId", 100);
@@ -107,28 +106,28 @@ public class LoanRequestSteps {
         loanRequestData.put("numberOfInstallments", 24);
         loanRequestData.put("salaryAmount", 89000);
     }
-    
+
     @And("customer submits the loan request form")
     public void customerSubmitsLoanRequestForm() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add("Authorization", "Bearer " + token);
-        
+
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(loanRequestData, headers);
-        
+
         try {
             // Add debugging to see what's being sent
             System.out.println("Sending loan request with token: " + token.substring(0, 10) + "...");
             System.out.println("Request data: " + loanRequestData);
-            
+
             // Use the correct API endpoint - add "/api" prefix and remove trailing slash
             responseEntity = restTemplate.exchange(
-                    getBaseUrl() + "/loans/", 
+                    getBaseUrl() + "/loans/",
                     HttpMethod.POST,
                     requestEntity,
                     Map.class
             );
-            
+
             // Print response for debugging
             System.out.println("Response status: " + responseEntity.getStatusCode());
             System.out.println("Response body: " + responseEntity.getBody());
@@ -138,33 +137,33 @@ public class LoanRequestSteps {
             System.err.println("Error response: " + e.getResponseBodyAsString());
         }
     }
-    
+
     @SuppressWarnings("null")
     @Then("the loan request should be successfully submitted")
     public void loanRequestShouldBeSuccessfullySubmitted() {
         assertNull(exception, "No exception should be thrown");
         assertNotNull(responseEntity, "Response should not be null");
         assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
-        
+
         @SuppressWarnings("unchecked")
         Map<String, Object> responseBody = (Map<String, Object>) responseEntity.getBody();
         assertTrue((Boolean) responseBody.get("success"), "Response should indicate success");
     }
-    
+
     @Then("the loan request should not be submitted")
     public void loanRequestShouldNotBeSubmitted() {
         assertNotNull(exception, "Exception should be thrown for invalid request");
-        assertTrue(exception.getStatusCode().is4xxClientError(), 
+        assertTrue(exception.getStatusCode().is4xxClientError(),
                 "Should return a client error status code");
     }
-    
+
     @When("customer presses the Details button")
     public void customerPressesDetailsButton() {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer " + token);
-        
+
         HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
-        
+
         try {
             // Use consistent API path structure
             responseEntity = restTemplate.exchange(
