@@ -1,5 +1,8 @@
 package com.banka1.banking.models.helper;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public enum BusinessActivityCode {
 
     COMPUTER_PROGRAMMING("6201", "Computer programming"),
@@ -31,6 +34,15 @@ public enum BusinessActivityCode {
             }
         }
         throw new IllegalArgumentException("Invalid activity code: " + code);
+    }
+
+    public static List<String> getAll() {
+        List<String> codes = new ArrayList<>();
+        for (BusinessActivityCode activity : values()) {
+            codes.add(activity.getCode() + " -> " + activity.getDescription());
+        }
+        System.out.println(codes);
+        return codes;
     }
 }
 

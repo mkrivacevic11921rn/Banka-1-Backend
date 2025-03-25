@@ -169,4 +169,51 @@ public class CompanyController {
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
+
+    @GetMapping("/basList")
+    @Operation(summary = "Lista svih sifara delatnosti", description = "sifr4e delatnosti i njihovi opisi")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "sifre delatnosti", content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(value = """
+                {
+                   "data": {
+                    "basList": [
+                        "6201 -> Computer programming",
+                        "4711 -> Retail sale in non-specialized stores with food, beverages, or tobacco predominating",
+                        "6820 -> Renting and operating of own or leased real estate",
+                        "5610 -> Restaurants and mobile food service activities",
+                        "4932 -> Taxi operation"
+                        ]
+                   },
+                   "success": true
+                 }
+            """))
+            ),
+            @ApiResponse(responseCode = "403", description = "Nedovoljna autorizacija.", content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(value = """
+                {
+                  "success": false,
+                  "error": "Nedovoljna autorizacija."
+                }
+            """))
+            ),
+            @ApiResponse(responseCode = "404", description = "nema", content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(value = """
+                {
+                  "success": false,
+                  "error": "nema informacija o siframa delatnosti"
+                }
+            """))
+            )
+    })
+//    @CompanyAuthorization(employeeOnlyOperation = true)
+    public ResponseEntity<?> getBasList() {
+        try {
+            List<String> lista =  companyService.getBusinessActivityCodes();
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("basList", lista), null);
+        } catch (Exception e) {
+            log.error("Greška prilikom trazenja basova: ", e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
+        }
+    }
 }
