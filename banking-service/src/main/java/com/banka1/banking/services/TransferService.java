@@ -12,6 +12,7 @@ import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.repository.CurrencyRepository;
 import com.banka1.banking.repository.TransactionRepository;
 import com.banka1.banking.repository.TransferRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -24,6 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class TransferService {
 
     private final AccountRepository accountRepository;
@@ -86,8 +88,8 @@ public class TransferService {
         toBankAccount.setBalance(toBankAccount.getBalance() + transfer.getAmount());
 
         Map<String, Object> exchange = exchangeService.calculatePreviewExchangeAutomatic(
-                transfer.getFromCurrency().toString(),
-                transfer.getToCurrency().toString(),
+                transfer.getFromCurrency().getCode().toString(),
+                transfer.getToCurrency().getCode().toString(),
                 transfer.getAmount()
         );
 
@@ -290,6 +292,7 @@ public class TransferService {
         } catch (Exception e) {
             transfer.setStatus(TransferStatus.FAILED);
             transfer.setNote("Error during processing: " + e.getMessage());
+            log.error(e.getMessage());
             transferRepository.save(transfer);
             throw new RuntimeException("Transfer processing failed", e);
         }
@@ -423,7 +426,7 @@ public class TransferService {
             transfer.setReceiver(moneyTransferDTO.getReceiver());
             transfer.setAdress(moneyTransferDTO.getAdress() != null ? moneyTransferDTO.getAdress() : "N/A");
             transfer.setStatus(TransferStatus.PENDING);
-            transfer.setType(fromCurrency.equals(toCurrency) ? TransferType.FOREIGN : TransferType.EXTERNAL);
+            transfer.setType(fromCurrency.equals(toCurrency) ? TransferType.EXTERNAL : TransferType.FOREIGN);
             transfer.setFromCurrency(fromCurrency);
             transfer.setToCurrency(toCurrency);
             transfer.setPaymentCode(moneyTransferDTO.getPayementCode());

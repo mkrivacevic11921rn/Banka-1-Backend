@@ -142,11 +142,10 @@ public class ExchangeService {
 
     @ExcludeFromGeneratedJacocoReport("Wrapper method")
     public Map<String, Object> calculatePreviewExchangeAutomatic(String fromCurrency, String toCurrency, Double amount) {
-        try {
+        if(fromCurrency.equals("RSD") || toCurrency.equals("RSD"))
             return calculatePreviewExchange(fromCurrency, toCurrency, amount);
-        } catch(Exception ignored) {
+        else
             return calculatePreviewExchangeForeign(fromCurrency, toCurrency, amount);
-        }
     }
 
     public Map<String, Object> calculatePreviewExchange(String fromCurrency, String toCurrency, Double amount) {
