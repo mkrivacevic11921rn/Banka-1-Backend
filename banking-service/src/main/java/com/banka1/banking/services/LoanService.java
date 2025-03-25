@@ -405,7 +405,7 @@ public class LoanService {
             loanRepository.save(loan);
             installmentsRepository.save(installment);
         } catch (Exception e) {
-            log.error("Greska tokom isplate rate kredita {}: {}", installment.getId(), e.getStackTrace());
+            log.error("Greska tokom isplate rate kredita {}: {}", installment.getId(), e.getMessage());
         }
     }
 
@@ -430,6 +430,8 @@ public class LoanService {
             var transfer = transferService.createMoneyTransferEntity(customerAccount, bankAccount, transferDTO);
 
             transferService.processExternalTransfer(transfer.getId());
+
+            installment.setTransaction(transactionService.findByTransfer(transfer));
 
             return true;
         }

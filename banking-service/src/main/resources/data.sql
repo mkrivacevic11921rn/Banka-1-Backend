@@ -394,19 +394,19 @@ VALUES (1000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*2, EXTRACT(EPOCH FR
 INSERT INTO transfer(amount, completed_at, created_at, from_account_id, from_currency_id, to_account_id, to_currency_id, adress, note, otp, payment_code, payment_description, payment_reference, receiver, status, type)
 VALUES (1000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*2, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000, 100, 1, 20, 1, 'Ustanicka 1', 'Payment for services', '123', '234', 'Payment for services', '94', 'Jelena Jovanovic', 'COMPLETED', 'INTERNAL');
 
-INSERT INTO transaction(amount, final_amount, fee, bank_only, currency_id, from_account_id, loan_id, timestamp, to_account_id,transfer_id, description)
-VALUES (1000.0,1000.0,0.0,false,1,100,null,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,20,2,'Payment for services');
-INSERT INTO transaction(amount, final_amount, fee, bank_only, currency_id, from_account_id, loan_id, timestamp, to_account_id,transfer_id, description)
-VALUES (1000.0,1000.0,0.0,false,1,100,null,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,20,2,'Payment for services');
+INSERT INTO transaction(amount, final_amount, fee, bank_only, currency_id, from_account_id, timestamp, to_account_id,transfer_id, description)
+VALUES (1000.0,1000.0,0.0,false,1,100,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,20,2,'Payment for services');
+INSERT INTO transaction(amount, final_amount, fee, bank_only, currency_id, from_account_id, timestamp, to_account_id,transfer_id, description)
+VALUES (1000.0,1000.0,0.0,false,1,100,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,20,2,'Payment for services');
 
 -- Anastasija -> Jovan
 INSERT INTO transfer(amount, completed_at, created_at, from_account_id, from_currency_id, to_account_id, to_currency_id, adress, note, otp, payment_code, payment_description, payment_reference, receiver, status, type)
 VALUES (30000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*2, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000, 11, 1, 100, 1, 'Milana Mijalkovica 1', 'Payment for shopping', '233', '234', 'Payment for shopping', '95', null, 'COMPLETED', 'INTERNAL');
 
-INSERT INTO transaction(amount, final_amount, fee, bank_only, currency_id, from_account_id, loan_id, timestamp, to_account_id,transfer_id, description)
-VALUES (30000.0,30000.0,0.0,false,1,11,null,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,100,3,'Payment for shopping');
-INSERT INTO transaction(amount, final_amount, fee, bank_only, currency_id, from_account_id, loan_id, timestamp, to_account_id,transfer_id, description)
-VALUES (1000.0,1000.0,0.0,false,1,11,null,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,100,3,'Payment for shopping');
+INSERT INTO transaction(amount, final_amount, fee, bank_only, currency_id, from_account_id, timestamp, to_account_id,transfer_id, description)
+VALUES (30000.0,30000.0,0.0,false,1,11,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,100,3,'Payment for shopping');
+INSERT INTO transaction(amount, final_amount, fee, bank_only, currency_id, from_account_id, timestamp, to_account_id,transfer_id, description)
+VALUES (1000.0,1000.0,0.0,false,1,11,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,100,3,'Payment for shopping');
 
 
 

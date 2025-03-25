@@ -2,6 +2,7 @@ package com.banka1.banking.services;
 
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Transaction;
+import com.banka1.banking.models.Transfer;
 import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.repository.TransactionRepository;
@@ -31,5 +32,9 @@ public class TransactionService {
 
     public boolean userExists(Long id){
         return transactionRepository.existsById(id);
+    }
+
+    public Transaction findByTransfer(Transfer transfer) {
+        return transactionRepository.findByTransferId(transfer.getId()).orElse(null);
     }
 }

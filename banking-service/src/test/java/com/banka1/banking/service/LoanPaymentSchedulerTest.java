@@ -30,8 +30,6 @@ class LoanPaymentSchedulerTest {
 
 	@Mock
 	private InstallmentsRepository installmentsRepository;
-	@Mock
-	private AccountRepository accountRepository;
 
 	@Mock
 	private TransferService transferService;
@@ -43,7 +41,7 @@ class LoanPaymentSchedulerTest {
 	private LoanRepository loanRepository;
 
 	@Mock
-	private CurrencyRepository currencyRepository;
+	private TransactionService transactionService;
 
 	@InjectMocks
 	private LoanService loanService;
