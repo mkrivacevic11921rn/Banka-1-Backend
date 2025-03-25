@@ -256,7 +256,7 @@ public class TransferServiceTest {
 
         // Verify notification was sent
         ArgumentCaptor<NotificationDTO> notificationCaptor = ArgumentCaptor.forClass(NotificationDTO.class);
-        verify(messageHelper).createTextMessage(notificationCaptor.capture());
+        verify(messageHelper, times(2)).createTextMessage(notificationCaptor.capture());
 
         NotificationDTO sentNotification = notificationCaptor.getValue();
         assertEquals("Verifikacija", sentNotification.getSubject());
@@ -317,7 +317,7 @@ public class TransferServiceTest {
 
         // Verify notification was sent
         ArgumentCaptor<NotificationDTO> notificationCaptor = ArgumentCaptor.forClass(NotificationDTO.class);
-        verify(messageHelper).createTextMessage(notificationCaptor.capture());
+        verify(messageHelper, times(2)).createTextMessage(notificationCaptor.capture());
 
         NotificationDTO sentNotification = notificationCaptor.getValue();
         assertEquals("Verifikacija", sentNotification.getSubject());
