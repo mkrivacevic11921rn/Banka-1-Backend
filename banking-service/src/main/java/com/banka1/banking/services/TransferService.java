@@ -390,10 +390,11 @@ public class TransferService {
 
             NotificationDTO pushNotification = new NotificationDTO();
             pushNotification.setSubject("Verifikacija");
-            pushNotification.setSubject("Kliknite kako biste verifikovali transfer");
+            pushNotification.setMessage("Kliknite kako biste verifikovali transfer");
             pushNotification.setFirstName(firstName);
             pushNotification.setLastName(lastName);
             pushNotification.setType("firebase");
+            pushNotification.setEmail(email);
             Map<String, String> data = Map.of("transferId", transfer.getId().toString(), "otp", otpCode);
             pushNotification.setAdditionalData(data);
 
@@ -463,9 +464,10 @@ public class TransferService {
 
             NotificationDTO pushNotification = new NotificationDTO();
             pushNotification.setSubject("Verifikacija");
-            pushNotification.setSubject("Kliknite kako biste verifikovali transfer");
+            pushNotification.setMessage("Kliknite kako biste verifikovali transfer");
             pushNotification.setFirstName(firstName);
             pushNotification.setLastName(lastName);
+            pushNotification.setEmail(email);
             pushNotification.setType("firebase");
             Map<String, String> data = Map.of("transferId", transfer.getId().toString(), "otp", otpCode);
             pushNotification.setAdditionalData(data);
