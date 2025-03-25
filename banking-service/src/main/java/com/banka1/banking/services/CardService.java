@@ -26,12 +26,14 @@ public class CardService {
     private final AccountRepository accountRepository;
 
     private final CardMapper cardMapper;
+    private final CompanyService companyService;
 
-    public CardService(CardRepository cardRepository, AuthorizedPersonRepository authorizedPersonRepository, AccountRepository accountRepository, CardMapper cardMapper) {
+    public CardService(CardRepository cardRepository, AuthorizedPersonRepository authorizedPersonRepository, AccountRepository accountRepository, CardMapper cardMapper, CompanyService companyService) {
         this.cardRepository = cardRepository;
         this.authorizedPersonRepository = authorizedPersonRepository;
         this.accountRepository = accountRepository;
         this.cardMapper = cardMapper;
+        this.companyService = companyService;
     }
 
     public Card findById(Long cardId) {
@@ -70,6 +72,10 @@ public class CardService {
 
                 authorizedPersonRepository.save(person);
             }
+        }
+
+        if (account.getSubtype().equals(AccountSubtype.BUSINESS) && createCardDTO.getCompany()!= null) {
+            companyService.createCompany(createCardDTO.getCompany());
         }
 
         if(card.getAccount().getType().equals(AccountType.FOREIGN_CURRENCY) && card.getCardBrand().equals(CardBrand.DINA_CARD)){
