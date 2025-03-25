@@ -9,7 +9,9 @@ public enum BusinessActivityCode {
     RETAIL_SALES("4711", "Retail sale in non-specialized stores with food, beverages, or tobacco predominating"),
     REAL_ESTATE_RENTAL("6820", "Renting and operating of own or leased real estate"),
     RESTAURANTS("5610", "Restaurants and mobile food service activities"),
-    TAXI_SERVICE("4932", "Taxi operation");
+    TAXI_SERVICE("4932", "Taxi operation"),
+    BANK("1111", "Bank"),
+    COUNTRY("2222", "Country");
 
     private final String code;
     private final String description;
