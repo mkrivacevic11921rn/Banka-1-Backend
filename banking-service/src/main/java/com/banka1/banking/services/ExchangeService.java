@@ -169,7 +169,7 @@ public class ExchangeService {
 
         ExchangePair exchangePair = exchangePairOpt.get();
         double exchangeRate = exchangePair.getExchangeRate();
-        double convertedAmount = isToRSD ? amount * exchangeRate : amount / exchangeRate;
+        double convertedAmount = amount * exchangeRate;
         double fee = convertedAmount * 0.01;
         double finalAmount = convertedAmount - fee;
 
@@ -206,7 +206,7 @@ public class ExchangeService {
         }
 
         double secondExchangeRate = secondExchangeOpt.get().getExchangeRate();
-        double amountInTargetCurrency = remainingRSD / secondExchangeRate;
+        double amountInTargetCurrency = remainingRSD * secondExchangeRate;
         double secondFee = amountInTargetCurrency * 0.01;
         double finalAmount = amountInTargetCurrency - secondFee;
         double totalFee = firstFee + secondFee;
@@ -214,7 +214,7 @@ public class ExchangeService {
         return Map.of(
                 "firstExchangeRate", firstExchangeRate,
                 "secondExchangeRate", secondExchangeRate,
-                "totalFee", totalFee,
+                "fee", totalFee,
                 "finalAmount", finalAmount
         );
     }

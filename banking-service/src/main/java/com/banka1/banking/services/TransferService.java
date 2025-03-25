@@ -137,19 +137,19 @@ public class TransferService {
         transactionToBank.setFinalAmount(transfer.getAmount());
         transactionToBank.setFee(0.0);
         transactionToBank.setTimestamp(System.currentTimeMillis());
-        transactionToBank.setDescription("Debit transaction for transfer " + transferToBank.getId());
+        transactionToBank.setDescription("Exchange transaction");
         transactionToBank.setTransfer(transferToBank);
 
         Transaction transactionFromBank = new Transaction();
         transactionFromBank.setBankOnly(true);
         transactionFromBank.setFromAccountId(fromBankAccount);
         transactionFromBank.setToAccountId(toAccount);
-        transactionFromBank.setAmount(transfer.getAmount());
+        transactionFromBank.setAmount(exchangedAmount);
         transactionFromBank.setCurrency(toCurrency);
-        transactionToBank.setFinalAmount(exchangedAmount);
-        transactionToBank.setFee(0.0);
+        transactionFromBank.setFinalAmount(exchangedAmount);
+        transactionFromBank.setFee(0.0);
         transactionFromBank.setTimestamp(System.currentTimeMillis());
-        transactionFromBank.setDescription("Debit transaction for transfer " + transferFromBank.getId());
+        transactionFromBank.setDescription("Exchange transaction");
         transactionFromBank.setTransfer(transferFromBank);
 
         transferRepository.save(transferToBank);
@@ -208,7 +208,7 @@ public class TransferService {
             debitTransaction.setAmount(transfer.getAmount());
             debitTransaction.setCurrency(transfer.getFromCurrency());
             if(exchangeMap != null) {
-                debitTransaction.setFee((Double) exchangeMap.get("totalFee"));
+                debitTransaction.setFee((Double) exchangeMap.get("fee"));
                 debitTransaction.setFinalAmount((Double) exchangeMap.get("finalAmount"));
             } else {
                 debitTransaction.setFee(0.0);
@@ -274,7 +274,8 @@ public class TransferService {
             debitTransaction.setAmount(amount);
             debitTransaction.setCurrency(transfer.getFromCurrency());
             if(exchangeMap != null) {
-                debitTransaction.setFee((Double) exchangeMap.get("totalFee"));
+                log.info(exchangeMap.toString());
+                debitTransaction.setFee((Double) exchangeMap.get("fee"));
                 debitTransaction.setFinalAmount((Double) exchangeMap.get("finalAmount"));
             } else {
                 debitTransaction.setFee(0.0);
