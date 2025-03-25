@@ -261,7 +261,7 @@ public class TransferServiceTest {
         NotificationDTO sentNotification = notificationCaptor.getValue();
         assertEquals("Verifikacija", sentNotification.getSubject());
         assertEquals("john.doe@example.com", sentNotification.getEmail());
-        assertTrue(sentNotification.getMessage().contains("123456"));
+        assertTrue(sentNotification.getMessage().contains("Kliknite"));
         assertEquals("John", sentNotification.getFirstName());
         assertEquals("Doe", sentNotification.getLastName());
     }
@@ -322,7 +322,7 @@ public class TransferServiceTest {
         NotificationDTO sentNotification = notificationCaptor.getValue();
         assertEquals("Verifikacija", sentNotification.getSubject());
         assertEquals("john.doe@example.com", sentNotification.getEmail());
-        assertTrue(sentNotification.getMessage().contains("123456"));
+        assertTrue(sentNotification.getMessage().contains("Kliknite"));
         assertEquals("John", sentNotification.getFirstName());
         assertEquals("Doe", sentNotification.getLastName());
     }
