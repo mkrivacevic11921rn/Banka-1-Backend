@@ -134,7 +134,18 @@ public class ExchangeService {
             emailDto.setLastName(lastName);
             emailDto.setType("email");
 
+            NotificationDTO pushNotification = new NotificationDTO();
+            pushNotification.setSubject("Verifikacija");
+            pushNotification.setSubject("Kliknite kako biste verifikovali transfer");
+            pushNotification.setFirstName(firstName);
+            pushNotification.setLastName(lastName);
+            pushNotification.setType("firebase");
+            Map<String, String> data = Map.of("transferId", transfer.getId().toString(), "otp", otpCode);
+            pushNotification.setAdditionalData(data);
+
             jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDto));
+            jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(pushNotification));
+
             return transfer.getId();
         }
 
