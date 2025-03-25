@@ -77,4 +77,8 @@ public class TransactionService {
             }
         return false;
     }
+
+    public boolean userExists(Long id){
+        return transactionRepository.existsById(id);
+    }
 }
