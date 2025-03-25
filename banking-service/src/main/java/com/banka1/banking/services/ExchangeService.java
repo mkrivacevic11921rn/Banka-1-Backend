@@ -146,6 +146,7 @@ public class ExchangeService {
         } catch (IllegalArgumentException e) {
             throw new RuntimeException("Nepoznata valuta: " + currency);
         }
+    }
 
     @ExcludeFromGeneratedJacocoReport("Wrapper method")
     public Map<String, Object> calculatePreviewExchangeAutomatic(String fromCurrency, String toCurrency, Double amount) {
@@ -162,7 +163,6 @@ public class ExchangeService {
         if (!isToRSD && !isFromRSD) {
             throw new RuntimeException("Ova funkcija podržava samo konverzije između RSD i druge valute.");
         }
-
 
         CurrencyType base = parseCurrency(isToRSD ? fromCurrency : "RSD");
         CurrencyType target = parseCurrency(isToRSD ? "RSD" : toCurrency);
@@ -183,24 +183,17 @@ public class ExchangeService {
             exchangeRate = 1 / reverseOpt.get().getExchangeRate();
         }
 
-
-        ExchangePair exchangePair = exchangePairOpt.get();
-        double exchangeRate = exchangePair.getExchangeRate();
         double convertedAmount = amount * exchangeRate;
-        double fee = convertedAmount * 0.01;
-        if (fromCurrency.equalsIgnoreCase("RSD") && toCurrency.equalsIgnoreCase("RSD")) {
-            fee = 0.0;
-        }
+        double fee = (fromCurrency.equalsIgnoreCase("RSD") && toCurrency.equalsIgnoreCase("RSD")) ? 0.0 : convertedAmount * 0.01;
         double finalAmount = convertedAmount - fee;
 
         double provision;
         if (fromCurrency.equalsIgnoreCase("RSD")) {
             provision = fee * 1 / exchangeRate;
             exchangeRate = 1 / exchangeRate;
-        }else {
+        } else {
             provision = fee;
         }
-
 
         return Map.of(
                 "exchangeRate", exchangeRate,
@@ -217,7 +210,6 @@ public class ExchangeService {
             throw new RuntimeException("Ova metoda je samo za konverziju strane valute u stranu valutu.");
         }
 
-        // NESTO -> RSD
         CurrencyType from = parseCurrency(fromCurrency);
         CurrencyType to = parseCurrency(toCurrency);
         CurrencyType rsd = CurrencyType.RSD;
@@ -242,7 +234,6 @@ public class ExchangeService {
         double firstFee = amountInRSD * 0.01;
         double remainingRSD = amountInRSD - firstFee;
 
-        // RSD -> NESTO
         Optional<ExchangePair> secondExchangeOpt = exchangePairRepository
                 .findByBaseCurrencyCodeAndTargetCurrencyCode(rsd, to);
 
@@ -259,20 +250,22 @@ public class ExchangeService {
             secondExchangeRate = 1 / reverseSecondOpt.get().getExchangeRate();
         }
 
-        double secondExchangeRate = secondExchangeOpt.get().getExchangeRate();
         double amountInTargetCurrency = remainingRSD * secondExchangeRate;
         double secondFee = amountInTargetCurrency * 0.01;
         double finalAmount = amountInTargetCurrency - secondFee;
         double totalFee = firstFee + secondFee;
 
-        secondExchangeRate = 1 / secondExchangeRate;
+        // Prikazujemo obrnut kurs za prikaz klijentu
+        double displayedSecondExchangeRate = 1 / secondExchangeRate;
+
         return Map.of(
                 "firstExchangeRate", firstExchangeRate,
-                "secondExchangeRate", secondExchangeRate,
+                "secondExchangeRate", displayedSecondExchangeRate,
                 "totalFee", totalFee,
                 "provision", totalFee,
                 "fee", totalFee,
                 "finalAmount", finalAmount
         );
     }
+
 }

@@ -82,7 +82,7 @@ public class TransferService {
     // To be called after the initial amount is stripped from the account initiating the transfer
     // Completes a transfer between two accounts of differing currency types
     @Transactional
-    private Map<String, Object> performCurrencyExchangeTransfer(Transfer transfer, Account fromAccount, Account toAccount) {
+    public Map<String, Object> performCurrencyExchangeTransfer(Transfer transfer, Account fromAccount, Account toAccount) {
         Account toBankAccount = bankAccountUtils.getBankAccountForCurrency(fromAccount.getCurrencyType());
         Account fromBankAccount = bankAccountUtils.getBankAccountForCurrency(toAccount.getCurrencyType());
 
