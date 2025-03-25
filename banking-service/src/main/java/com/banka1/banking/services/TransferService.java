@@ -1,6 +1,9 @@
 package com.banka1.banking.services;
 
-import com.banka1.banking.dto.*;
+import com.banka1.banking.dto.CustomerDTO;
+import com.banka1.banking.dto.InternalTransferDTO;
+import com.banka1.banking.dto.MoneyTransferDTO;
+import com.banka1.banking.dto.NotificationDTO;
 import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Currency;
@@ -19,9 +22,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -418,31 +421,13 @@ public class TransferService {
         Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrencyType())
                 .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
-            Long customerId = fromAccount.getOwnerID();
-            CustomerDTO customerData = userServiceCustomer.getCustomerById(customerId);
+        Long customerId = fromAccount.getOwnerID();
+        CustomerDTO customerData = userServiceCustomer.getCustomerById(customerId);
 
-            if (customerData == null ) {
-                throw new IllegalArgumentException("Korisnik nije pronađen");
-            }
+        if (customerData == null ) {
+            throw new IllegalArgumentException("Korisnik nije pronađen");
+        }
 
-            String email = customerData.getEmail();
-            String firstName = customerData.getFirstName();
-            String lastName = customerData.getLastName();
-
-            Transfer transfer = new Transfer();
-            transfer.setFromAccountId(fromAccount);
-            transfer.setToAccountId(toAccount);
-            transfer.setAmount(moneyTransferDTO.getAmount());
-            transfer.setReceiver(moneyTransferDTO.getReceiver());
-            transfer.setAdress(moneyTransferDTO.getAdress() != null ? moneyTransferDTO.getAdress() : "N/A");
-            transfer.setStatus(TransferStatus.PENDING);
-            transfer.setType(fromCurrency.equals(toCurrency) ? TransferType.EXTERNAL : TransferType.FOREIGN);
-            transfer.setFromCurrency(fromCurrency);
-            transfer.setToCurrency(toCurrency);
-            transfer.setPaymentCode(moneyTransferDTO.getPayementCode());
-            transfer.setPaymentReference(moneyTransferDTO.getPayementReference() != null ? moneyTransferDTO.getPayementReference() : "N/A");
-            transfer.setPaymentDescription(moneyTransferDTO.getPayementDescription());
-            transfer.setCreatedAt(System.currentTimeMillis());
         Transfer transfer = new Transfer();
         transfer.setFromAccountId(fromAccount);
         transfer.setToAccountId(toAccount);
@@ -450,7 +435,7 @@ public class TransferService {
         transfer.setReceiver(moneyTransferDTO.getReceiver());
         transfer.setAdress(moneyTransferDTO.getAdress() != null ? moneyTransferDTO.getAdress() : "N/A");
         transfer.setStatus(TransferStatus.PENDING);
-        transfer.setType(fromCurrency.equals(toCurrency) ? TransferType.FOREIGN : TransferType.EXTERNAL);
+        transfer.setType(fromCurrency.equals(toCurrency) ? TransferType.EXTERNAL : TransferType.FOREIGN);
         transfer.setFromCurrency(fromCurrency);
         transfer.setToCurrency(toCurrency);
         transfer.setPaymentCode(moneyTransferDTO.getPayementCode());
