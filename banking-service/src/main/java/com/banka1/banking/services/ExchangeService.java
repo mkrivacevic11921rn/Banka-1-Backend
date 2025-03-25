@@ -16,6 +16,7 @@ import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.repository.CurrencyRepository;
 import com.banka1.banking.repository.ExchangePairRepository;
 import com.banka1.banking.repository.TransferRepository;
+import com.banka1.banking.utils.ExcludeFromGeneratedJacocoReport;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
@@ -140,6 +141,14 @@ public class ExchangeService {
         return null;
     }
 
+    @ExcludeFromGeneratedJacocoReport("Wrapper method")
+    public Map<String, Object> calculatePreviewExchangeAutomatic(String fromCurrency, String toCurrency, Double amount) {
+        if(fromCurrency.equals("RSD") || toCurrency.equals("RSD"))
+            return calculatePreviewExchange(fromCurrency, toCurrency, amount);
+        else
+            return calculatePreviewExchangeForeign(fromCurrency, toCurrency, amount);
+    }
+
     public Map<String, Object> calculatePreviewExchange(String fromCurrency, String toCurrency, Double amount) {
         boolean isToRSD = toCurrency.equals("RSD");
         boolean isFromRSD = fromCurrency.equals("RSD");
@@ -160,7 +169,7 @@ public class ExchangeService {
 
         ExchangePair exchangePair = exchangePairOpt.get();
         double exchangeRate = exchangePair.getExchangeRate();
-        double convertedAmount = isToRSD ? amount * exchangeRate : amount / exchangeRate;
+        double convertedAmount = amount * exchangeRate;
         double fee = convertedAmount * 0.01;
         double finalAmount = convertedAmount - fee;
 
@@ -197,7 +206,7 @@ public class ExchangeService {
         }
 
         double secondExchangeRate = secondExchangeOpt.get().getExchangeRate();
-        double amountInTargetCurrency = remainingRSD / secondExchangeRate;
+        double amountInTargetCurrency = remainingRSD * secondExchangeRate;
         double secondFee = amountInTargetCurrency * 0.01;
         double finalAmount = amountInTargetCurrency - secondFee;
         double totalFee = firstFee + secondFee;
@@ -205,7 +214,7 @@ public class ExchangeService {
         return Map.of(
                 "firstExchangeRate", firstExchangeRate,
                 "secondExchangeRate", secondExchangeRate,
-                "totalFee", totalFee,
+                "fee", totalFee,
                 "finalAmount", finalAmount
         );
     }

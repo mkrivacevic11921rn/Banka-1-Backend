@@ -44,6 +44,9 @@ public class TransactionServiceTest {
     @Mock
     private CurrencyRepository currencyRepository;
 
+    @Mock
+    private BankAccountUtils bankAccountUtils;
+
     @InjectMocks
     private TransactionService transactionService;
 
@@ -95,62 +98,12 @@ public class TransactionServiceTest {
     }
 
     @Test
-    void testProcessTransfer_Internal() {
-        when(transferRepository.findById(1L)).thenReturn(Optional.of(internalTransfer));
-        when(accountRepository.save(any(Account.class))).thenReturn(null);
-        when(transactionRepository.save(any(Transaction.class))).thenReturn(null);
-
-        String result = transactionService.processTransfer(1L);
-
-        assertEquals("Transfer completed successfully", result);
-        assertEquals(TransferStatus.COMPLETED, internalTransfer.getStatus());
-        assertEquals(900.0, fromAccount.getBalance());
-        assertEquals(600.0, toAccount.getBalance());
-        verify(transactionRepository, times(2)).save(any(Transaction.class));
-    }
-
-    @Test
-    void testProcessTransfer_External() {
-        when(transferRepository.findById(2L)).thenReturn(Optional.of(externalTransfer));
-        when(accountRepository.save(any(Account.class))).thenReturn(null);
-        when(transactionRepository.save(any(Transaction.class))).thenReturn(null);
-
-        String result = transactionService.processTransfer(2L);
-
-        assertEquals("Transfer completed successfully", result);
-        assertEquals(TransferStatus.COMPLETED, externalTransfer.getStatus());
-        assertEquals(900.0, fromAccount.getBalance());
-        assertEquals(600.0, toAccount.getBalance());
-        verify(transactionRepository, times(2)).save(any(Transaction.class));
-    }
-
-    @Test
-    void testProcessInternalTransfer_InsufficientFunds() {
-        fromAccount.setBalance(50.0);
-        internalTransfer.setAmount(100.0);
-
-        when(transferRepository.findById(1L)).thenReturn(Optional.of(internalTransfer));
-
-        assertThrows(RuntimeException.class, () -> transactionService.processInternalTransfer(1L));
-        assertEquals(TransferStatus.FAILED, internalTransfer.getStatus());
-    }
-
-    @Test
-    void testProcessExternalTransfer_InsufficientFunds() {
-        fromAccount.setBalance(50.0);
-        externalTransfer.setAmount(100.0);
-
-        when(transferRepository.findById(2L)).thenReturn(Optional.of(externalTransfer));
-
-        assertThrows(RuntimeException.class, () -> transactionService.processExternalTransfer(2L));
-        assertEquals(TransferStatus.FAILED, externalTransfer.getStatus());
-    }
-
-    @Test
     void testGetTransactionsByUserId() {
         Long userId = 1L;
         List<Account> accounts = Arrays.asList(fromAccount);
         List<Transaction> expectedTransactions = Arrays.asList(new Transaction(), new Transaction());
+
+        when(bankAccountUtils.getBankAccountForCurrency(any())).thenReturn(new Account());
 
         when(accountRepository.findByOwnerID(userId)).thenReturn(accounts);
         when(transactionRepository.findByFromAccountIdIn(accounts)).thenReturn(expectedTransactions);

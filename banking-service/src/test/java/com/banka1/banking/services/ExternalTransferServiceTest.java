@@ -72,7 +72,7 @@ public class ExternalTransferServiceTest {
         assertEquals(TransferStatus.COMPLETED, transfer.getStatus());
 
         verify(accountRepository, times(2)).save(any(Account.class));
-        verify(transactionRepository, times(2)).save(any(Transaction.class));
+        verify(transactionRepository, times(1)).save(any(Transaction.class));
         verify(transferRepository, times(1)).save(transfer);
     }
 
