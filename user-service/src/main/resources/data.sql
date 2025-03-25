@@ -6,6 +6,10 @@ TRUNCATE TABLE employee CASCADE;
 TRUNCATE TABLE reset_password CASCADE;
 TRUNCATE TABLE set_password CASCADE;
 
+
+ALTER SEQUENCE customer_id_seq RESTART WITH 100;
+ALTER SEQUENCE employee_id_seq RESTART WITH 100;
+
 -- ============== Loading Data ==============
 
 -- Admin user password: admin123
@@ -180,4 +184,3 @@ INSERT INTO employee (id, first_name, last_name, email, username, phone_number,
 VALUES (6, 'Milica', 'Jovanović', 'milica.jovanovic2@banka.com', 'milicaaaa2',
         '+381641001001', '2000-10-10', 'Knez Mihailova 6', 'FEMALE', 'WORKER',
         'AGENT', TRUE, FALSE, 'salt', '$2a$12$c2Y5721b8h0B0olC.xrQ.eHw2UR.67NAsDvyEkAbRo/a2dW5Tr.ge');
-

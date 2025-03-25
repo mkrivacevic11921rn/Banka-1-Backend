@@ -82,7 +82,7 @@ public class TransferService {
     // To be called after the initial amount is stripped from the account initiating the transfer
     // Completes a transfer between two accounts of differing currency types
     @Transactional
-    public Map<String, Object> performCurrencyExchangeTransfer(Transfer transfer, Account fromAccount, Account toAccount) {
+    protected Map<String, Object> performCurrencyExchangeTransfer(Transfer transfer, Account fromAccount, Account toAccount) {
         Account toBankAccount = bankAccountUtils.getBankAccountForCurrency(fromAccount.getCurrencyType());
         Account fromBankAccount = bankAccountUtils.getBankAccountForCurrency(toAccount.getCurrencyType());
 
@@ -388,7 +388,19 @@ public class TransferService {
             emailDto.setLastName(lastName);
             emailDto.setType("email");
 
+            NotificationDTO pushNotification = new NotificationDTO();
+            pushNotification.setSubject("Verifikacija");
+            pushNotification.setMessage("Kliknite kako biste verifikovali transfer");
+            pushNotification.setFirstName(firstName);
+            pushNotification.setLastName(lastName);
+            pushNotification.setType("firebase");
+            pushNotification.setEmail(email);
+            Map<String, String> data = Map.of("transferId", transfer.getId().toString(), "otp", otpCode);
+            pushNotification.setAdditionalData(data);
+
             jmsTemplate.convertAndSend(destinationEmail,messageHelper.createTextMessage(emailDto));
+            jmsTemplate.convertAndSend(destinationEmail,messageHelper.createTextMessage(pushNotification));
+
             return transfer.getId();
         }
         return null;
@@ -450,7 +462,19 @@ public class TransferService {
             emailDto.setLastName(lastName);
             emailDto.setType("email");
 
+            NotificationDTO pushNotification = new NotificationDTO();
+            pushNotification.setSubject("Verifikacija");
+            pushNotification.setMessage("Kliknite kako biste verifikovali transfer");
+            pushNotification.setFirstName(firstName);
+            pushNotification.setLastName(lastName);
+            pushNotification.setEmail(email);
+            pushNotification.setType("firebase");
+            Map<String, String> data = Map.of("transferId", transfer.getId().toString(), "otp", otpCode);
+            pushNotification.setAdditionalData(data);
+
             jmsTemplate.convertAndSend(destinationEmail,messageHelper.createTextMessage(emailDto));
+            jmsTemplate.convertAndSend(destinationEmail,messageHelper.createTextMessage(pushNotification));
+
             return transfer.getId();
 
         }
