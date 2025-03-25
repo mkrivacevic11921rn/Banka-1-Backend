@@ -142,7 +142,7 @@ public class ExchangeServiceTest {
 
         verify(transferRepository, times(1)).saveAndFlush(any(Transfer.class));
         verify(transferRepository, times(1)).save(any(Transfer.class));
-        verify(jmsTemplate, times(1)).convertAndSend(eq("test-destination"), eq("Simulirana poruka"));
+        verify(jmsTemplate, times(2)).convertAndSend(eq("test-destination"), eq("Simulirana poruka"));
     }
 }
 

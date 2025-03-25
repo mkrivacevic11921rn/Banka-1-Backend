@@ -2,6 +2,7 @@ package com.banka1.notification.listener;
 
 import com.banka1.notification.DTO.response.NotificationDTO;
 import com.banka1.notification.listener.helper.MessageHelper;
+import com.banka1.notification.sender.EmailSender;
 import com.banka1.notification.service.EmailService;
 import jakarta.jms.JMSException;
 import jakarta.jms.Message;
@@ -21,7 +22,7 @@ class NotificationListenerTest {
     private MessageHelper messageHelper;
 
     @Mock
-    private EmailService emailService;
+    private EmailSender emailSender;
 
     @Mock
     private Message message;
@@ -37,7 +38,7 @@ class NotificationListenerTest {
         mockNotification.setEmail("test@example.com");
         mockNotification.setSubject("Test Subject");
         mockNotification.setMessage("Test Message");
-        mockNotification.setType("EMAIL");
+        mockNotification.setType("email");
 
         when(messageHelper.getMessage(any(Message.class), eq(NotificationDTO.class)))
                 .thenReturn(mockNotification);
@@ -48,6 +49,6 @@ class NotificationListenerTest {
         notificationListener.onActivationMessage(message);
 
         verify(messageHelper, times(1)).getMessage(eq(message), eq(NotificationDTO.class));
-        verify(emailService, times(1)).sendEmail(eq(mockNotification));
+        verify(emailSender, times(1)).sendToCustomer(eq(mockNotification));
     }
 }
