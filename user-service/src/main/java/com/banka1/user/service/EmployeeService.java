@@ -47,7 +47,7 @@ public class EmployeeService {
         return findById(Long.parseLong(id));
     }
 
-    public EmployeeResponse findById(Long id) {
+    public EmployeeResponse findById(long id) {
         var employeeOptional = employeeRepository.findById(id);
         if (employeeOptional.isEmpty())
             return null;
