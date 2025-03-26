@@ -24,16 +24,16 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
 public class CardSteps {
-    
+
     @LocalServerPort
     private int port;
-    
+
     private RestTemplate restTemplate;
     private String token;
     private ResponseEntity<Map> responseEntity;
     private HttpStatusCodeException exception;
     private Map<String, Object> cardData;
-    
+
     @Before
     public void setup() {
         restTemplate = new RestTemplate();
@@ -41,22 +41,22 @@ public class CardSteps {
         exception = null;
         token = null;
     }
-    
+
     private String getBaseUrl() {
         return "http://localhost:" + port;
     }
-    
+
     @SuppressWarnings({ "unchecked" })
     @Given("customer is logged into the banking portal for cards")
     public void customerIsLoggedIntoBankingPortalForCards() {
         Map<String, String> loginData = new HashMap<>();
-        loginData.put("email", "marko.markovic@banka.com"); 
+        loginData.put("email", "marko.markovic@banka.com");
         loginData.put("password", "M@rko12345");
-        
+
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(
                     "http://localhost:8081/api/auth/login", loginData, Map.class);
-            
+
             token = (String) ((Map<String, Object>) response.getBody().get("data")).get("token");
             assertNotNull(token, "Token should be generated during login");
             System.out.println("Customer authenticated with token length: " + token.length());
@@ -64,29 +64,29 @@ public class CardSteps {
             fail("Login failed: " + e.getMessage());
         }
     }
-    
+
     @And("customer navigates to card page")
     public void customerNavigatesToCardPage() {
         System.out.println("Customer navigates to card page (simulated)");
     }
-    
+
     @When("customer fills out the card form")
     public void customerFillsOutTheCardForm() {
         cardData = new HashMap<>();
         cardData.put("accountID", 106);
         cardData.put("cardBrand", "VISA");
-        cardData.put("cardType", "DEBIT"); 
+        cardData.put("cardType", "DEBIT");
         System.out.println("Card form completed with account ID: " + cardData.get("accountID") + " and card type: " + cardData.get("cardType"));
     }
-    
+
     @And("customer presses the Continue button for cards")
     public void customerPressesTheContinueButton() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add("Authorization", "Bearer " + token);
-        
+
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(cardData, headers);
-        
+
         try {
             System.out.println("Sending card creation request with data: " + cardData);
             responseEntity = restTemplate.exchange(
@@ -102,20 +102,20 @@ public class CardSteps {
             System.err.println("Error response: " + e.getResponseBodyAsString());
         }
     }
-    
+
     @Then("customer should see a success message for cards")
     public void customerShouldSeeASuccessMessage() {
         assertNull(exception, "No exception should be thrown");
         assertNotNull(responseEntity, "Response should not be null");
         assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode(), "Expected 201 CREATED status");
-        
+
         Map<String, Object> responseBody = responseEntity.getBody();
         assertTrue((Boolean) responseBody.get("success"), "Response should indicate success");
-        
+
         Map<String, Object> data = (Map<String, Object>) responseBody.get("data");
         assertNotNull(data.get("id"), "Response should contain card ID");
         assertNotNull(data.get("message"), "Response should contain success message");
-        
+
         System.out.println("Card successfully created with ID: " + data.get("id"));
     }
 }
