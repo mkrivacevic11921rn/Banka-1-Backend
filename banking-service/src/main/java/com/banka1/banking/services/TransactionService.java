@@ -30,6 +30,7 @@ public class TransactionService {
         return transactions;
     }
 
+
     public boolean userExists(Long id){
         return transactionRepository.existsById(id);
     }

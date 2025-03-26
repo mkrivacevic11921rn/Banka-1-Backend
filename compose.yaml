@@ -216,12 +216,6 @@ services:
       POSTGRES_PASSWORD: trading_service_password
       POSTGRES_DB: trading_db
 
-volumes:
-  activemq_data: null
-  notification_db_data: null
-  banking_db_data: null
-  user_db_data: null
-  trading_db_data: null
 networks:
   broker-net: null
   notification-net: null
