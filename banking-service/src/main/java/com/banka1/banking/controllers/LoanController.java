@@ -4,13 +4,13 @@ import com.banka1.banking.dto.request.CreateLoanDTO;
 import com.banka1.banking.dto.request.LoanUpdateDTO;
 import com.banka1.banking.models.Installment;
 import com.banka1.banking.models.Loan;
-import com.banka1.banking.repository.InstallmentsRepository;
-import com.banka1.banking.repository.LoanRepository;
 import com.banka1.banking.services.LoanService;
 import com.banka1.banking.services.implementation.AuthService;
 import com.banka1.banking.utils.ResponseMessage;
 import com.banka1.banking.utils.ResponseTemplate;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,10 +33,6 @@ public class LoanController {
     private LoanService loanService;
     @Autowired
     private AuthService authService;
-    @Autowired
-    private LoanRepository loanRepository;
-    @Autowired
-    private InstallmentsRepository installmentRepository;
 
     @PostMapping("/")
     @Operation(summary = "Kreiranje zahteva za kredit", description = "Dodaje novi kredit u sistem i cuva se u bazi pod statusom na cekanju.")
@@ -63,7 +59,7 @@ public class LoanController {
     })
     @LoanAuthorization(customerOnlyOperation = true)
     public ResponseEntity<?> createLoan(@Valid @RequestBody CreateLoanDTO createLoanDTO) {
-        Loan newLoan = null;
+        Loan newLoan;
         try {
             newLoan = loanService.createLoan(createLoanDTO);
         } catch (RuntimeException e) {
