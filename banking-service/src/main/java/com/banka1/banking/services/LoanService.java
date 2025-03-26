@@ -273,6 +273,8 @@ public class LoanService {
 
                 createNextInstallment(loan, 0);
 
+                loan.setAllowedDate(Instant.now().getEpochSecond());
+
                 return loanRepository.save(loan);
             }
 
@@ -321,7 +323,15 @@ public class LoanService {
                 installments.addAll(installmentsRepository.getByLoanId(loan.getId()));
             }
         }
-        return installments;
+        return installments.stream().map(installment -> {
+            if (installment.getPaymentStatus() != PaymentStatus.PENDING)
+                return installment;
+            var loan = updateLoanRate(installment.getLoan(), true);
+            if (Objects.equals(installment.getAmount(), loan.getMonthlyPayment()))
+                return installment;
+            updateInstallmentRate(installment);
+            return installmentsRepository.save(installment);
+        }).toList();
     }
     public Integer calculateRemainingInstallments(Long ownerId, Long loanId) {
         Loan loan = loanRepository.findById(loanId).
