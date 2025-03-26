@@ -257,7 +257,7 @@ public class CompanyController {
             )
     })
     @CompanyAuthorization(employeeOnlyOperation = true)
-    public ResponseEntity<?> getCardsByAccountID(@PathVariable("owner_id") Long ownerId) {
+    public ResponseEntity<?> getCompaniesByOwnerID(@PathVariable("owner_id") Long ownerId) {
         try {
             List<Company> companies = companyService.findAllByOwnerId(ownerId);
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("companies", companies), null);
