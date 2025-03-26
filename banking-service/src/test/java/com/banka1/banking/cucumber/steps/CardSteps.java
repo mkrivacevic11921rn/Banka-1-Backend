@@ -76,6 +76,8 @@ public class CardSteps {
         cardData.put("accountID", 106);
         cardData.put("cardBrand", "VISA");
         cardData.put("cardType", "DEBIT");
+        cardData.put("authorizedPerson", null);
+        cardData.put("company", null);
         System.out.println("Card form completed with account ID: " + cardData.get("accountID") + " and card type: " + cardData.get("cardType"));
     }
 
