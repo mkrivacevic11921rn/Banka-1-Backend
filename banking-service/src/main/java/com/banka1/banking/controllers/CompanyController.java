@@ -2,6 +2,7 @@ package com.banka1.banking.controllers;
 
 import com.banka1.banking.aspect.CompanyAuthorization;
 import com.banka1.banking.dto.CreateCompanyDTO;
+
 import com.banka1.banking.models.Company;
 import com.banka1.banking.services.CompanyService;
 
@@ -206,13 +207,62 @@ public class CompanyController {
             """))
             )
     })
-//    @CompanyAuthorization(employeeOnlyOperation = true)
+    @CompanyAuthorization(employeeOnlyOperation = true)
     public ResponseEntity<?> getBasList() {
         try {
             List<String> lista =  companyService.getBusinessActivityCodes();
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("basList", lista), null);
         } catch (Exception e) {
             log.error("Greška prilikom trazenja basova: ", e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
+        }
+    }
+
+    @GetMapping("/{owner_id}")
+    @Operation(summary = "Pregled svih kompanija za vlasnika", description = "Izlistavanje svih kompanija istog vlasnika")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista kompanija korisnika.", content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(value = """
+                {
+                   "data": {
+                      "companies": [
+                        {
+                            "id": 1,
+                            "name": "Ime firme raa",
+                            "address": "Bulevar Banka 1",
+                            "vatNumber": "111111111",
+                            "companyNumber": "11111111"
+                        }
+                      ]
+                   },
+                   "success": true
+                 }
+            """))
+            ),
+            @ApiResponse(responseCode = "403", description = "Nedovoljna autorizacija.", content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(value = """
+                {
+                  "success": false,
+                  "error": "Nedovoljna autorizacija."
+                }
+            """))
+            ),
+            @ApiResponse(responseCode = "404", description = "Nema kaompanija ovog kornsnika.", content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(value = """
+                {
+                  "success": false,
+                  "error": "Nema kompanija ovog korisnika."
+                }
+            """))
+            )
+    })
+    @CompanyAuthorization(employeeOnlyOperation = true)
+    public ResponseEntity<?> getCardsByAccountID(@PathVariable("owner_id") Long ownerId) {
+        try {
+            List<Company> companies = companyService.findAllByOwnerId(ownerId);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("companies", companies), null);
+        } catch (Exception e) {
+            log.error("Greška prilikom trazenja kartica: ", e);
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }

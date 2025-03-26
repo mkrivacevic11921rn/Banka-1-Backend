@@ -42,4 +42,8 @@ public class CompanyService {
     public List<String> getBusinessActivityCodes() {
         return BusinessActivityCode.getAll();
     }
+
+    public List<Company> findAllByOwnerId(Long ownerId) {
+        return companyRepository.findByOwnerID(ownerId);
+    }
 }
