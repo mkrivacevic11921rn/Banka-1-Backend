@@ -56,25 +56,25 @@ public class TransactionService {
 
         Double amount = calculateInstallment(loanAmount, annualInterestRate, numberOfInstallments);
 
-            if (customerAccount.getBalance().compareTo(amount) >= 0) {
-                customerAccount.setBalance(customerAccount.getBalance() - amount);
-                bankAccount.setBalance(bankAccount.getBalance() + amount);
-                Transaction transaction = new Transaction();
-                transaction.setFromAccountId(customerAccount);
-                transaction.setToAccountId(bankAccount);
-                transaction.setFinalAmount(amount);
-                transaction.setAmount(amount);
-                transaction.setFee(0.0);
-                transaction.setCurrency(currencyRepository.getByCode(customerAccount.getCurrencyType()));
-                transaction.setTimestamp(Instant.now().getEpochSecond());
-                transaction.setDescription("Installment for loan " + installment.getLoan());
-                transaction.setLoanId(installment.getLoan().getId());
+        if (customerAccount.getBalance().compareTo(amount) >= 0) {
+            customerAccount.setBalance(customerAccount.getBalance() - amount);
+            bankAccount.setBalance(bankAccount.getBalance() + amount);
+            Transaction transaction = new Transaction();
+            transaction.setFromAccountId(customerAccount);
+            transaction.setToAccountId(bankAccount);
+            transaction.setFinalAmount(amount);
+            transaction.setAmount(amount);
+            transaction.setFee(0.0);
+            transaction.setCurrency(currencyRepository.getByCode(customerAccount.getCurrencyType()));
+            transaction.setTimestamp(Instant.now().getEpochSecond());
+            transaction.setDescription("Installment for loan " + installment.getLoan());
+            transaction.setLoanId(installment.getLoan().getId());
 
-                transactionRepository.save(transaction);
-                accountRepository.save(customerAccount);
-                accountRepository.save(bankAccount);
-                return true;
-            }
+            transactionRepository.save(transaction);
+            accountRepository.save(customerAccount);
+            accountRepository.save(bankAccount);
+            return true;
+        }
         return false;
     }
 
