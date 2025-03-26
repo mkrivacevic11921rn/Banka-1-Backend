@@ -213,6 +213,9 @@ public class LoanService {
             Loan loan = loanRepository.findById(loanId).orElse(null);
             if (loan == null) {return null;}
 
+            if (loan.getPaymentStatus() != PaymentStatus.PENDING)
+                return null;
+
             // Update loan status based on approval decision
             String emailMessage;
             if (loanUpdateDTO.getApproved()) {
