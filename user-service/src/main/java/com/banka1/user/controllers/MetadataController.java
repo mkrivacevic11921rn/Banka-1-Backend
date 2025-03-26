@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,7 +45,7 @@ public class MetadataController {
         )
     })
     public ResponseEntity<?> getAllDepartments() {
-        return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("list", Arrays.stream(Department.values()).map(Department::toString).collect(Collectors.toList())), null);
+        return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("list", Arrays.stream(Department.values()).map(Department::toString).collect(Collectors.toList())), null);
     }
 
     @Authorization(permissions = { Permission.CREATE_EMPLOYEE, Permission.EDIT_EMPLOYEE })
@@ -67,7 +68,7 @@ public class MetadataController {
         )
     })
     public ResponseEntity<?> getAllPermissions() {
-        return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("list", Arrays.stream(Permission.values()).map(Permission::toString).collect(Collectors.toList())), null);
+        return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("list", Arrays.stream(Permission.values()).map(Permission::toString).collect(Collectors.toList())), null);
     }
 
     @Authorization(permissions = { Permission.CREATE_EMPLOYEE, Permission.EDIT_EMPLOYEE })
@@ -90,6 +91,6 @@ public class MetadataController {
         )
     })
     public ResponseEntity<?> getAllPositions() {
-        return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("list", Arrays.stream(Position.values()).map(Position::toString).collect(Collectors.toList())), null);
+        return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("list", Arrays.stream(Position.values()).map(Position::toString).collect(Collectors.toList())), null);
     }
 }

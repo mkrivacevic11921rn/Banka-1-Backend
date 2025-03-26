@@ -11,8 +11,6 @@ import com.banka1.banking.services.implementation.AuthService;
 import com.banka1.banking.utils.ResponseMessage;
 import com.banka1.banking.utils.ResponseTemplate;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -155,12 +153,9 @@ public class LoanController {
     public ResponseEntity<?> getPendingLoans() {
         try {
             List<Loan> loans = loanService.getPendingLoans();
-            if (loans.isEmpty()) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, ResponseMessage.NO_DATA.toString());
-            }
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("loans", loans), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("loans", loans), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -237,17 +232,9 @@ public class LoanController {
             @PathVariable("user_id") Long userId) {
         try {
             List<Loan> loans = loanService.getAllUserLoans(userId);
-            if (loans == null) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
-                        ResponseMessage.ACCOUNTS_NOT_FOUND.toString());
-            }
-            else if (loans.isEmpty()) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
-                        ResponseMessage.NO_DATA.toString());
-            }
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("loans", loans), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("loans", loans), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -317,17 +304,10 @@ public class LoanController {
         try {
             Long ownerId = authService.parseToken(authService.getToken(authorization)).get("id", Long.class);
             List<Loan> loans = loanService.getAllUserLoans(ownerId);
-            if (loans == null) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
-                        ResponseMessage.ACCOUNTS_NOT_FOUND.toString());
-            }
-            else if (loans.isEmpty()) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
-                        ResponseMessage.NO_DATA.toString());
-            }
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("loans", loans), null);
+
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("loans", loans), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 /// samo zaposleni
@@ -397,13 +377,9 @@ public class LoanController {
             @RequestHeader(value = "Authorization", required = false) String authorization) {
         try {
             List<Loan> loans = loanService.getAllLoans();
-            if (loans == null || loans.isEmpty()) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
-                        ResponseMessage.NO_DATA.toString());
-            }
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("loans", loans), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("loans", loans), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -475,9 +451,9 @@ public class LoanController {
                 return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
                         ResponseMessage.NOT_THE_OWNER.toString());
             }
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("loan", loan), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("loan", loan), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -547,12 +523,12 @@ public class LoanController {
         try {
             Loan loan = loanService.getLoanDetails(loanId);
             if (loan == null) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
-                        ResponseMessage.NOT_THE_OWNER.toString());
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, "Kredit sa ID-em " + loanId + " nije pronađen."
+                       );
             }
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("loan", loan), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("loan", loan), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -625,23 +601,22 @@ public class LoanController {
             // Validate required fields
             if (loanUpdateDTO == null || loanUpdateDTO.getApproved() == null) {
                 return ResponseTemplate.create(ResponseEntity.badRequest(), false,
-                        Map.of("message", "Approved status must be provided"), null);
+                        null, "Approved status must be provided");
             }
             
             Loan updatedLoan = loanService.updateLoanRequest(loanId, loanUpdateDTO);
             if (updatedLoan == null) {
                 return ResponseTemplate.create(ResponseEntity.badRequest(), false,
-                        Map.of("message", ResponseMessage.LOAN_NOT_FOUND), null);
+                        null, ResponseMessage.LOAN_NOT_FOUND.getMessage());
             }
-            return ResponseTemplate.create(ResponseEntity.ok(), true,
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true,
                     Map.of("message", ResponseMessage.UPDATED, "data", updatedLoan), null);
         } catch (HttpMessageNotReadableException e) {
             // Specific handling for JSON parsing errors
             return ResponseTemplate.create(ResponseEntity.badRequest(), false,
-                    Map.of("message", "Failed to parse request body. Please check JSON format."), null);
+                    null, "Failed to parse request body. Please check JSON format.");
         } catch (RuntimeException e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), false,
-                    Map.of("message", e.getMessage()), null);
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
     }
     @GetMapping("/admin/{user_id}/installments")
@@ -732,13 +707,9 @@ public class LoanController {
     public ResponseEntity<?> getUserInstallments(@PathVariable("user_id") Long userId) {
         try {
             List<Installment> installments = loanService.getUserInstallments(userId);
-            if (installments.isEmpty()) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
-                        ResponseMessage.NO_DATA.toString());
-            }
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("installments", installments), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("installments", installments), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -831,13 +802,9 @@ public class LoanController {
         try {
             Long userId = authService.parseToken(authService.getToken(authorization)).get("id", Long.class);
             List<Installment> installments = loanService.getUserInstallments(userId);
-            if (installments.isEmpty()) {
-                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
-                        ResponseMessage.NO_DATA.toString());
-            }
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("installments", installments), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("installments", installments), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -873,9 +840,14 @@ public class LoanController {
                 return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
                         ResponseMessage.NOT_THE_OWNER.toString());
             }
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("remaining_number", num), null);
+            // Ako je broj preostalih rata 0, vraćamo HTTP 200 OK sa praznom listom
+            if (num == 0) {
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("remaining_number", 0), "Sve rate su plaćene.");
+            }
+
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("remaining_number", num), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -907,9 +879,9 @@ public class LoanController {
     public ResponseEntity<?> getRemainingInstallments() {
         try {
             loanService.processLoanPayments();
-            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("cron", "success"), null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("cron", "success"), null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), false, Map.of("cron", "failed"), e.getMessage());
+            return ResponseTemplate.create(ResponseEntity.badRequest(), false, null, e.getMessage());
         }
     }
 

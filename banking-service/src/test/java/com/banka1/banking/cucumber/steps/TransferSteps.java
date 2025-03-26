@@ -25,18 +25,18 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
 public class TransferSteps {
-    
+
     @LocalServerPort
     private int port;
-    
+
     private RestTemplate restTemplate;
-    
+
     private String token;
     private ResponseEntity<Map> responseEntity;
     private HttpStatusCodeException exception;
     private Map<String, Object> internalTransferData;
     private Map<String, Object> moneyTransferData;
-    
+
     @Before
     public void setup() {
         restTemplate = new RestTemplate();
@@ -44,22 +44,22 @@ public class TransferSteps {
         exception = null;
         token = null;
     }
-    
+
     private String getBaseUrl() {
         return "http://localhost:" + port;
     }
-    
+
     @SuppressWarnings({ "unchecked" })
     @Given("customer is logged into the banking portal for transfers")
     public void customerIsLoggedIntoBankingPortal() {
         Map<String, String> loginData = new HashMap<>();
-        loginData.put("email", "marko.markovic@banka.com"); 
+        loginData.put("email", "marko.markovic@banka.com");
         loginData.put("password", "M@rko12345");
-        
+
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(
                     "http://localhost:8081/api/auth/login", loginData, Map.class);
-            
+
             token = (String) ((Map<String, Object>) response.getBody().get("data")).get("token");
             assertNotNull(token, "Token should be generated during login");
             System.out.println("Customer authenticated with token length: " + token.length());
@@ -67,17 +67,17 @@ public class TransferSteps {
             fail("Login failed: " + e.getMessage());
         }
     }
-    
+
     @And("customer navigates to transfer page")
     public void customerNavigatesToTransferPage() {
         System.out.println("Customer navigates to transfer page (simulated)");
     }
-    
+
     @And("customer navigates to payment page")
     public void customerNavigatesToPaymentPage() {
         System.out.println("Customer navigates to payment page (simulated)");
     }
-    
+
     @When("customer fills out the transfer form")
     public void customerFillsOutTheTransferForm() {
         internalTransferData = new HashMap<>();
@@ -85,13 +85,13 @@ public class TransferSteps {
         internalTransferData.put("toAccountId", 107);
         internalTransferData.put("amount", 1000);
     }
-    
+
     @When("customer does not fill out the transfer form")
     public void customerDoesNotFillOutTheTransferForm() {
         internalTransferData = new HashMap<>();
         internalTransferData.put("fromAccountId", 106);
     }
-    
+
     @When("customer fills out payment form")
     public void customerFillsOutPaymentForm() {
         moneyTransferData = new HashMap<>();
@@ -104,21 +104,21 @@ public class TransferSteps {
         moneyTransferData.put("payementReference", "222");
         moneyTransferData.put("payementDescription", "Test Payment");
     }
-    
+
     @When("customer does not fill out the payment form")
     public void customerDoesNotFillOutThePaymentForm() {
         moneyTransferData = new HashMap<>();
         moneyTransferData.put("fromAccountNumber", "111000100000000101");
     }
-    
+
     @And("customer presses the Continue button")
     public void customerPressesTheContinueButton() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add("Authorization", "Bearer " + token);
-        
+
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(internalTransferData, headers);
-        
+
         try {
             System.out.println("Sending internal transfer request with token");
             responseEntity = restTemplate.exchange(
@@ -134,15 +134,15 @@ public class TransferSteps {
             System.err.println("Error response: " + e.getResponseBodyAsString());
         }
     }
-    
+
     @And("customer presses Continue button")
     public void customerPressesContinueButton() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add("Authorization", "Bearer " + token);
-        
+
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(moneyTransferData, headers);
-        
+
         try {
             System.out.println("Sending money transfer request with token");
             responseEntity = restTemplate.exchange(
@@ -158,20 +158,20 @@ public class TransferSteps {
             System.err.println("Error response: " + e.getResponseBodyAsString());
         }
     }
-    
+
     @Then("customer should be prompted to enter verification code")
     public void customerShouldBePromptedToEnterVerificationCode() {
         assertNull(exception, "No exception should be thrown");
         assertNotNull(responseEntity, "Response should not be null");
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode(), "Expected 200 OK status");
     }
-    
+
     @Then("customer should see an error message")
     public void customerShouldSeeAnErrorMessage() {
         assertNotNull(exception, "Exception should be thrown for invalid request");
-        assertTrue(exception.getStatusCode().is4xxClientError(), 
+        assertTrue(exception.getStatusCode().is4xxClientError(),
                 "Should return a client error status code");
-        
+
         String errorResponse = exception.getResponseBodyAsString();
         System.out.println("Received expected error: " + errorResponse);
     }

@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Component
 @Getter
@@ -19,4 +20,5 @@ public class NotificationDTO {
     private String type;
     private Long userId;
     private UserType userType;
+    private Map<String, String> additionalData;
 }

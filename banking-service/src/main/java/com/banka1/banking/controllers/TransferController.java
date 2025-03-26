@@ -89,11 +89,11 @@ public class TransferController {
 
             Long transferId = transferService.createInternalTransfer(transferDTO);
 
-            return ResponseTemplate.create(ResponseEntity.ok(),true, Map.of("message","Interni prenos uspešno kreiran.","transferId",transferId),null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK),true, Map.of("message","Interni prenos uspešno kreiran.","transferId",transferId),null);
 
 
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
 
         }
 
@@ -156,10 +156,10 @@ public class TransferController {
 //            Long toAccountId = transferDTO.getToAccountId();
 //            Double amount = transferDTO.getAmount();
 
-            return ResponseTemplate.create(ResponseEntity.ok(),true, Map.of("message","Transfer novca uspešno kreiran.","transferId",transferId),null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK),true, Map.of("message","Transfer novca uspešno kreiran.","transferId",transferId),null);
 
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
 
         }
     }

@@ -60,7 +60,7 @@ public class CurrencyController {
     })
     public ResponseEntity<?> getAvailableCurrencies() {
         List<String> currencies = currencyService.getAvailableCurrencies();
-        return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("currencies", currencies), null);
+        return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("currencies", currencies), null);
     }
 
     @GetMapping("/exchange-rates")
@@ -94,7 +94,7 @@ public class CurrencyController {
     })
     public ResponseEntity<?> getAllExchangeRates() {
         List<ExchangePairDTO> rates = currencyService.getAllExchangeRates();
-        return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("rates", rates), null);
+        return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("rates", rates), null);
     }
 
     @GetMapping("/exchange-rates/{currency}")
@@ -140,6 +140,6 @@ public class CurrencyController {
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
                     "Ne postoji kursna lista za traženu valutu " + currency);
         }
-        return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("rates", rates), null);
+        return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("rates", rates), null);
     }
 }

@@ -73,10 +73,10 @@ public class ExchangeController {
 
             Long transferId = exchangeService.createExchangeTransfer(exchangeMoneyTransferDTO);
 
-            return ResponseTemplate.create(ResponseEntity.ok(),true, Map.of("message","Interni prenos sa konverzijom uspesno izvršen.","transferId",transferId),null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK),true, Map.of("message","Interni prenos sa konverzijom uspesno izvršen.","transferId",transferId),null);
 
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
 
     }

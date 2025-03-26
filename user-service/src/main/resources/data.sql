@@ -6,6 +6,10 @@ TRUNCATE TABLE employee CASCADE;
 TRUNCATE TABLE reset_password CASCADE;
 TRUNCATE TABLE set_password CASCADE;
 
+
+ALTER SEQUENCE customer_id_seq RESTART WITH 100;
+ALTER SEQUENCE employee_id_seq RESTART WITH 100;
+
 -- ============== Loading Data ==============
 
 -- Admin user password: admin123
@@ -20,10 +24,10 @@ VALUES (1, 'Admin', 'Admin', 'admin@admin.com',
 -- Insert all permissions for admin
 INSERT INTO employee_permissions (employee_id, permission)
 SELECT 1, unnest(ARRAY[
-    'CREATE_CUSTOMER', 'DELETE_CUSTOMER', 'LIST_CUSTOMER', 'EDIT_CUSTOMER', 'READ_CUSTOMER',
-    'SET_CUSTOMER_PERMISSION', 'SET_EMPLOYEE_PERMISSION', 'DELETE_EMPLOYEE', 'EDIT_EMPLOYEE',
-    'LIST_EMPLOYEE', 'READ_EMPLOYEE', 'CREATE_EMPLOYEE'
-    ]);
+                     'CREATE_CUSTOMER', 'DELETE_CUSTOMER', 'LIST_CUSTOMER', 'EDIT_CUSTOMER', 'READ_CUSTOMER',
+                 'SET_CUSTOMER_PERMISSION', 'SET_EMPLOYEE_PERMISSION', 'DELETE_EMPLOYEE', 'EDIT_EMPLOYEE',
+                 'LIST_EMPLOYEE', 'READ_EMPLOYEE', 'CREATE_EMPLOYEE'
+                     ]);
 
 -- Employee 1: Petar password: Per@12345
 INSERT INTO employee (id, first_name, last_name, email, username, phone_number,
@@ -36,10 +40,10 @@ VALUES (2, 'Petar', 'Petrović', 'petar.petrovic@banka.com', 'perica',
 -- Permissions for Petar
 INSERT INTO employee_permissions (employee_id, permission)
 SELECT 2, unnest(ARRAY[
-    'CREATE_CUSTOMER', 'DELETE_CUSTOMER', 'LIST_CUSTOMER', 'EDIT_CUSTOMER', 'READ_CUSTOMER',
-    'SET_CUSTOMER_PERMISSION', 'SET_EMPLOYEE_PERMISSION', 'DELETE_EMPLOYEE', 'EDIT_EMPLOYEE',
-    'LIST_EMPLOYEE', 'READ_EMPLOYEE', 'CREATE_EMPLOYEE'
-    ]);
+                     'CREATE_CUSTOMER', 'DELETE_CUSTOMER', 'LIST_CUSTOMER', 'EDIT_CUSTOMER', 'READ_CUSTOMER',
+                 'SET_CUSTOMER_PERMISSION', 'SET_EMPLOYEE_PERMISSION', 'DELETE_EMPLOYEE', 'EDIT_EMPLOYEE',
+                 'LIST_EMPLOYEE', 'READ_EMPLOYEE', 'CREATE_EMPLOYEE'
+                     ]);
 
 -- Employee 2: Jovana password: Jovan@12345
 INSERT INTO employee (id, first_name, last_name, email, username, phone_number,
@@ -52,8 +56,8 @@ VALUES (3, 'Jovana', 'Jovanović', 'jovana.jovanovic@banka.com', 'jjovanaa',
 -- Permissions for Jovana
 INSERT INTO employee_permissions (employee_id, permission)
 SELECT 3, unnest(ARRAY[
-    'READ_CUSTOMER', 'CREATE_CUSTOMER', 'DELETE_CUSTOMER', 'LIST_CUSTOMER', 'EDIT_CUSTOMER'
-    ]);
+                     'READ_CUSTOMER', 'CREATE_CUSTOMER', 'DELETE_CUSTOMER', 'LIST_CUSTOMER', 'EDIT_CUSTOMER'
+                     ]);
 
 -- Employee 3: Nikolina
 INSERT INTO employee (id, first_name, last_name, email, username, phone_number,
@@ -66,8 +70,8 @@ VALUES (4, 'Nikolina', 'Jovanović', 'nikolina.jovanovic@banka.com', 'nikolinaaa
 -- Permissions for Nikolina password: Jovan@12345
 INSERT INTO employee_permissions (employee_id, permission)
 SELECT 4, unnest(ARRAY[
-    'READ_CUSTOMER', 'CREATE_CUSTOMER', 'DELETE_CUSTOMER', 'LIST_CUSTOMER', 'EDIT_CUSTOMER'
-    ]);
+                     'READ_CUSTOMER', 'CREATE_CUSTOMER', 'DELETE_CUSTOMER', 'LIST_CUSTOMER', 'EDIT_CUSTOMER'
+                     ]);
 
 -- Employee 4: Milica password: Jovan@12345
 INSERT INTO employee (id, first_name, last_name, email, username, phone_number,
@@ -80,8 +84,8 @@ VALUES (5, 'Milica', 'Jovanović', 'milica.jovanovic@banka.com', 'milicaaaa',
 -- Permissions for Milica
 INSERT INTO employee_permissions (employee_id, permission)
 SELECT 5, unnest(ARRAY[
-    'READ_CUSTOMER', 'CREATE_CUSTOMER', 'DELETE_CUSTOMER', 'LIST_CUSTOMER', 'EDIT_CUSTOMER'
-    ]);
+                     'READ_CUSTOMER', 'CREATE_CUSTOMER', 'DELETE_CUSTOMER', 'LIST_CUSTOMER', 'EDIT_CUSTOMER'
+                     ]);
 
 -- Customer 1: Marko password: M@rko12345
 INSERT INTO customer (id, first_name, last_name, email, username, phone_number,
@@ -172,3 +176,11 @@ INSERT INTO customer_permissions (customer_id, permission)
 VALUES (8, 'READ_EMPLOYEE');
 
 -- ============== Data Loaded ==============
+
+-- Employee 6: Milica password: Jovan@12345
+INSERT INTO employee (id, first_name, last_name, email, username, phone_number,
+                      birth_date, address, gender, position, department, active,
+                      is_admin, salt_password, password)
+VALUES (6, 'Milica', 'Jovanović', 'milica.jovanovic2@banka.com', 'milicaaaa2',
+        '+381641001001', '2000-10-10', 'Knez Mihailova 6', 'FEMALE', 'WORKER',
+        'AGENT', TRUE, FALSE, 'salt', '$2a$12$c2Y5721b8h0B0olC.xrQ.eHw2UR.67NAsDvyEkAbRo/a2dW5Tr.ge');
