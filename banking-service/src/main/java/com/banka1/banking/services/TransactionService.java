@@ -24,7 +24,7 @@ public class TransactionService {
     @Transactional
     public List<Transaction> getTransactionsByUserId(Long userId) {
         List<Account> accounts = accountRepository.findByOwnerID(userId);
-        List<Transaction> transactions = transactionRepository.findByFromAccountIdIn(accounts);
+        List<Transaction> transactions = transactionRepository.findByFromAccountIdInOrToAccountIdIn(accounts, accounts);
         if(!Objects.equals(bankAccountUtils.getBankAccountForCurrency(CurrencyType.RSD).getOwnerID(), userId))
             transactions.removeIf(Transaction::getBankOnly);
         return transactions;
