@@ -35,7 +35,7 @@ public enum BusinessActivityCode {
     public static List<String> getAll() {
         List<String> codes = new ArrayList<>();
         for (BusinessActivityCode activity : values()) {
-            codes.add(String.format("%.0f -> %s", activity.getCode(), activity.getDescription()));
+            codes.add(String.format("%s -> %s", activity.getCode(), activity.getDescription()));
         }
         System.out.println(codes);
         return codes;
