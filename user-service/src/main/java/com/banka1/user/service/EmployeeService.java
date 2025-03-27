@@ -16,12 +16,7 @@ import org.springframework.data.domain.*;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
-import java.util.Base64;
 import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
@@ -138,11 +133,6 @@ public class EmployeeService {
         if (employee.getEmail().equals(currentUserEmail)) {
             throw new AccessDeniedException("Ne možete obrisati sami sebe");
         }
-
-//        // Samo admin može brisati admina
-//        if (employee.getPermissions().contains("admin") && !currentUserHasAdminPermission()) {
-//            throw new AccessDeniedException("Samo admin može brisati drugog admina");
-//        }
 
         employeeRepository.delete(employee);
     }
