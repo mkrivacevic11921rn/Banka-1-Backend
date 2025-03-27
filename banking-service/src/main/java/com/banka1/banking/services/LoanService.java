@@ -9,6 +9,7 @@ import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Installment;
 import com.banka1.banking.models.Loan;
+import com.banka1.banking.models.RateChange;
 import com.banka1.banking.models.helper.InterestType;
 import com.banka1.banking.models.helper.LoanType;
 import com.banka1.banking.models.helper.PaymentStatus;
@@ -148,16 +149,21 @@ public class LoanService {
     }
 
     public double getRateChange() {
-        var change = rateChangeRepository.findById(1L).orElseThrow();
         var date = LocalDate.now();
 
-        if (change.getYear() == date.getYear() && change.getMonth() == date.getMonthValue())
-            return change.getChange();
+        var changeOpt = rateChangeRepository.findByYearAndMonth(date.getYear(), date.getMonthValue());
 
-        change.setYear(date.getYear());
-        change.setMonth(date.getMonthValue());
-        change.setChange((Math.random() - 0.5) * 3);
-        return rateChangeRepository.save(change).getChange();
+        if (changeOpt.isEmpty()) {
+            var change = new RateChange();
+            change.setYear(date.getYear());
+            change.setMonth(date.getMonthValue());
+            change.setChange((Math.random() - 0.5) * 3);
+            return rateChangeRepository.save(change).getChange();
+        }
+        var change = changeOpt.get();
+
+
+        return change.getChange();
     }
 
     public void calculateRemaining(Loan loan) {
@@ -289,7 +295,7 @@ public class LoanService {
         try {
             NotificationDTO emailDTO = new NotificationDTO();
             emailDTO.setSubject("Obaveštenje o statusu kredita");
-            emailDTO.setMessage("Nije prosao loan jbg");
+            emailDTO.setMessage(emailMessage);
             emailDTO.setType("email");
 
             try {
