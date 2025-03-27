@@ -3,7 +3,6 @@ package com.banka1.banking.services;
 import com.banka1.banking.dto.CreateCompanyDTO;
 import com.banka1.banking.models.Company;
 import com.banka1.banking.models.helper.BusinessActivityCode;
-import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.repository.CompanyRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -15,13 +14,10 @@ import java.util.List;
 public class CompanyService {
     private final CompanyRepository companyRepository;
     private final ModelMapper modelMapper;
-    private final AccountRepository accountRepository;
 
-
-    public CompanyService(CompanyRepository companyRepository, ModelMapper modelMapper, AccountRepository accountRepository) {
+    public CompanyService(CompanyRepository companyRepository, ModelMapper modelMapper) {
         this.companyRepository = companyRepository;
         this.modelMapper = modelMapper;
-        this.accountRepository = accountRepository;
     }
 
     public Company createCompany(CreateCompanyDTO createCompanyDTO) {

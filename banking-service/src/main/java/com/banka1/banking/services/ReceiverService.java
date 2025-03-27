@@ -4,7 +4,6 @@ import com.banka1.banking.dto.ReceiverDTO;
 import com.banka1.banking.models.Receiver;
 import com.banka1.banking.repository.ReceiverRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

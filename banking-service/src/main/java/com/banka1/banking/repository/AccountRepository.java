@@ -1,12 +1,10 @@
 package com.banka1.banking.repository;
-
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.helper.AccountType;
 import com.banka1.banking.models.helper.CurrencyType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
 import java.util.List;

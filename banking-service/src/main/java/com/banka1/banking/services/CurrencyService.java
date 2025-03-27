@@ -6,10 +6,8 @@ import com.banka1.banking.models.ExchangePair;
 import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.repository.CurrencyRepository;
 import com.banka1.banking.repository.ExchangePairRepository;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -24,11 +22,8 @@ public class CurrencyService {
     private final RestTemplate restTemplate;
     private final CurrencyRepository currencyRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    private static final String API_URL = "https://api.exchangerate-api.com/v4/latest/RSD";
     private static final List<CurrencyType> SUPPORTED_CURRENCIES = Arrays.asList(CurrencyType.values());
 
-    @Autowired
     public CurrencyService(ExchangePairRepository exchangePairRepository, RestTemplate restTemplate, CurrencyRepository currencyRepository) {
         this.exchangePairRepository = exchangePairRepository;
         this.restTemplate = restTemplate;

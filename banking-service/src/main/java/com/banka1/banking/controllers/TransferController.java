@@ -152,10 +152,6 @@ public class TransferController {
 
             Long transferId = transferService.createMoneyTransfer(transferDTO);
 
-//            Long fromAccountId = transferDTO.getFromAccountId();
-//            Long toAccountId = transferDTO.getToAccountId();
-//            Double amount = transferDTO.getAmount();
-
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK),true, Map.of("message","Transfer novca uspešno kreiran.","transferId",transferId),null);
 
         } catch (Exception e) {

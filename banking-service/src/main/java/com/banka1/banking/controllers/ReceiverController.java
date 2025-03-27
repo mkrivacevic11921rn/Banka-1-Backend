@@ -1,6 +1,4 @@
 package com.banka1.banking.controllers;
-
-import com.banka1.banking.aspect.AccountAuthorization;
 import com.banka1.banking.aspect.ReceiverAuthorization;
 import com.banka1.banking.dto.ReceiverDTO;
 import com.banka1.banking.models.Receiver;

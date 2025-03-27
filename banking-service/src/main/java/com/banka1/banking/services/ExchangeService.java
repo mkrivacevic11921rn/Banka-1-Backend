@@ -72,11 +72,7 @@ public class ExchangeService {
             return false;
         }
 
-        if (!fromAccount.getOwnerID().equals(toAccount.getOwnerID())){
-            return false;
-        }
-
-        return true;
+        return fromAccount.getOwnerID().equals(toAccount.getOwnerID());
     }
 
     public Long createExchangeTransfer(ExchangeMoneyTransferDTO exchangeMoneyTransferDTO) {
