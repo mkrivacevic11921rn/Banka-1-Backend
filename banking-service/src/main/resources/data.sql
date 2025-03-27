@@ -410,4 +410,4 @@ VALUES (1000.0,1000.0,0.0,false,1,11,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 100
 
 
 
-INSERT INTO rate_change (id) VALUES (1);
+INSERT INTO rate_change (change) VALUES ();
