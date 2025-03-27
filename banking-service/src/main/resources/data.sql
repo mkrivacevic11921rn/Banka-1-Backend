@@ -408,6 +408,3 @@ VALUES (30000.0,30000.0,0.0,false,1,11,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1
 INSERT INTO transaction(amount, final_amount, fee, bank_only, currency_id, from_account_id, timestamp, to_account_id,transfer_id, description)
 VALUES (1000.0,1000.0,0.0,false,1,11,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,100,3,'Payment for shopping');
 
-
-
-INSERT INTO rate_change (change) VALUES ();
