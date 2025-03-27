@@ -106,7 +106,7 @@ public class TransactionServiceTest {
         when(bankAccountUtils.getBankAccountForCurrency(any())).thenReturn(new Account());
 
         when(accountRepository.findByOwnerID(userId)).thenReturn(accounts);
-        when(transactionRepository.findByFromAccountIdIn(accounts)).thenReturn(expectedTransactions);
+        when(transactionRepository.findByFromAccountIdInOrToAccountIdIn(accounts, accounts)).thenReturn(expectedTransactions);
 
         List<Transaction> actualTransactions = transactionService.getTransactionsByUserId(userId);
 
