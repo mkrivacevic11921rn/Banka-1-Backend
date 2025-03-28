@@ -51,6 +51,6 @@ public class Card {
     private Double cardLimit;
 
     @ManyToOne
-    @JoinColumn(name = "authorized_person_id", nullable = true)
+    @JoinColumn(name = "authorized_person_id")
     private AuthorizedPerson authorizedPerson;
 }

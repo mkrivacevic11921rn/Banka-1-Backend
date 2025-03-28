@@ -19,5 +19,4 @@ public interface InstallmentsRepository extends JpaRepository<Installment, Long>
             "OR (i.retryDate IS NOT NULL AND i.retryDate <= :today AND i.isPaid = false AND i.lawsuit = false)")
     List<Installment> getDueInstallments(@Param("today") LocalDate today);
 
-    Integer countByLoan(Loan loan);
 }

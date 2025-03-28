@@ -39,7 +39,7 @@ public class Transaction {
     @Column(nullable = false)
     private Long timestamp;
 
-    @Column(nullable = true)
+    @Column()
     private String description;
 
     @ManyToOne

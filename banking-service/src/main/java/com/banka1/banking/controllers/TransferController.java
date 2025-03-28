@@ -29,22 +29,6 @@ public class TransferController {
 
     private final TransferService transferService;
 
-//     @PostMapping("/internal-transfer")
-//     public ResponseEntity<String> processInternalTransfer(@RequestBody Transfer transfer) {
-
-
-//         try {
-//             //ovde se ulazi kada je OTP validan
-//                 String result = transferService.processTransfer(transfer.getId());
-//                 return ResponseEntity.ok(result);
-//             } catch (Exception e) {
-//                 // 3. Ako dođe do greške (npr. nema dovoljno sredstava), vraćamo odgovarajući status
-//                 return ResponseEntity.badRequest().body(e.getMessage());
-//             }
-//         }
-
-// }
-
     @Operation(
             summary = "Interni prenos",
             description = "Kreira interni prenos novca između računa istog korisnika, ako su u istoj valuti."
@@ -151,10 +135,6 @@ public class TransferController {
             }
 
             Long transferId = transferService.createMoneyTransfer(transferDTO);
-
-//            Long fromAccountId = transferDTO.getFromAccountId();
-//            Long toAccountId = transferDTO.getToAccountId();
-//            Double amount = transferDTO.getAmount();
 
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK),true, Map.of("message","Transfer novca uspešno kreiran.","transferId",transferId),null);
 

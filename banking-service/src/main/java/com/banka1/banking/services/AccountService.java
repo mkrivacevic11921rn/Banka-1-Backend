@@ -11,10 +11,8 @@ import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Transaction;
 import com.banka1.banking.models.helper.*;
 import com.banka1.banking.repository.AccountRepository;
-
 import com.banka1.banking.repository.TransactionRepository;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.jms.core.JmsTemplate;
@@ -35,8 +33,10 @@ public class AccountService {
     private final UserServiceCustomer userServiceCustomer;
     private final CardService cardService;
     private final BankAccountUtils bankAccountUtils;
+    private final TransactionRepository transactionRepository;
 
-    public AccountService(AccountRepository accountRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, @Value("${destination.email}") String destinationEmail, UserServiceCustomer userServiceCustomer, CardService cardService, BankAccountUtils bankAccountUtils) {
+
+    public AccountService(AccountRepository accountRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, @Value("${destination.email}") String destinationEmail, UserServiceCustomer userServiceCustomer, CardService cardService, BankAccountUtils bankAccountUtils,TransactionRepository transactionRepository) {
         this.accountRepository = accountRepository;
         this.jmsTemplate = jmsTemplate;
         this.messageHelper = messageHelper;
@@ -45,6 +45,7 @@ public class AccountService {
         this.userServiceCustomer = userServiceCustomer;
         this.cardService = cardService;
         this.bankAccountUtils = bankAccountUtils;
+        this.transactionRepository = transactionRepository;
     }
 
     public Account createAccount(CreateAccountDTO createAccountDTO, Long employeeId) {
@@ -154,8 +155,6 @@ public class AccountService {
     }
     //realno metode mogu da se spoje i ne treba odvojen dto al ajde kao da ni ne dam opciju useru da slucajno sam sebi menja status
 
-    @Autowired
-    private TransactionRepository transactionRepository;
     public List<Transaction> getTransactionsForAccount(Long accountId) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Račun sa ID-jem " + accountId + " nije pronađen"));

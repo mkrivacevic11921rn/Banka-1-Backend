@@ -3,7 +3,6 @@ package com.banka1.banking.controllers;
 import com.banka1.banking.aspect.AccountAuthorization;
 import com.banka1.banking.models.Transaction;
 import com.banka1.banking.services.TransactionService;
-import com.banka1.banking.services.implementation.AuthService;
 import com.banka1.banking.utils.ResponseTemplate;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -11,7 +10,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,15 +19,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/transactions")
 @Tag(name = "Transaction API", description = "API za upravljanje transakcijama")
 public class TransactionController {
 
-    @Autowired
-    private TransactionService transactionService;
-    @Autowired
-    private AuthService authService;
+
+    private final TransactionService transactionService;
+
 
     @GetMapping("/{userId}")
     @Operation(summary = "Dobavljanje svih transakcija", description = "Vraća listu svih transakcija u sistemu.")

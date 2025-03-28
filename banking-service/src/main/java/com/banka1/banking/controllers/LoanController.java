@@ -15,7 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -25,14 +25,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/loans")
 @Tag(name = "Loan API", description = "API za pozive vezane za kredite i rate")
 public class LoanController {
-    @Autowired
-    private LoanService loanService;
-    @Autowired
-    private AuthService authService;
+    private final LoanService loanService;
+    private final AuthService authService;
 
     @PostMapping("/")
     @Operation(summary = "Kreiranje zahteva za kredit", description = "Dodaje novi kredit u sistem i cuva se u bazi pod statusom na cekanju.")

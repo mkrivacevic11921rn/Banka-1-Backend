@@ -17,24 +17,21 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/accounts")
 @Tag(name = "Account API", description = "API za upravljanje racunima")
 public class AccountController {
-    @Autowired
-    private AccountService accountService;
-    @Autowired
-    private AuthService authService;
+    private final AccountService accountService;
+    private final AuthService authService;
 
     /// pristup imaju samo zaposleni
     /// Da bi zaposleni mogao da kreira novi račun, potrebno je da se prijavi u aplikaciju.
@@ -73,7 +70,7 @@ public class AccountController {
     })
     @AccountAuthorization(employeeOnlyOperation = true)
     public ResponseEntity<?> createAccount(@Valid @RequestBody CreateAccountDTO createAccountDTO, @RequestHeader(value = "Authorization", required = false) String authorization) {
-        Account savedAccount = null;
+        Account savedAccount;
         try {
             savedAccount = accountService.createAccount(createAccountDTO, authService.parseToken(authService.getToken(authorization)).get("id", Long.class));
         } catch (RuntimeException e) {
