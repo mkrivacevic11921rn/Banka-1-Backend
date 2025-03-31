@@ -134,7 +134,6 @@ func CreateOrder(c *fiber.Ctx) error {
 	}
 
 	if orderRequest.Margin {
-		// 1. Učitaj Security iz baze
 		var security types.Security
 		if err := db.DB.First(&security, orderRequest.SecurityID).Error; err != nil {
 			return c.Status(404).JSON(types.Response{
@@ -143,11 +142,9 @@ func CreateOrder(c *fiber.Ctx) error {
 			})
 		}
 
-		// 2. Izračunaj initialMarginCost (koristimo LastPrice × 0.3 × 1.1)
 		maintenanceMargin := security.LastPrice * 0.3
 		initialMarginCost := maintenanceMargin * 1.1
 
-		// 3. Učitaj Actuary (agent info)
 		var actuary types.Actuary
 		if err := db.DB.Where("user_id = ?", orderRequest.UserID).First(&actuary).Error; err != nil {
 			return c.Status(403).JSON(types.Response{
@@ -156,7 +153,6 @@ func CreateOrder(c *fiber.Ctx) error {
 			})
 		}
 
-		// 4. Provera prava
 		if actuary.Role != "agent" {
 			return c.Status(403).JSON(types.Response{
 				Success: false,
@@ -170,10 +166,6 @@ func CreateOrder(c *fiber.Ctx) error {
 				Error:   "Nedovoljan limit za margin order",
 			})
 		}
-
-		// (opciono) ažuriraj UsedLimit odmah – ili kasnije kada se order odobri
-		// actuary.UsedLimit += initialMarginCost
-		// db.DB.Save(&actuary)
 	}
 
 	return c.JSON(types.Response{
@@ -212,10 +204,9 @@ func ApproveDeclineOrder(c *fiber.Ctx, decline bool) error {
 	} else {
 		order.Status = "approved"
 		order.ApprovedBy = new(uint)
-		*order.ApprovedBy = 0 // TODO: dobavi iz token-a
+		*order.ApprovedBy = 0
 		db.DB.Save(&order)
 
-		// 👇 Pokreni izvršavanje nakon odobrenja
 		MatchOrder(order)
 
 		return c.JSON(types.Response{
@@ -224,7 +215,6 @@ func ApproveDeclineOrder(c *fiber.Ctx, decline bool) error {
 		})
 	}
 
-	// U slučaju decline:
 	order.ApprovedBy = new(uint)
 	*order.ApprovedBy = 0 // TODO: dobavi iz token-a
 	db.DB.Save(&order)
