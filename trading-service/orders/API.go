@@ -2,6 +2,7 @@ package orders
 
 import (
 	"banka1.com/middlewares"
+	"fmt"
 	"strings"
 
 	"banka1.com/db"
@@ -131,6 +132,50 @@ func CreateOrder(c *fiber.Ctx) error {
 			Error:   "Neuspelo kreiranje: " + err.Error(),
 		})
 	}
+
+	if orderRequest.Margin {
+		// 1. Učitaj Security iz baze
+		var security types.Security
+		if err := db.DB.First(&security, orderRequest.SecurityID).Error; err != nil {
+			return c.Status(404).JSON(types.Response{
+				Success: false,
+				Error:   "Hartija nije pronađena",
+			})
+		}
+
+		// 2. Izračunaj initialMarginCost (koristimo LastPrice × 0.3 × 1.1)
+		maintenanceMargin := security.LastPrice * 0.3
+		initialMarginCost := maintenanceMargin * 1.1
+
+		// 3. Učitaj Actuary (agent info)
+		var actuary types.Actuary
+		if err := db.DB.Where("user_id = ?", orderRequest.UserID).First(&actuary).Error; err != nil {
+			return c.Status(403).JSON(types.Response{
+				Success: false,
+				Error:   "Korisnik nema margin nalog (nije agent ili nije registrovan kao aktuar)",
+			})
+		}
+
+		// 4. Provera prava
+		if actuary.Role != "agent" {
+			return c.Status(403).JSON(types.Response{
+				Success: false,
+				Error:   "Samo agenti mogu da koriste margin",
+			})
+		}
+
+		if actuary.LimitAmount < initialMarginCost {
+			return c.Status(403).JSON(types.Response{
+				Success: false,
+				Error:   "Nedovoljan limit za margin order",
+			})
+		}
+
+		// (opciono) ažuriraj UsedLimit odmah – ili kasnije kada se order odobri
+		// actuary.UsedLimit += initialMarginCost
+		// db.DB.Save(&actuary)
+	}
+
 	return c.JSON(types.Response{
 		Success: true,
 		Data:    order.ID,
@@ -165,12 +210,25 @@ func ApproveDeclineOrder(c *fiber.Ctx, decline bool) error {
 	if decline {
 		order.Status = "declined"
 	} else {
-		// TODO: provera da li je vremenski ogranicen?
 		order.Status = "approved"
+		order.ApprovedBy = new(uint)
+		*order.ApprovedBy = 0 // TODO: dobavi iz token-a
+		db.DB.Save(&order)
+
+		// 👇 Pokreni izvršavanje nakon odobrenja
+		MatchOrder(order)
+
+		return c.JSON(types.Response{
+			Success: true,
+			Data:    fmt.Sprintf("Order %d odobren i pokrenuto izvršavanje", order.ID),
+		})
 	}
+
+	// U slučaju decline:
 	order.ApprovedBy = new(uint)
 	*order.ApprovedBy = 0 // TODO: dobavi iz token-a
 	db.DB.Save(&order)
+
 	return c.JSON(types.Response{
 		Success: true,
 		Data:    order.ID,
@@ -182,6 +240,7 @@ func DeclineOrder(c *fiber.Ctx) error {
 }
 
 func ApproveOrder(c *fiber.Ctx) error {
+
 	return ApproveDeclineOrder(c, false)
 }
 
