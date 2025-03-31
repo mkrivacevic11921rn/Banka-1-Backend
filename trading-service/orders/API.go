@@ -34,6 +34,18 @@ func OrderToOrderResponse(order types.Order) types.OrderResponse {
 	}
 }
 
+// GetOrderByID godoc
+//
+//	@Summary		Preuzimanje naloga po I
+//	@Summary		Preuzimanje naloga po ID-u
+//	@Description	Vraća detalje specifičnog naloga na osnovu njegovog jedinstvenog identifikatora (ID).
+//	@Tags			Orders
+//	@Produce		json
+//	@Param			id	path		int											true	"ID naloga koji se preuzima"
+//	@Success		200	{object}	types.Response{data=types.OrderResponse}	"Uspešno preuzet nalog"
+//	@Failure		400	{object}	types.Response								"Nevalidan ID naloga"
+//	@Failure		404	{object}	types.Response								"Nalog sa datim ID-jem ne postoji"
+//	@Router			/orders/{id} [get]
 func GetOrderByID(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id", -1)
 	if err != nil || id <= 0 {
@@ -59,6 +71,16 @@ func GetOrderByID(c *fiber.Ctx) error {
 	})
 }
 
+// GetOrders godoc
+//
+//	@Summary		Preuzimanje liste naloga
+//	@Description	Vraća listu naloga, opciono filtriranu po statusu.
+//	@Tags			Orders
+//	@Produce		json
+//	@Param			filter_status	query		string										false	"Status naloga za filtriranje. Podrazumevano 'all' za sve statuse."	default(all)	example(pending)
+//	@Success		200				{object}	types.Response{data=[]types.OrderResponse}	"Uspešno preuzeta lista naloga"
+//	@Failure		500				{object}	types.Response								"Greška pri preuzimanju naloga iz baze"
+//	@Router			/orders [get]
 func GetOrders(c *fiber.Ctx) error {
 	filterStatus := strings.ToLower(c.Query("filter_status", "all"))
 	var orders []types.Order
@@ -84,6 +106,21 @@ func GetOrders(c *fiber.Ctx) error {
 	})
 }
 
+//	@Descripti
+//
+// CreateOrder godoc
+//
+//	@Summary		Kreiranje novog naloga
+//	@Description	Kreira novi nalog za hartije od vrednosti.
+//	@Tags			Orders
+//	@Accept			json
+//	@Produce		json
+//	@Param			orderRequest	body	types.CreateOrderRequest	true	"Podaci neophodni za kreiranje naloga"
+//	@Security		BearerAuth
+//	@Success		201	{object}	types.Response{data=uint}	"Uspešno kreiran nalog, vraća ID novog naloga"
+//	@Failure		400	{object}	types.Response				"Neispravan format, neuspela validacija ili greška pri upisu u bazu"
+//	@Failure		403	{object}	types.Response				"Nije dozvoljeno kreirati nalog za drugog korisnika"
+//	@Router			/orders [post]
 func CreateOrder(c *fiber.Ctx) error {
 	var orderRequest types.CreateOrderRequest
 	userId := c.Locals("user_id").(float64)
@@ -177,84 +214,47 @@ func ApproveDeclineOrder(c *fiber.Ctx, decline bool) error {
 	})
 }
 
+// DeclineOrder godoc
+//
+//	@Summary		Odbijanje naloga
+//	@Description	Menja status naloga u 'declined'.
+//	@Tags			Orders
+//	@Produce		json
+//	@Param			id	path	int	true	"ID naloga koji se odbija"
+//	@Security		BearerAuth
+//	@Success		200	{object}	types.Response{data=uint}	"Nalog uspešno odbijen, vraća ID naloga"
+//	@Failure		400	{object}	types.Response				"Nevalidan ID ili nalog nije u 'pending' statusu"
+//	@Failure		403	{object}	types.Response				"Nedovoljne privilegije"
+//	@Failure		404	{object}	types.Response				"Nalog sa datim ID-jem ne postoji"
+//	@Failure		500	{object}	types.Response				"Interna Greška Servera"
+//	@Router			/orders/{id}/decline [post]
 func DeclineOrder(c *fiber.Ctx) error {
 	return ApproveDeclineOrder(c, true)
 }
 
+// ApproveOrder godoc
+//
+//	@Summary		Odobravanje naloga
+//	@Description	Menja status naloga u 'approved'.
+//	@Tags			Orders
+//	@Produce		json
+//	@Param			id	path	int	true	"ID naloga koji se odobrava"
+//	@Security		BearerAuth
+//	@Success		200	{object}	types.Response{data=uint}	"Nalog uspešno odobren"
+//	@Failure		400	{object}	types.Response				"Nevalidan ID ili nalog nije u 'pending' statusu"
+//	@Failure		403	{object}	types.Response				"Nedovoljne privilegije"
+//	@Failure		404	{object}	types.Response				"Nalog sa datim ID-jem ne postoji"
+//	@Failure		500	{object}	types.Response				"Interna Greška Servera"
+//	@Router			/orders/{id}/approve [post]
 func ApproveOrder(c *fiber.Ctx) error {
 	return ApproveDeclineOrder(c, false)
 }
 
 func InitRoutes(app *fiber.App) {
-	// swagger:operation GET /orders/{id} GetOrderByID
-	//
-	// Pregled naloga po ID-u.
-	//
-	// ---
-	// parameters:
-	// - name: id
-	//   in: path
-	//   description: ID naloga
-	//   type: integer
-	//   required: true
-	// responses:
-	//   '200':
-	//     schema:
-	//       $ref: '#/definitions/OrderResponse'
+
 	app.Get("/orders/:id", GetOrderByID)
-	// swagger:operation GET /orders GetOrders
-	//
-	// Pregled svih naloga, sa filtriranjem po statusu.
-	//
-	// ---
-	// parameters:
-	// - name: filter_status
-	//   in: query
-	//   description: Status za filtriranje, ili "all" (bez filtriranja, to je podrazumevana vrednost)
-	//   default: "all"
-	//   type: string
-	// responses:
-	//   '200':
-	//     schema:
-	//       type: array
-	//       items:
-	//         $ref: '#/definitions/OrderResponse'
 	app.Get("/orders", GetOrders)
-	// swagger:operation POST /orders CreateOrder
-	//
-	// Kreiranje novog naloga
-	//
-	// ---
-	// parameters:
-	// - name: body
-	//   in: body
-	//   description: Podaci o nalogu
-	//   required: true
-	//   schema:
-	//      $ref: '#/definitions/CreateOrderRequest'
 	app.Post("/orders", middlewares.Auth, CreateOrder)
-	// swagger:operation POST /orders/{id}/decline DeclineOrder
-	//
-	// Odbijanje naloga.
-	//
-	// ---
-	// parameters:
-	// - name: id
-	//   in: path
-	//   description: ID naloga
-	//   type: integer
-	//   required: true
 	app.Post("/orders/:id/decline", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), DeclineOrder)
-	// swagger:operation POST /orders/{id}/approve ApproveOrder
-	//
-	// Odobrenje naloga.
-	//
-	// ---
-	// parameters:
-	// - name: id
-	//   in: path
-	//   description: ID naloga
-	//   type: integer
-	//   required: true
 	app.Post("/orders/:id/approve", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), ApproveOrder)
 }

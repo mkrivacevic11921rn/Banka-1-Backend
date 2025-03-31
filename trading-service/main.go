@@ -1,20 +1,21 @@
 package main
 
 import (
+	"banka1.com/controllers"
+	fiberSwagger "github.com/swaggo/fiber-swagger"
 	"os"
+	//"strings"
 	"time"
 
 	// options "banka1.com/listings/options"
 	"banka1.com/middlewares"
 
-	"banka1.com/listings/futures"
-	"banka1.com/routes"
-
-	"banka1.com/controllers"
 	"banka1.com/db"
+	_ "banka1.com/docs"
 	"banka1.com/exchanges"
 	"banka1.com/listings/finhub"
 	"banka1.com/listings/forex"
+	"banka1.com/listings/futures"
 	"banka1.com/listings/stocks"
 	"banka1.com/orders"
 	"banka1.com/types"
@@ -24,6 +25,17 @@ import (
 	"log"
 )
 
+//	@title			Trading Service
+//	@version		1.0
+//	@description	Trading Service API
+
+//	@host		localhost:3000
+//	@BasePath	/
+
+// @securityDefinitions.apikey	BearerAuth
+// @in							header
+// @name						Authorization
+// @description				Unesite token. Primer: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 func main() {
 
 	err := godotenv.Load()
@@ -77,7 +89,7 @@ func main() {
 		return c.Next()
 	})
 
-	routes.Setup(app)
+	//routes.Setup(app, controllers.NewActuaryController())
 
 	app.Get("/", middlewares.Auth, middlewares.DepartmentCheck("AGENT"), func(c *fiber.Ctx) error {
 		response := types.Response{
@@ -92,6 +104,14 @@ func main() {
 		return c.SendStatus(200)
 	})
 
+	// GetAllExchanges godoc
+	//	@Summary		Preuzimanje svih berzi
+	//	@Description	Vraća listu svih berzi dostupnih u sistemu.
+	//	@Tags			Exchanges
+	//	@Produce		json
+	//	@Success		200	{object}	types.Response{data=[]types.Exchange}	"Lista svih berzi"
+	//	@Failure		500	{object}	types.Response							"Interna greška servera pri preuzimanju berzi"
+	//	@Router			/exchanges [get]
 	app.Get("/exchanges", func(c *fiber.Ctx) error {
 		/*
 			Function to get all the exchanges from the database
@@ -123,6 +143,15 @@ func main() {
 		})
 	})
 
+	// GetExchangeByID godoc
+	//	@Summary		Preuzimanje berze po ID-u
+	//	@Description	Vraća detalje specifične berze na osnovu njenog internog ID-ja.
+	//	@Tags			Exchanges
+	//	@Produce		json
+	//	@Param			id	path		int									true	"ID berze"
+	//	@Success		200	{object}	types.Response{data=types.Exchange}	"Detalji tražene berze"
+	//	@Failure		404	{object}	types.Response						"Berza sa datim ID-jem nije pronađena"
+	//	@Router			/exchanges/{id} [get]
 	app.Get("/exchanges/:id", func(c *fiber.Ctx) error {
 		/*
 			Get exchange by ID.
@@ -148,6 +177,15 @@ func main() {
 		})
 	})
 
+	// GetExchangeByMIC godoc
+	//	@Summary		Preuzimanje berze po MIC kodu
+	//	@Description	Vraća detalje specifične berze na osnovu njenog jedinstvenog MIC koda.
+	//	@Tags			Exchanges
+	//	@Produce		json
+	//	@Param			micCode	path		string								true	"Market Identifier Code (MIC) berze"	example(XNAS)
+	//	@Success		200		{object}	types.Response{data=types.Exchange}	"Detalji tražene berze"
+	//	@Failure		404		{object}	types.Response						"Berza sa datim MIC kodom nije pronađena"
+	//	@Router			/exchanges/mic/{micCode} [get]
 	app.Get("/exchanges/mic/:micCode", func(c *fiber.Ctx) error {
 		/*
 			Get exchange by MIC code.
@@ -172,6 +210,15 @@ func main() {
 		})
 	})
 
+	// GetExchangeByAcronym godoc
+	//	@Summary		Preuzimanje berze po akronimu
+	//	@Description	Vraća detalje specifične berze na osnovu njenog akronima. Napomena: Akronim ne mora biti jedinstven. Vraća prvu pronađenu.
+	//	@Tags			Exchanges
+	//	@Produce		json
+	//	@Param			acronym	path		string								true	"Akronim berze"	example(NASDAQ)
+	//	@Success		200		{object}	types.Response{data=types.Exchange}	"Detalji pronađene berze"
+	//	@Failure		404		{object}	types.Response						"Berza sa datim akronimom nije pronađena"
+	//	@Router			/exchanges/acronym/{acronym} [get]
 	app.Get("/exchanges/acronym/:acronym", func(c *fiber.Ctx) error {
 		/*
 			Get exchange by acronym.
@@ -197,6 +244,14 @@ func main() {
 		})
 	})
 
+	// GetAllStocks godoc
+	//	@Summary		Preuzimanje svih akcija
+	//	@Description	Vraća listu svih listinga koji predstavljaju akcije.
+	//	@Tags			Stocks
+	//	@Produce		json
+	//	@Success		200	{object}	types.Response{data=[]types.Listing}	"Lista svih akcija"
+	//	@Failure		500	{object}	types.Response							"Interna greška servera pri preuzimanju akcija"
+	//	@Router			/stocks [get]
 	app.Get("/stocks", func(c *fiber.Ctx) error {
 		var listings []types.Listing
 
@@ -215,6 +270,16 @@ func main() {
 		})
 	})
 
+	// GetStockByTicker godoc
+	//	@Summary		Preuzimanje akcije po tikeru
+	//	@Description	Vraća osnovne podatke (Listing) i detalje (Stock) za akciju specificiranu tikerom.
+	//	@Tags			Stocks
+	//	@Produce		json
+	//	@Param			ticker	path		string																	true	"Tiker (simbol) akcije"	example(AAPL)
+	//	@Success		200		{object}	types.Response{data=object{listing=types.Listing,details=types.Stock}}	"Detalji akcije"
+	//	@Failure		404		{object}	types.Response															"Akcija sa datim tikerom nije pronađena"
+	//	@Failure		500		{object}	types.Response															"Interna greška servera pri preuzimanju detalja akcije"
+	//	@Router			/stocks/{ticker} [get]
 	app.Get("/stocks/:ticker", func(c *fiber.Ctx) error {
 		ticker := c.Params("ticker")
 
@@ -246,6 +311,16 @@ func main() {
 		})
 	})
 
+	// GetStockFirstHistory godoc
+	//	@Summary		Prvi istorijski podatak za akciju
+	//	@Description	Preuzima najstariji dostupan dnevni istorijski podatak za akciju.
+	//	@Tags			Stocks
+	//	@Produce		json
+	//	@Param			ticker	path		string											true	"Tiker (simbol) akcije"	example(AAPL)
+	//	@Success		200		{object}	types.Response{data=finhub.HistoricalPriceData}	"Najstariji istorijski podatak"
+	//	@Failure		404		{object}	types.Response									"Akcija sa datim tikerom nije pronađena"
+	//	@Failure		500		{object}	types.Response									"Greška pri preuzimanju istorijskih podataka"
+	//	@Router			/stocks/{ticker}/history/first [get]
 	app.Get("/stocks/:ticker/history/first", func(c *fiber.Ctx) error {
 		ticker := c.Params("ticker")
 
@@ -274,6 +349,19 @@ func main() {
 			Error:   "",
 		})
 	})
+
+	// GetStockHistoryByDate godoc
+	//	@Summary		Istorijski podatak za akciju za određeni datum
+	//	@Description	Preuzima dnevni istorijski podatak za akciju za određeni datum.
+	//	@Tags			Stocks
+	//	@Produce		json
+	//	@Param			ticker	path		string											true	"Tiker (simbol) akcije"			example(AAPL)
+	//	@Param			date	path		string											true	"Datum u formatu YYYY-MM-DD"	example(2023-10-26)	Format(date)
+	//	@Success		200		{object}	types.Response{data=finhub.HistoricalPriceData}	"Istorijski podatak za dati datum"
+	//	@Failure		400		{object}	types.Response									"Neispravan format datuma"
+	//	@Failure		404		{object}	types.Response									"Akcija sa datim tikerom nije pronađena"
+	//	@Failure		500		{object}	types.Response									"Greška pri preuzimanju istorijskih podataka"
+	//	@Router			/stocks/{ticker}/history/{date} [get]
 	app.Get("/stocks/:ticker/history/:date", func(c *fiber.Ctx) error {
 		ticker := c.Params("ticker")
 		date := c.Params("date")
@@ -314,6 +402,19 @@ func main() {
 		})
 	})
 
+	// GetStockHistoryRange godoc
+	//	@Summary		Istorijski podaci za akciju u vremenskom opsegu
+	//	@Description	Preuzima dnevne istorijske podatke za akciju u vremenskom opsegu.
+	//	@Tags			Stocks
+	//	@Produce		json
+	//	@Param			ticker		path		string												true	"Tiker (simbol) akcije"										example(AAPL)
+	//	@Param			startDate	query		string												false	"Početni datum (YYYY-MM-DD). Podrazumevano pre 30 dana."	example(2023-09-27)	Format(date)
+	//	@Param			endDate		query		string												false	"Krajnji datum (YYYY-MM-DD). Podrazumevano današnji dan."	example(2023-10-27)	Format(date)
+	//	@Success		200			{object}	types.Response{data=[]types.ListingDailyPriceInfo}	"Lista istorijskih podataka"
+	//	@Failure		400			{object}	types.Response										"Neispravan format datuma"
+	//	@Failure		404			{object}	types.Response										"Akcija sa datim tikerom nije pronađena"
+	//	@Failure		500			{object}	types.Response										"Greška pri preuzimanju istorijskih podataka iz baze"
+	//	@Router			/stocks/{ticker}/history [get]
 	app.Get("/stocks/:ticker/history", func(c *fiber.Ctx) error {
 		ticker := c.Params("ticker")
 		// Parse date range parameters
@@ -378,6 +479,14 @@ func main() {
 		})
 	})
 
+	// GetAllForex godoc
+	//	@Summary		Preuzimanje svih forex parova
+	//	@Description	Vraća listu svih listinga koji predstavljaju forex valutne parove.
+	//	@Tags			Forex
+	//	@Produce		json
+	//	@Success		200	{object}	types.Response{data=[]types.Listing}	"Lista svih forex parova"
+	//	@Failure		500	{object}	types.Response							"Interna greška servera pri preuzimanju forex parova"
+	//	@Router			/forex [get]
 	app.Get("/forex", func(c *fiber.Ctx) error {
 		var listings []types.Listing
 
@@ -396,6 +505,17 @@ func main() {
 		})
 	})
 
+	// GetForexByPair godoc
+	//	@Summary		Preuzimanje forex para po valutama
+	//	@Description	Vraća osnovne podatke (Listing) i detalje (ForexPair) za forex par specificiran osnovnom i kvotnom valutom.
+	//	@Tags			Forex
+	//	@Produce		json
+	//	@Param			base	path		string																		true	"Osnovna valuta (ISO kod)"	example(EUR)
+	//	@Param			quote	path		string																		true	"Kvotna valuta (ISO kod)"	example(USD)
+	//	@Success		200		{object}	types.Response{data=object{listing=types.Listing,details=types.ForexPair}}	"Detalji forex para"
+	//	@Failure		404		{object}	types.Response																"Forex par nije pronađen"
+	//	@Failure		500		{object}	types.Response																"Interna greška servera pri preuzimanju detalja forex para"
+	//	@Router			/forex/{base}/{quote} [get]
 	app.Get("/forex/:base/:quote", func(c *fiber.Ctx) error {
 
 		base := c.Params("base")
@@ -430,6 +550,20 @@ func main() {
 		})
 	})
 
+	// GetForexHistoryRange godoc
+	//	@Summary		Istorijski podaci za forex par u vremenskom opsegu
+	//	@Description	Preuzima dnevne istorijske podatke za forex par u vremenskom opsegu.
+	//	@Tags			Forex
+	//	@Produce		json
+	//	@Param			base		path		string												true	"Osnovna valuta"											example(EUR)
+	//	@Param			quote		path		string												true	"Kvotna valuta"												example(USD)
+	//	@Param			startDate	query		string												false	"Početni datum (YYYY-MM-DD). Podrazumevano pre 30 dana."	example(2023-09-27)	Format(date)
+	//	@Param			endDate		query		string												false	"Krajnji datum (YYYY-MM-DD). Podrazumevano današnji dan."	example(2023-10-27)	Format(date)
+	//	@Success		200			{object}	types.Response{data=[]types.ListingDailyPriceInfo}	"Lista istorijskih podataka"
+	//	@Failure		400			{object}	types.Response										"Neispravan format datuma"
+	//	@Failure		404			{object}	types.Response										"Forex par nije pronađen"
+	//	@Failure		500			{object}	types.Response										"Greška pri preuzimanju istorijskih podataka iz baze"
+	//	@Router			/forex/{base}/{quote}/history [get]
 	app.Get("/forex/:base/:quote/history", func(c *fiber.Ctx) error {
 		base := c.Params("base")
 		quote := c.Params("quote")
@@ -493,6 +627,14 @@ func main() {
 		})
 	})
 
+	// GetAllFutures godoc
+	//	@Summary		Preuzimanje svih future-a
+	//	@Description	Vraća listu svih listinga koji predstavljaju future ugovore.
+	//	@Tags			Futures
+	//	@Produce		json
+	//	@Success		200	{object}	types.Response{data=[]types.Listing}	"Lista svih future-a"
+	//	@Failure		500	{object}	types.Response							"Interna greška servera pri preuzimanju future-a"
+	//	@Router			/future [get]
 	app.Get("/future", func(c *fiber.Ctx) error {
 		var listings []types.Listing
 
@@ -511,6 +653,16 @@ func main() {
 		})
 	})
 
+	// GetFutureByTicker godoc
+	//	@Summary		Preuzimanje future-a po tikeru
+	//	@Description	Vraća osnovne podatke (Listing) i detalje (FuturesContract) za future specificiran tikerom.
+	//	@Tags			Futures
+	//	@Produce		json
+	//	@Param			ticker	path		string																				true	"Tiker (simbol) future-a"	example(ESZ3)
+	//	@Success		200		{object}	types.Response{data=object{listing=types.Listing,details=types.FuturesContract}}	"Detalji future-a"
+	//	@Failure		404		{object}	types.Response																		"Future sa datim tikerom nije pronađen"
+	//	@Failure		500		{object}	types.Response																		"Interna greška servera pri preuzimanju detalja future-a"
+	//	@Router			/future/{ticker} [get]
 	app.Get("/future/:ticker", func(c *fiber.Ctx) error {
 		ticker := c.Params("ticker")
 
@@ -542,8 +694,24 @@ func main() {
 		})
 	})
 
+	// GetAllSecuritiesAvailable godoc
+	//	@Summary		Preuzimanje svih dostupnih hartija od vrednosti
+	//	@Description	Vraća listu svih dostupnih hartija od vrednosti.
+	//	@Tags			Securities
+	//	@Produce		json
+	//	@Success		200	{object}	types.Response{data=[]types.Security}	"Lista svih hartija od vrednosti"
+	//	@Failure		500	{object}	types.Response							"Interna greška servera pri preuzimanju ili konverziji hartija od vrednosti"
+	//	@Router			/securities/available [get]
 	app.Get("/securities/available", getSecurities())
 
+	// GetAllSecurities godoc
+	//	@Summary		Preuzimanje svih hartija od vrednosti (Alias)
+	//	@Description	Vraća listu svih dostupnih hartija od vrednosti.
+	//	@Tags			Securities
+	//	@Produce		json
+	//	@Success		200	{object}	types.Response{data=[]types.Security}	"Lista svih hartija od vrednosti"
+	//	@Failure		500	{object}	types.Response							"Interna greška servera pri preuzimanju ili konverziji hartija od vrednosti"
+	//	@Router			/securities [get]
 	app.Get("/securities", getSecurities())
 
 	app.Post("/actuaries", controllers.NewActuaryController().CreateActuary)
@@ -553,7 +721,10 @@ func main() {
 
 	orders.InitRoutes(app)
 
+	app.Get("/swagger/*", fiberSwagger.WrapHandler)
+
 	port := os.Getenv("LISTEN_PATH")
+	log.Printf("Swagger UI available at http://localhost%s/swagger/index.html", port)
 	log.Fatal(app.Listen(port))
 }
 
