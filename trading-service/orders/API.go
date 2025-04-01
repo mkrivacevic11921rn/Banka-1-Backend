@@ -1,16 +1,10 @@
 package orders
 
 import (
-<<<<<<< HEAD
-=======
-	"banka1.com/middlewares"
-	"fmt"
-	"strings"
-
->>>>>>> c6d9e48acbda5edb63d07942d5b4b1ba4e024dc0
 	"banka1.com/db"
 	"banka1.com/middlewares"
 	"banka1.com/types"
+	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"strings"
