@@ -1,14 +1,13 @@
 package orders
 
 import (
-	"banka1.com/middlewares"
-	"fmt"
-	"strings"
-
 	"banka1.com/db"
+	"banka1.com/middlewares"
 	"banka1.com/types"
+	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"strings"
 )
 
 var validate = validator.New(validator.WithRequiredStructEnabled())
@@ -108,6 +107,31 @@ func CreateOrder(c *fiber.Ctx) error {
 		})
 	}
 
+	department, ok := c.Locals("department").(string)
+	if !ok {
+		return c.Status(500).JSON(types.Response{
+			Success: false,
+			Error:   "[MIDDLEWARE] Greska prilikom dohvatanja department vrednosti",
+		})
+	}
+
+	status := "pending"
+	if department == "SUPERVISOR" {
+		status = "approved"
+	}
+
+	var orderType string
+	switch {
+	case orderRequest.StopPricePerUnit == nil && orderRequest.LimitPricePerUnit == nil:
+		orderType = "market"
+	case orderRequest.StopPricePerUnit == nil && orderRequest.LimitPricePerUnit != nil:
+		orderType = "limit"
+	case orderRequest.StopPricePerUnit != nil && orderRequest.LimitPricePerUnit == nil:
+		orderType = "stop"
+	case orderRequest.StopPricePerUnit != nil && orderRequest.LimitPricePerUnit != nil:
+		orderType = "stop-limit"
+	}
+
 	order := types.Order{
 		UserID:            orderRequest.UserID,
 		AccountID:         orderRequest.AccountID,
@@ -116,8 +140,9 @@ func CreateOrder(c *fiber.Ctx) error {
 		ContractSize:      orderRequest.ContractSize,
 		StopPricePerUnit:  orderRequest.StopPricePerUnit,
 		LimitPricePerUnit: orderRequest.LimitPricePerUnit,
+		OrderType:         orderType,
 		Direction:         orderRequest.Direction,
-		Status:            "pending", // TODO: pribaviti needs approval vrednost preko token-a?
+		Status:            status,
 		ApprovedBy:        nil,
 		IsDone:            false,
 		RemainingParts:    &orderRequest.Quantity,
@@ -125,6 +150,7 @@ func CreateOrder(c *fiber.Ctx) error {
 		AON:               orderRequest.AON,
 		Margin:            orderRequest.Margin,
 	}
+
 	tx := db.DB.Create(&order)
 	if err := tx.Error; err != nil {
 		return c.Status(400).JSON(types.Response{
