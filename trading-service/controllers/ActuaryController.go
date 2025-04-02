@@ -19,8 +19,6 @@ func NewActuaryController() *ActuaryController {
 	return &ActuaryController{}
 }
 
-//var validate = validator.New()
-
 type Employee struct {
 	ID          int      `json:"id"`
 	FirstName   string   `json:"firstName"`
@@ -136,7 +134,7 @@ func (ac *ActuaryController) GetAllActuaries(c *fiber.Ctx) error {
 //	@Success		200			{object}	types.Response{data=types.Actuary}	"Uspešno ažurirani limiti aktuara"
 //	@Failure		400			{object}	types.Response						"Neispravan format podataka"
 //	@Failure		404			{object}	types.Response						"Aktuar nije pronadjen"
-//	@Router			/actuaries/{ID} [put]
+//	@Router			/actuaries/{id} [put]
 func (ac *ActuaryController) ChangeAgentLimits(c *fiber.Ctx) error {
 	id := c.Params("ID")
 	var actuary types.Actuary
@@ -292,4 +290,14 @@ func containsIgnoreCase(source, search string) bool {
 	sourceLower := strings.ToLower(source)
 	searchLower := strings.ToLower(search)
 	return strings.Contains(sourceLower, searchLower)
+}
+
+func InitActuaryRoutes(app *fiber.App) {
+	actuaryController := NewActuaryController()
+
+	app.Post("/actuaries", actuaryController.CreateActuary)
+	app.Get("/actuaries/all", actuaryController.GetAllActuaries)
+	app.Put("/actuaries/:ID/limit", actuaryController.ChangeAgentLimits)
+	app.Get("/actuaries/filter", actuaryController.FilterActuaries)
+	app.Put("/actuaries/:ID/reset-used-limit", actuaryController.ResetActuaryLimit)
 }

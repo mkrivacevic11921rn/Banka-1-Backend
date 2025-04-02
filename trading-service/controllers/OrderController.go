@@ -1,6 +1,7 @@
-package orders
+package controllers
 
 import (
+	"banka1.com/controllers/orders"
 	"banka1.com/db"
 	"banka1.com/middlewares"
 	"banka1.com/types"
@@ -9,6 +10,13 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"strings"
 )
+
+type OrderController struct {
+}
+
+func NewOrderController() *OrderController {
+	return &OrderController{}
+}
 
 var validate = validator.New(validator.WithRequiredStructEnabled())
 
@@ -46,7 +54,7 @@ func OrderToOrderResponse(order types.Order) types.OrderResponse {
 //	@Failure		400	{object}	types.Response								"Nevalidan ID naloga"
 //	@Failure		404	{object}	types.Response								"Nalog sa datim ID-jem ne postoji"
 //	@Router			/orders/{id} [get]
-func GetOrderByID(c *fiber.Ctx) error {
+func (oc *OrderController) GetOrderByID(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id", -1)
 	if err != nil || id <= 0 {
 		var response types.Response
@@ -81,14 +89,14 @@ func GetOrderByID(c *fiber.Ctx) error {
 //	@Success		200				{object}	types.Response{data=[]types.OrderResponse}	"Uspešno preuzeta lista naloga"
 //	@Failure		500				{object}	types.Response								"Greška pri preuzimanju naloga iz baze"
 //	@Router			/orders [get]
-func GetOrders(c *fiber.Ctx) error {
+func (oc *OrderController) GetOrders(c *fiber.Ctx) error {
 	filterStatus := strings.ToLower(c.Query("filter_status", "all"))
-	var orders []types.Order
+	var ordersList []types.Order
 	var err error
 	if "all" == filterStatus {
-		err = db.DB.Find(&orders).Error
+		err = db.DB.Find(&ordersList).Error
 	} else {
-		err = db.DB.Find(&orders, "status = ?", filterStatus).Error
+		err = db.DB.Find(&ordersList, "status = ?", filterStatus).Error
 	}
 	if err != nil {
 		return c.Status(400).JSON(types.Response{
@@ -96,8 +104,8 @@ func GetOrders(c *fiber.Ctx) error {
 			Error:   "Neuspela pretraga: " + err.Error(),
 		})
 	}
-	responses := make([]types.OrderResponse, len(orders))
-	for i, order := range orders {
+	responses := make([]types.OrderResponse, len(ordersList))
+	for i, order := range ordersList {
 		responses[i] = OrderToOrderResponse(order)
 	}
 	return c.JSON(types.Response{
@@ -106,8 +114,6 @@ func GetOrders(c *fiber.Ctx) error {
 	})
 }
 
-//	@Descripti
-//
 // CreateOrder godoc
 //
 //	@Summary		Kreiranje novog naloga
@@ -121,7 +127,7 @@ func GetOrders(c *fiber.Ctx) error {
 //	@Failure		400	{object}	types.Response				"Neispravan format, neuspela validacija ili greška pri upisu u bazu"
 //	@Failure		403	{object}	types.Response				"Nije dozvoljeno kreirati nalog za drugog korisnika"
 //	@Router			/orders [post]
-func CreateOrder(c *fiber.Ctx) error {
+func (oc *OrderController) CreateOrder(c *fiber.Ctx) error {
 	var orderRequest types.CreateOrderRequest
 	userId := c.Locals("user_id").(float64)
 
@@ -270,7 +276,7 @@ func ApproveDeclineOrder(c *fiber.Ctx, decline bool) error {
 		*order.ApprovedBy = 0
 		db.DB.Save(&order)
 
-		MatchOrder(order)
+		orders.MatchOrder(order)
 
 		return c.JSON(types.Response{
 			Success: true,
@@ -302,7 +308,7 @@ func ApproveDeclineOrder(c *fiber.Ctx, decline bool) error {
 //	@Failure		404	{object}	types.Response				"Nalog sa datim ID-jem ne postoji"
 //	@Failure		500	{object}	types.Response				"Interna Greška Servera"
 //	@Router			/orders/{id}/decline [post]
-func DeclineOrder(c *fiber.Ctx) error {
+func (oc *OrderController) DeclineOrder(c *fiber.Ctx) error {
 	return ApproveDeclineOrder(c, true)
 }
 
@@ -320,16 +326,16 @@ func DeclineOrder(c *fiber.Ctx) error {
 //	@Failure		404	{object}	types.Response				"Nalog sa datim ID-jem ne postoji"
 //	@Failure		500	{object}	types.Response				"Interna Greška Servera"
 //	@Router			/orders/{id}/approve [post]
-func ApproveOrder(c *fiber.Ctx) error {
-
+func (oc *OrderController) ApproveOrder(c *fiber.Ctx) error {
 	return ApproveDeclineOrder(c, false)
 }
 
-func InitRoutes(app *fiber.App) {
+func InitOrderRoutes(app *fiber.App) {
+	orderController := NewOrderController()
 
-	app.Get("/orders/:id", GetOrderByID)
-	app.Get("/orders", GetOrders)
-	app.Post("/orders", middlewares.Auth, CreateOrder)
-	app.Post("/orders/:id/decline", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), DeclineOrder)
-	app.Post("/orders/:id/approve", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), ApproveOrder)
+	app.Get("/orders/:id", orderController.GetOrderByID)
+	app.Get("/orders", orderController.GetOrders)
+	app.Post("/orders", middlewares.Auth, orderController.CreateOrder)
+	app.Post("/orders/:id/decline", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), orderController.DeclineOrder)
+	app.Post("/orders/:id/approve", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), orderController.ApproveOrder)
 }
