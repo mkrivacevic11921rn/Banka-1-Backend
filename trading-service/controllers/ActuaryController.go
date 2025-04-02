@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"strconv"
@@ -20,7 +19,7 @@ func NewActuaryController() *ActuaryController {
 	return &ActuaryController{}
 }
 
-var validate = validator.New()
+//var validate = validator.New()
 
 type Employee struct {
 	ID          int      `json:"id"`
