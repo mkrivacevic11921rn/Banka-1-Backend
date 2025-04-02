@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"time"
+	"fmt"
 
 	"banka1.com/cron"
 
@@ -19,7 +20,6 @@ import (
 	"banka1.com/listings/forex"
 	"banka1.com/listings/stocks"
 	"banka1.com/orders"
-	"banka1.com/tax"
 	"banka1.com/types"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
@@ -635,10 +635,47 @@ func main() {
 	app.Get("/actuaries/filter", controllers.NewActuaryController().FilterActuaries)
 
 	orders.InitRoutes(app)
-	tax.InitRoutes(app)
+
+	ticker := time.NewTicker(5000 * time.Millisecond)
+	done := make(chan bool)
+
+	go func() {
+		for {
+			select {
+				case <-done:
+					return
+				case <-ticker.C:
+					checkUncompletedOrders()
+			}
+		}
+	}()
 
 	port := os.Getenv("LISTEN_PATH")
 	log.Fatal(app.Listen(port))
+	ticker.Stop()
+	done <- true
+}
+
+func checkUncompletedOrders() {
+	var undoneOrders []types.Order
+
+	fmt.Println("Proveravanje neizvršenih naloga...")
+
+	db.DB.Where("status = ? AND is_done = ?", "approved", false).Find(&undoneOrders)
+	fmt.Printf("Pronadjeno %v neizvršenih naloga\n", len(undoneOrders))
+	previousLength := -1
+
+	for len(undoneOrders) > 0 && previousLength != len(undoneOrders) {
+		fmt.Printf("Preostalo još %v neizvršenih naloga\n", len(undoneOrders))
+		for _, order := range undoneOrders {
+			if orders.CanExecuteAny(order) {
+				orders.MatchOrder(order)
+				break
+			}
+		}
+		previousLength = len(undoneOrders)
+		db.DB.Where("status = ? AND is_done = ?", "approved", false).Find(&undoneOrders)
+	}
 }
 
 func getSecurities() func(c *fiber.Ctx) error {
