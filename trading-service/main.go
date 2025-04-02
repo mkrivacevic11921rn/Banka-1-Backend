@@ -63,6 +63,18 @@ func main() {
 		log.Println("Finished loading default futures")
 	}()
 
+	func() {
+		log.Println("Starting to load default securities...")
+		LoadSecurities()
+		log.Println("Finished loading default securities")
+	}()
+
+	func() {
+		log.Println("Starting to load default taxes...")
+		LoadTax()
+		log.Println("Finished loading default taxes")
+	}()
+
 	// func() {
 	// 	log.Println("Starting to load default options...")
 	// 	err = options.LoadAllOptions()
@@ -658,6 +670,54 @@ func getSecurities() func(c *fiber.Ctx) error {
 			Error:   "",
 		})
 	}
+}
+
+func LoadSecurities() {
+
+	settlementDate := time.Now().AddDate(0, 0, 2).Format("2006-01-02")
+
+	security := types.Security{
+		Ticker:         "AAPL",
+		Name:           "Apple Inc.",
+		Type:           "Stock",
+		Exchange:       "NASDAQ",
+		LastPrice:      178.56,
+		AskPrice:       179.00,
+		BidPrice:       178.50,
+		Volume:         123456789,
+		SettlementDate: &settlementDate,
+		StrikePrice:    nil,
+		OptionType:     nil,
+		UserID:         3,
+	}
+
+	if err := db.DB.Create(&security).Error; err != nil {
+		log.Println("Failed to insert security:", err)
+		return
+	}
+
+	log.Println("Security inserted successfully!")
+}
+
+func LoadTax() {
+
+	monthYear := time.Now().Format("2006-01")
+
+	taxData := types.Tax{
+		UserID:        3,
+		MonthYear:     monthYear,
+		TaxableProfit: 50000.00,
+		TaxAmount:     15000.00,
+		IsPaid:        false,
+		CreatedAt:     time.Now().Format("2006-01-02"),
+	}
+
+	if err := db.DB.Create(&taxData).Error; err != nil {
+		log.Println("Failed to insert tax:", err)
+		return
+	}
+
+	log.Println("Tax record inserted successfully!")
 }
 
 func listingToSecurity(l *types.Listing) (*types.Security, error) {

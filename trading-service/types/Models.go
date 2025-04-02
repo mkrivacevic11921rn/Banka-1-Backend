@@ -13,6 +13,7 @@ type Actuary struct {
 
 type Security struct {
 	ID             uint    `gorm:"primaryKey" json:"id,omitempty"`
+	UserID         uint    `gorm:"not null" json:"userId,omitempty"`
 	Ticker         string  `gorm:"unique;not null" json:"ticker,omitempty"`
 	Name           string  `gorm:"not null" json:"name,omitempty"`
 	Type           string  `gorm:"type:text;not null" json:"type,omitempty"`
@@ -80,13 +81,12 @@ type Portfolio struct {
 
 type Tax struct {
 	ID            uint    `gorm:"primaryKey"`
-	UserID        uint    `gorm:"not null;index:idx_tax_user_createdat"`
-	MonthYear     string  `gorm:"not null;index"` // Format: YYYY-MM
+	UserID        uint    `gorm:"foreignKey;index:idx_tax_user_createdat"`
+	MonthYear     string  `gorm:"not null;index"`
 	TaxableProfit float64 `gorm:"not null"`
 	TaxAmount     float64 `gorm:"not null"`
 	IsPaid        bool    `gorm:"default:false"`
-	CreatedAt     int64   `gorm:"autoCreateTime;index:idx_tax_user_createdat"`
-	User          uint    `gorm:"foreignKey:UserID"`
+	CreatedAt     string  `gorm:"autoCreateTime;index:idx_tax_user_createdat"`
 }
 
 type Exchange struct {
