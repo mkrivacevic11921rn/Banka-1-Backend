@@ -1603,8 +1603,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Tax",
-                    "Users"
+                    "Tax"
                 ],
                 "summary": "Dohvatanje agregiranih poreskih podataka za korisnika",
                 "parameters": [

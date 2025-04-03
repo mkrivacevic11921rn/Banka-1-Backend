@@ -1393,7 +1393,6 @@ paths:
       summary: Dohvatanje agregiranih poreskih podataka za korisnika
       tags:
       - Tax
-      - Users
   /tax/run:
     post:
       description: Endpoint namenjen za pokretanje procesa obračuna poreza za korisnike.
