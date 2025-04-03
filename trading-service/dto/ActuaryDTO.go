@@ -17,6 +17,7 @@ type FilteredActuaryDTO struct {
 	LimitAmount  float64 `json:"limitAmount"`
 	UsedLimit    float64 `json:"usedLimit"`
 	NeedApproval bool    `json:"needApproval"`
+	Position     string  `json:"position"`
 }
 
 type EmployeeResponse struct {
