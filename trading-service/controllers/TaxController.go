@@ -1,4 +1,4 @@
-package tax
+package controllers
 
 import (
 	"banka1.com/db"
@@ -8,7 +8,24 @@ import (
 	"time"
 )
 
-func GetTaxForAllUsers(c *fiber.Ctx) error {
+type TaxController struct {
+}
+
+func NewTaxController() *TaxController {
+	return &TaxController{}
+}
+
+// GetTaxForAllUsers godoc
+//
+//	@Summary		Dohvatanje poslednjeg neplaćenog poreza za sve korisnike
+//	@Description	Vraća listu najskorijih neplaćenih poreskih obaveza (za poslednji obračunati mesec/godinu) za sve korisnike. Za svakog korisnika proverava i da li je registrovan kao aktuar.
+//	@Tags			Tax
+//	@Produce		json
+//	@Success		200	{object}	types.Response{data=[]types.TaxResponse}	"Lista poslednjih neplaćenih poreskih obaveza"
+//	@Failure		400	{object}	types.Response								"Greška pri izvršavanju upita u bazi (kako je implementirano u kodu)"
+//	@Failure		500	{object}	types.Response								"Greška pri čitanju rezultata iz baze"
+//	@Router			/tax [get]
+func (tc *TaxController) GetTaxForAllUsers(c *fiber.Ctx) error {
 	rows, err := db.DB.Raw(`WITH max_created_at AS (SELECT user_id, MAX(created_at) AS c FROM tax GROUP BY user_id)
 SELECT user_id, taxable_profit, tax_amount, is_paid, actuary.id IS NOT NULL
 FROM tax LEFT JOIN actuary USING (user_id)
@@ -40,13 +57,33 @@ AND NOT is_paid;`).Rows()
 	})
 }
 
-func RunTax(c *fiber.Ctx) error {
+// RunTax godoc
+//
+//	@Summary		Pokretanje obračuna poreza
+//	@Description	Endpoint namenjen za pokretanje procesa obračuna poreza za korisnike. Trenutno nije implementiran i uvek vraća grešku 500.
+//	@Tags			Tax
+//	@Produce		json
+//	@Success		202	{object}	types.Response	"Zahtev za obračun poreza je primljen"
+//	@Failure		500	{object}	types.Response	"Greska"
+//	@Router			/tax/run [post]
+func (tc *TaxController) RunTax(c *fiber.Ctx) error {
 	return c.Status(500).JSON(types.Response{
 		Success: false,
 		Error:   "Nije implementirano.",
 	})
 }
 
+// GetAggregatedTaxForUser godoc
+//
+//	@Summary		Dohvatanje agregiranih poreskih podataka za korisnika
+//	@Description	Vraća sumu plaćenog poreza za tekuću godinu i sumu neplaćenog poreza za tekući mesec za specificiranog korisnika.
+//	@Tags			Tax
+//	@Produce		json
+//	@Param			userID	path		int									true	"ID korisnika čiji se podaci traže"	example(123)
+//	@Success		200		{object}	types.Response{data=types.AggregatedTaxResponse}	"Agregirani poreski podaci za korisnika"
+//	@Failure		400		{object}	types.Response									"Neispravan ID korisnika (nije validan broj ili <= 0)"
+//	@Failure		500		{object}	types.Response									"Interna greška servera pri dohvatanju podataka iz baze"
+//	@Router			/tax/dashboard/{userID} [get]
 func GetAggregatedTaxForUser(c *fiber.Ctx) error {
 	userID, err := c.ParamsInt("userID")
 	if err != nil || userID <= 0 {
@@ -93,8 +130,10 @@ func GetAggregatedTaxForUser(c *fiber.Ctx) error {
 	})
 }
 
-func InitRoutes(app *fiber.App) {
-	app.Get("/tax", middlewares.Auth, GetTaxForAllUsers)
-	app.Post("/tax/run", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), RunTax)
+func InitTaxRoutes(app *fiber.App) {
+	taxController := NewTaxController()
+
+	app.Get("/tax", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), taxController.GetTaxForAllUsers)
+	app.Post("/tax/run", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), taxController.RunTax)
 	app.Get("/tax/dashboard/:userID", middlewares.Auth, GetAggregatedTaxForUser)
 }

@@ -5,10 +5,10 @@ import (
 	"banka1.com/dto"
 	"banka1.com/services"
 	"banka1.com/types"
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"strconv"
+	"strings"
 )
 
 type ActuaryController struct {
@@ -17,8 +17,6 @@ type ActuaryController struct {
 func NewActuaryController() *ActuaryController {
 	return &ActuaryController{}
 }
-
-var validate = validator.New()
 
 type Employee struct {
 	ID          int      `json:"id"`
@@ -36,6 +34,18 @@ type APIResponse struct {
 	Data    []Employee `json:"data"`
 }
 
+// CreateActuary godoc
+//
+//	@Summary		Kreiranje novog aktuara
+//	@Description	Kreira novi aktuar na osnovu dostavljenih podataka.
+//	@Tags			Actuaries
+//	@Accept			json
+//	@Produce		json
+//	@Param			actuary	body		dto.ActuaryDTO						true	"Podaci za kreiranje aktuara"
+//	@Success		201		{object}	types.Response{data=types.Actuary}	"Uspešno kreiran aktuar"
+//	@Failure		400		{object}	types.Response						"Neispravan format unosa ili poslati podaci nisu validni."
+//	@Failure		500		{object}	types.Response						"Greska u bazi."
+//	@Router			/actuaries [post]
 func (ac *ActuaryController) CreateActuary(c *fiber.Ctx) error {
 	var actuaryDTO dto.ActuaryDTO
 
@@ -89,6 +99,15 @@ func (ac *ActuaryController) CreateActuary(c *fiber.Ctx) error {
 	return c.Status(201).JSON(response)
 }
 
+// GetAllActuaries godoc
+//
+//	@Summary		Dobavljanje svih aktuara
+//	@Description	Vraća listu svih zapisa aktuara iz baze podataka.
+//	@Tags			Actuaries
+//	@Produce		json
+//	@Success		200	{object}	types.Response{data=[]types.Actuary}	"Uspešno dobavljeni svi aktuari"
+//	@Failure		500	{object}	types.Response							"Greška u bazi"
+//	@Router			/actuaries [get]
 func (ac *ActuaryController) GetAllActuaries(c *fiber.Ctx) error {
 	var actuaries []types.Actuary
 	result := db.DB.Find(&actuaries)
@@ -107,6 +126,19 @@ func (ac *ActuaryController) GetAllActuaries(c *fiber.Ctx) error {
 	})
 }
 
+// ChangeAgentLimits godoc
+//
+//	@Summary		Izmena limita aktuara
+//	@Description	Ažurira iznos limita za određeni aktuar prema ID-ju.
+//	@Tags			Actuaries
+//	@Accept			json
+//	@Produce		json
+//	@Param			ID			path		string								true	"ID aktuara"
+//	@Param			updateData	body		dto.UpdateActuaryDTO				true	"Podaci za ažuriranje limita"
+//	@Success		200			{object}	types.Response{data=types.Actuary}	"Uspešno ažurirani limiti aktuara"
+//	@Failure		400			{object}	types.Response						"Neispravan format podataka"
+//	@Failure		404			{object}	types.Response						"Aktuar nije pronadjen"
+//	@Router			/actuaries/{id} [put]
 func (ac *ActuaryController) ChangeAgentLimits(c *fiber.Ctx) error {
 	id := c.Params("ID")
 	var actuary types.Actuary
@@ -153,6 +185,22 @@ func (ac *ActuaryController) ChangeAgentLimits(c *fiber.Ctx) error {
 		Error:   "",
 	})
 }
+
+// FilterActuaries godoc
+//
+//	@Summary		Filtriranje aktuara
+//	@Description	Vraća listu aktuara filtriranu po imenu, prezimenu, email-u i/ili poziciji..
+//	@Tags			Actuaries
+//	@Produce		json
+//	@Param			name		query		string											false	"Filter po imenu (case-insensitive, partial match)"
+//	@Param			surname		query		string											false	"Filter po prezimenu (case-insensitive, partial match)"
+//	@Param			email		query		string											false	"Filter po email-u (case-insensitive, partial match)"
+//	@Param			position	query		string											false	"Filter po poziciji (exact match from user-service)"
+//	@Success		200			{object}	types.Response{data=[]dto.FilteredActuaryDTO}	"Uspešno filtrirani aktuari"
+//	@Failure		500			{object}	types.Response									"Greska pri preuzimanju aktuara."
+//	@Router			/actuaries/filter [get]
+//
+
 func (ac *ActuaryController) FilterActuaries(c *fiber.Ctx) error {
 	name := c.Query("name")
 	surname := c.Query("surname")
@@ -215,4 +263,20 @@ func (ac *ActuaryController) ResetActuaryLimit(c *fiber.Ctx) error {
 		Data:    actuary,
 		Error:   "",
 	})
+}
+
+func containsIgnoreCase(source, search string) bool {
+	sourceLower := strings.ToLower(source)
+	searchLower := strings.ToLower(search)
+	return strings.Contains(sourceLower, searchLower)
+}
+
+func InitActuaryRoutes(app *fiber.App) {
+	actuaryController := NewActuaryController()
+
+	app.Post("/actuaries", actuaryController.CreateActuary)
+	app.Get("/actuaries/all", actuaryController.GetAllActuaries)
+	app.Put("/actuaries/:ID/limit", actuaryController.ChangeAgentLimits)
+	app.Get("/actuaries/filter", actuaryController.FilterActuaries)
+	app.Put("/actuaries/:ID/reset-used-limit", actuaryController.ResetActuaryLimit)
 }

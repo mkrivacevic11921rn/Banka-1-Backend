@@ -7,13 +7,13 @@ import com.banka1.banking.dto.NotificationDTO;
 import com.banka1.banking.dto.request.CreateAccountDTO;
 import com.banka1.banking.dto.request.UpdateAccountDTO;
 import com.banka1.banking.dto.request.UserUpdateAccountDTO;
-import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Company;
 import com.banka1.banking.models.Transaction;
 import com.banka1.banking.models.helper.*;
 import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.repository.TransactionRepository;
+import com.banka1.common.listener.MessageHelper;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -72,8 +72,12 @@ public class AccountService {
             Company companyToUse;
             if (existingCompany == null) {
                 companyToUse = companyService.createCompany(companyDTO);
+                companyToUse.setOwnerID(owner.getId());
             } else {
                 companyToUse = existingCompany;
+                if (!companyToUse.getOwnerID().equals(owner.getId())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Korisnik nije vlasnik kompanije");
+                }
             }
 
             account.setCompany(companyToUse);

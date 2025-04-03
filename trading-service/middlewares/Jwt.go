@@ -1,8 +1,8 @@
 package middlewares
 
 import (
-	"fmt"
 	"encoding/base64"
+	"fmt"
 	"os"
 
 	"github.com/dgrijalva/jwt-go"
@@ -39,9 +39,9 @@ func NewOrderToken(direction string, userID uint, accountID uint, amount float64
 
 	tokenString, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"direction": direction,
-		"userId": userID,
+		"userId":    userID,
 		"accountId": accountID,
-		"amount": fmt.Sprintf("%f", amount),
+		"amount":    fmt.Sprintf("%f", amount),
 	}).SignedString(key)
 
 	if err != nil {
