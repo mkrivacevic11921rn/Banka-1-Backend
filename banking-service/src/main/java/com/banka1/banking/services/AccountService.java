@@ -72,8 +72,12 @@ public class AccountService {
             Company companyToUse;
             if (existingCompany == null) {
                 companyToUse = companyService.createCompany(companyDTO);
+                companyToUse.setOwnerID(owner.getId());
             } else {
                 companyToUse = existingCompany;
+                if (!companyToUse.getOwnerID().equals(owner.getId())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Korisnik nije vlasnik kompanije");
+                }
             }
 
             account.setCompany(companyToUse);
