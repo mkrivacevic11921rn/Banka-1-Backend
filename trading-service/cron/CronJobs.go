@@ -2,7 +2,6 @@ package cron
 
 import (
 	"banka1.com/db"
-	//"banka1.com/orders"
 	"encoding/json"
 	"errors"
 	"github.com/gofiber/fiber/v2/log"
@@ -45,21 +44,21 @@ func StartScheduler() {
 		return
 	}
 	/*
-	// Provera i izvrsavanje STOP ordera na svakih 5 sekundi
-	_, err = c.AddFunc("@every 5s", func() {
-		orders.ExecuteStopOrders()
-	})
-	if err != nil {
-		log.Errorf("Greška pri zakazivanju ExecuteStopOrders:", err)
-	}
+		// Provera i izvrsavanje STOP ordera na svakih 5 sekundi
+		_, err = c.AddFunc("@every 5s", func() {
+			orders.ExecuteStopOrders()
+		})
+		if err != nil {
+			log.Errorf("Greška pri zakazivanju ExecuteStopOrders:", err)
+		}
 
-	// Provera i izvrsavanje STOP-LIMIT ordera na svakih 5 sekundi
-	_, err = c.AddFunc("@every 5s", func() {
-		orders.ExecuteStopLimitOrders()
-	})
-	if err != nil {
-		log.Errorf("Greška pri zakazivanju ExecuteStopLimitOrders:", err)
-	}
+		// Provera i izvrsavanje STOP-LIMIT ordera na svakih 5 sekundi
+		_, err = c.AddFunc("@every 5s", func() {
+			orders.ExecuteStopLimitOrders()
+		})
+		if err != nil {
+			log.Errorf("Greška pri zakazivanju ExecuteStopLimitOrders:", err)
+		}
 	*/
 	c.Start()
 }
