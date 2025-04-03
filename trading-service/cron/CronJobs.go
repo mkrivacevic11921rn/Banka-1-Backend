@@ -44,21 +44,23 @@ func StartScheduler() {
 		log.Errorf("Greska pri pokretanju cron job-a:", err)
 		return
 	}
-	// Provera i izvrsavanje STOP ordera na svakih 5 sekundi
-	_, err = c.AddFunc("@every 5s", func() {
-		orders.ExecuteStopOrders()
-	})
-	if err != nil {
-		log.Errorf("Greška pri zakazivanju ExecuteStopOrders:", err)
-	}
+	/*
+		// Provera i izvrsavanje STOP ordera na svakih 5 sekundi
+		_, err = c.AddFunc("@every 5s", func() {
+			orders.ExecuteStopOrders()
+		})
+		if err != nil {
+			log.Errorf("Greška pri zakazivanju ExecuteStopOrders:", err)
+		}
 
-	// Provera i izvrsavanje STOP-LIMIT ordera na svakih 5 sekundi
-	_, err = c.AddFunc("@every 5s", func() {
-		orders.ExecuteStopLimitOrders()
-	})
-	if err != nil {
-		log.Errorf("Greška pri zakazivanju ExecuteStopLimitOrders:", err)
-	}
+		// Provera i izvrsavanje STOP-LIMIT ordera na svakih 5 sekundi
+		_, err = c.AddFunc("@every 5s", func() {
+			orders.ExecuteStopLimitOrders()
+		})
+		if err != nil {
+			log.Errorf("Greška pri zakazivanju ExecuteStopLimitOrders:", err)
+		}
+	*/
 	c.Start()
 }
 
