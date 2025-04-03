@@ -1,6 +1,7 @@
 package main
 
 import (
+	"banka1.com/tax"
 	"fmt"
 	"os"
 	"time"
@@ -635,6 +636,8 @@ func main() {
 	app.Get("/actuaries/filter", controllers.NewActuaryController().FilterActuaries)
 
 	orders.InitRoutes(app)
+
+	tax.InitRoutes(app)
 
 	ticker := time.NewTicker(5000 * time.Millisecond)
 	done := make(chan bool)
