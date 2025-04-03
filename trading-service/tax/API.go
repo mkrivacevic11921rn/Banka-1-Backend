@@ -60,7 +60,7 @@ func GetAggregatedTax(c *fiber.Ctx) error {
 	rowsPaid, err := db.DB.Raw(`
 SELECT user_id, COALESCE(SUM(tax_amount), 0) 
 FROM tax 
-WHERE is_paid = 1 AND strftime('%Y', datetime(created_at / 1000, 'unixepoch')) = ? 
+WHERE is_paid = 1 AND substr(created_at, 1, 4) = ?
 GROUP BY user_id`, year).Rows()
 	if err != nil {
 		log.Println("RAW SELECT error:", err)
@@ -82,7 +82,7 @@ GROUP BY user_id`, year).Rows()
 	SELECT user_id, tax_amount
 	FROM tax
 	WHERE is_paid = 0
-		AND strftime('%Y-%m', datetime(created_at / 1000, 'unixepoch')) = ?
+		AND substr(created_at, 1, 7) = ?
 	GROUP BY user_id `, yearMonth).Rows()
 	if err != nil {
 		log.Println("[ERROR] Unpaid query error:", err)
