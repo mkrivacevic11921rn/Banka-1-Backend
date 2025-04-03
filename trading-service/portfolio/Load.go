@@ -12,6 +12,7 @@ func LoadPortfolios() {
 		SecurityID:    1,
 		Quantity:      10,
 		PurchasePrice: 150.00,
+		PublicCount:   0,
 	}
 
 	p2 := types.Portfolio{
@@ -19,6 +20,7 @@ func LoadPortfolios() {
 		SecurityID:    2,
 		Quantity:      5,
 		PurchasePrice: 180.00,
+		PublicCount:   0,
 	}
 
 	if err := db.DB.FirstOrCreate(&p1, types.Portfolio{

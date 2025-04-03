@@ -8,5 +8,5 @@ type PortfolioSecurityDTO struct {
 	Price        float64 `json:"price"`
 	Profit       float64 `json:"profit"`
 	LastModified int64   `json:"last_modified"`
-	Public       bool    `json:"public"`
+	Public       int     `json:"public"`
 }
