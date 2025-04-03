@@ -107,7 +107,7 @@ func (sc *SecuritiesController) GetUserSecurities(c *fiber.Ctx) error {
 			Price:        p.PurchasePrice,
 			Profit:       profit,
 			LastModified: lastMod,
-			Public:       p.Security.Exchange != "", // ako postoji exchange, smatra se javnim
+			Public:       p.PublicCount,
 		}
 		response = append(response, item)
 	}
