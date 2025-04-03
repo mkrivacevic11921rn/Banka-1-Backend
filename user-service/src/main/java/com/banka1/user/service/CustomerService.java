@@ -133,9 +133,18 @@ public class CustomerService {
         // Saving the customer in the database gives it an ID, which can be used to generate the set-password token
         customer = customerRepository.save(customer);
 
-        jmsTemplate.convertAndSend(destinationAccount, messageHelper.createTextMessage(new CreateAccountByEmployeeDTO(new CreateAccountDTO(customerDTO.getAccountInfo(), customer.getId()), employeeId)));
+        try {
+            setPasswordService.saveSetPasswordRequest(verificationCode, customer.getId(), true);
 
-        setPasswordService.saveSetPasswordRequest(verificationCode, customer.getId(), true);
+            var dto = new CreateAccountByEmployeeDTO(new CreateAccountDTO(customerDTO.getAccountInfo(), customer.getId()), employeeId);
+            var message = jmsTemplate.sendAndReceive(destinationAccount, session -> session.createTextMessage(messageHelper.createTextMessage(dto)));
+            var error = messageHelper.getMessage(message, String.class);
+            if (error != null)
+                throw new RuntimeException(error);
+        } catch (Exception e) {
+            customerRepository.delete(customer);
+            throw new RuntimeException(e);
+        }
 
         jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
         return customer;
