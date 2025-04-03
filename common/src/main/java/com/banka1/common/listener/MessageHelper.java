@@ -1,5 +1,6 @@
-package com.banka1.notification.listener.helper;
+package com.banka1.common.listener;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.jms.JMSException;
 import jakarta.jms.Message;
@@ -7,6 +8,7 @@ import jakarta.jms.TextMessage;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.springframework.stereotype.Component;
+
 import java.io.IOException;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -39,6 +41,13 @@ public class MessageHelper {
         }
     }
 
+    public String createTextMessage(Object object) {
+        try {
+            return objectMapper.writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Problem with creating text message");
+        }
+    }
 
     private <T> void printViolationsAndThrowException(Set<ConstraintViolation<T>> violations) {
         String concatenatedViolations = violations.stream()
