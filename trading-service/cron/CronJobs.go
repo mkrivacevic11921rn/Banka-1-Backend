@@ -4,11 +4,12 @@ import (
 	"banka1.com/db"
 	"encoding/json"
 	"errors"
-	"github.com/gofiber/fiber/v2/log"
-	"gorm.io/gorm"
 	"io"
 	"net/http"
 	"os"
+
+	"github.com/gofiber/fiber/v2/log"
+	"gorm.io/gorm"
 
 	"banka1.com/types"
 	"github.com/robfig/cron/v3"
@@ -32,6 +33,7 @@ type APIResponse struct {
 
 // cron posao koji resetuje limit agentu svakog dana u 23 59
 func StartScheduler() {
+	createNewActuaries()
 	c := cron.New(cron.WithSeconds())
 	_, err := c.AddFunc("0 59 23 * * *", func() {
 		resetDailyLimits()
