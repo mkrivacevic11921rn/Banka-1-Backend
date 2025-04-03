@@ -5,11 +5,12 @@ import (
 	//"banka1.com/orders"
 	"encoding/json"
 	"errors"
-	"github.com/gofiber/fiber/v2/log"
-	"gorm.io/gorm"
 	"io"
 	"net/http"
 	"os"
+
+	"github.com/gofiber/fiber/v2/log"
+	"gorm.io/gorm"
 
 	"banka1.com/types"
 	"github.com/robfig/cron/v3"
@@ -33,6 +34,7 @@ type APIResponse struct {
 
 // cron posao koji resetuje limit agentu svakog dana u 23 59
 func StartScheduler() {
+	createNewActuaries()
 	c := cron.New(cron.WithSeconds())
 	_, err := c.AddFunc("0 59 23 * * *", func() {
 		resetDailyLimits()
@@ -45,21 +47,21 @@ func StartScheduler() {
 		return
 	}
 	/*
-	// Provera i izvrsavanje STOP ordera na svakih 5 sekundi
-	_, err = c.AddFunc("@every 5s", func() {
-		orders.ExecuteStopOrders()
-	})
-	if err != nil {
-		log.Errorf("Greška pri zakazivanju ExecuteStopOrders:", err)
-	}
+		// Provera i izvrsavanje STOP ordera na svakih 5 sekundi
+		_, err = c.AddFunc("@every 5s", func() {
+			orders.ExecuteStopOrders()
+		})
+		if err != nil {
+			log.Errorf("Greška pri zakazivanju ExecuteStopOrders:", err)
+		}
 
-	// Provera i izvrsavanje STOP-LIMIT ordera na svakih 5 sekundi
-	_, err = c.AddFunc("@every 5s", func() {
-		orders.ExecuteStopLimitOrders()
-	})
-	if err != nil {
-		log.Errorf("Greška pri zakazivanju ExecuteStopLimitOrders:", err)
-	}
+		// Provera i izvrsavanje STOP-LIMIT ordera na svakih 5 sekundi
+		_, err = c.AddFunc("@every 5s", func() {
+			orders.ExecuteStopLimitOrders()
+		})
+		if err != nil {
+			log.Errorf("Greška pri zakazivanju ExecuteStopLimitOrders:", err)
+		}
 	*/
 	c.Start()
 }
