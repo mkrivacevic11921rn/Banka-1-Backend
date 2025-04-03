@@ -34,9 +34,6 @@ import (
 //	@version		1.0
 //	@description	Trading Service API
 
-//	@host		localhost:3000
-//	@BasePath	/
-
 // @securityDefinitions.apikey	BearerAuth
 // @in							header
 // @name						Authorization
