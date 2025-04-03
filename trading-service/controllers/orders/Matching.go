@@ -2,13 +2,13 @@ package orders
 
 import (
 	"banka1.com/db"
-	"banka1.com/types"
 	"banka1.com/middlewares"
+	"banka1.com/types"
 	"fmt"
 	"math/rand"
-	"time"
-	"strings"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -275,7 +275,9 @@ func CanExecuteAny(order types.Order) bool {
 
 func canPreExecute(order types.Order) bool {
 	price := getListingPrice(order)
-	if price < 0 { return false }
+	if price < 0 {
+		return false
+	}
 	if strings.ToUpper(order.OrderType) == "LIMIT" {
 		if order.Direction == "sell" {
 			return price >= *order.LimitPricePerUnit
