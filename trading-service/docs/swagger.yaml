@@ -82,6 +82,17 @@ definitions:
       userId:
         type: integer
     type: object
+  types.AggregatedTaxResponse:
+    properties:
+      is_actuary:
+        type: boolean
+      paid_this_year:
+        type: number
+      unpaid_this_month:
+        type: number
+      user_id:
+        type: integer
+    type: object
   types.CreateOrderRequest:
     properties:
       account_id:
@@ -301,6 +312,8 @@ definitions:
         type: integer
       bid:
         type: number
+      contractSize:
+        type: integer
       exchange:
         type: string
       id:
@@ -311,16 +324,19 @@ definitions:
         type: string
       optionType:
         type: string
+      previousClose:
+        type: number
       settlementDate:
         description: Samo za futures i opcije
         type: string
       strikePrice:
-        description: data for option
         type: number
       ticker:
         type: string
       type:
         type: string
+      userId:
+        type: integer
     type: object
   types.Stock:
     properties:
@@ -413,7 +429,7 @@ paths:
       summary: Kreiranje novog aktuara
       tags:
       - Actuaries
-  /actuaries/{ID}:
+  /actuaries/{id}:
     put:
       consumes:
       - application/json
@@ -1343,6 +1359,41 @@ paths:
       summary: Dohvatanje poslednjeg neplaćenog poreza za sve korisnike
       tags:
       - Tax
+  /tax/dashboard/{userID}:
+    get:
+      description: Vraća sumu plaćenog poreza za tekuću godinu i sumu neplaćenog poreza
+        za tekući mesec za specificiranog korisnika.
+      parameters:
+      - description: ID korisnika čiji se podaci traže
+        example: 123
+        in: path
+        name: userID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Agregirani poreski podaci za korisnika
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.AggregatedTaxResponse'
+              type: object
+        "400":
+          description: Neispravan ID korisnika (nije validan broj ili <= 0)
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Interna greška servera pri dohvatanju podataka iz baze
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Dohvatanje agregiranih poreskih podataka za korisnika
+      tags:
+      - Tax
+      - Users
   /tax/run:
     post:
       description: Endpoint namenjen za pokretanje procesa obračuna poreza za korisnike.

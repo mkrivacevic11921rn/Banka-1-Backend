@@ -2,7 +2,7 @@ package middlewares
 
 import (
 	"encoding/base64"
-	"fmt
+	"fmt"
 	"os"
 
 	"github.com/dgrijalva/jwt-go"

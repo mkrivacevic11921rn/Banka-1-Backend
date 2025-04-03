@@ -179,7 +179,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/actuaries/{ID}": {
+        "/actuaries/{id}": {
             "put": {
                 "description": "Ažurira iznos limita za određeni aktuar prema ID-ju.",
                 "consumes": [
@@ -1596,6 +1596,61 @@ const docTemplate = `{
                 }
             }
         },
+        "/tax/dashboard/{userID}": {
+            "get": {
+                "description": "Vraća sumu plaćenog poreza za tekuću godinu i sumu neplaćenog poreza za tekući mesec za specificiranog korisnika.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tax",
+                    "Users"
+                ],
+                "summary": "Dohvatanje agregiranih poreskih podataka za korisnika",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 123,
+                        "description": "ID korisnika čiji se podaci traže",
+                        "name": "userID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Agregirani poreski podaci za korisnika",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/types.AggregatedTaxResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Neispravan ID korisnika (nije validan broj ili \u003c= 0)",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Interna greška servera pri dohvatanju podataka iz baze",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/tax/run": {
             "post": {
                 "description": "Endpoint namenjen za pokretanje procesa obračuna poreza za korisnike. Trenutno nije implementiran i uvek vraća grešku 500.",
@@ -1743,6 +1798,23 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "types.AggregatedTaxResponse": {
+            "type": "object",
+            "properties": {
+                "is_actuary": {
+                    "type": "boolean"
+                },
+                "paid_this_year": {
+                    "type": "number"
+                },
+                "unpaid_this_month": {
+                    "type": "number"
+                },
+                "user_id": {
                     "type": "integer"
                 }
             }
@@ -2073,6 +2145,9 @@ const docTemplate = `{
                 "bid": {
                     "type": "number"
                 },
+                "contractSize": {
+                    "type": "integer"
+                },
                 "exchange": {
                     "type": "string"
                 },
@@ -2088,12 +2163,14 @@ const docTemplate = `{
                 "optionType": {
                     "type": "string"
                 },
+                "previousClose": {
+                    "type": "number"
+                },
                 "settlementDate": {
                     "description": "Samo za futures i opcije",
                     "type": "string"
                 },
                 "strikePrice": {
-                    "description": "data for option",
                     "type": "number"
                 },
                 "ticker": {
@@ -2101,6 +2178,9 @@ const docTemplate = `{
                 },
                 "type": {
                     "type": "string"
+                },
+                "userId": {
+                    "type": "integer"
                 }
             }
         },

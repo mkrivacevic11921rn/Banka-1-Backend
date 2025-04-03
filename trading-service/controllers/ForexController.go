@@ -102,7 +102,7 @@ func (fc *ForexController) GetForexByPair(c *fiber.Ctx) error {
 //	@Failure		404			{object}	types.Response										"Forex par nije pronađen"
 //	@Failure		500			{object}	types.Response										"Greška pri preuzimanju istorijskih podataka iz baze"
 //	@Router			/forex/{base}/{quote}/history [get]
-func (f *ForexController) GetForexHistoryRange(c *fiber.Ctx) error {
+func (fc *ForexController) GetForexHistoryRange(c *fiber.Ctx) error {
 	base := c.Params("base")
 	quote := c.Params("quote")
 	ticker := base + "/" + quote

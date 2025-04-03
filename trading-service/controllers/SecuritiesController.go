@@ -5,6 +5,7 @@ import (
 	"banka1.com/dto"
 	"banka1.com/types"
 	"github.com/gofiber/fiber/v2"
+	"time"
 )
 
 type SecuritiesController struct {
@@ -105,33 +106,38 @@ func (sc *SecuritiesController) GetUserSecurities(c *fiber.Ctx) error {
 
 func listingToSecurity(l *types.Listing) (*types.Security, error) {
 	var security types.Security
+	previousClose := getPreviousCloseForListing(l.ID)
 	switch l.Type {
 	case "Stock":
 		{
 			security = types.Security{
-				ID:        l.ID,
-				Ticker:    l.Ticker,
-				Name:      l.Name,
-				Type:      l.Type,
-				Exchange:  l.Exchange.Name,
-				LastPrice: float64(l.Price),
-				AskPrice:  float64(l.Ask),
-				BidPrice:  float64(l.Bid),
-				Volume:    int64(l.ContractSize * 10),
+				ID:            l.ID,
+				Ticker:        l.Ticker,
+				Name:          l.Name,
+				Type:          l.Type,
+				Exchange:      l.Exchange.Name,
+				LastPrice:     float64(l.Price),
+				AskPrice:      float64(l.Ask),
+				BidPrice:      float64(l.Bid),
+				Volume:        int64(l.ContractSize * 10),
+				ContractSize:  int64(l.ContractSize),
+				PreviousClose: previousClose,
 			}
 		}
 	case "Forex":
 		{
 			security = types.Security{
-				ID:        l.ID,
-				Ticker:    l.Ticker,
-				Name:      l.Name,
-				Type:      l.Type,
-				Exchange:  l.Exchange.Name,
-				LastPrice: float64(l.Price),
-				AskPrice:  float64(l.Ask),
-				BidPrice:  float64(l.Bid),
-				Volume:    int64(l.ContractSize * 10),
+				ID:            l.ID,
+				Ticker:        l.Ticker,
+				Name:          l.Name,
+				Type:          l.Type,
+				Exchange:      l.Exchange.Name,
+				LastPrice:     float64(l.Price),
+				AskPrice:      float64(l.Ask),
+				BidPrice:      float64(l.Bid),
+				Volume:        int64(l.ContractSize * 10),
+				ContractSize:  int64(l.ContractSize),
+				PreviousClose: previousClose,
 			}
 		}
 	case "Future":
@@ -152,6 +158,8 @@ func listingToSecurity(l *types.Listing) (*types.Security, error) {
 				BidPrice:       float64(l.Bid),
 				Volume:         int64(l.ContractSize * 10),
 				SettlementDate: &settlementDate,
+				ContractSize:   int64(l.ContractSize),
+				PreviousClose:  previousClose,
 			}
 		}
 	case "Option":
@@ -160,6 +168,7 @@ func listingToSecurity(l *types.Listing) (*types.Security, error) {
 			if result := db.DB.Where("listing_id = ?", l.ID).First(&option); result.Error != nil {
 				return nil, result.Error
 			}
+			settlementDate := option.SettlementDate.Format("2006-01-02")
 			security = types.Security{
 				ID:             l.ID,
 				Ticker:         l.Ticker,
@@ -172,13 +181,41 @@ func listingToSecurity(l *types.Listing) (*types.Security, error) {
 				Volume:         int64(l.ContractSize * 10),
 				StrikePrice:    &option.StrikePrice,
 				OptionType:     &option.OptionType,
-				SettlementDate: nil,
+				SettlementDate: &settlementDate,
+				ContractSize:   int64(l.ContractSize),
+				PreviousClose:  previousClose,
 			}
 
 		}
 
 	}
 	return &security, nil
+}
+
+func getPreviousCloseForListing(listingID uint) float64 {
+	var dailyInfo types.ListingDailyPriceInfo
+
+	yesterday := time.Now().AddDate(0, 0, -1)
+
+	err := db.DB.
+		Where("listing_id = ? AND DATE(date) = ?", listingID, yesterday.Format("2006-01-02")).
+		Order("date DESC").
+		First(&dailyInfo).Error
+
+	if err == nil {
+		return dailyInfo.Price
+	}
+
+	err = db.DB.
+		Where("listing_id = ?", listingID).
+		Order("date DESC").
+		First(&dailyInfo).Error
+
+	if err == nil {
+		return dailyInfo.Price
+	}
+
+	return 0
 }
 
 func InitSecuritiesRoutes(app *fiber.App) {

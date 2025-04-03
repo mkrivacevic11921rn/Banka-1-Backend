@@ -5,6 +5,7 @@ import (
 	"banka1.com/middlewares"
 	"banka1.com/types"
 	"github.com/gofiber/fiber/v2"
+	"time"
 )
 
 type TaxController struct {
@@ -72,9 +73,67 @@ func (tc *TaxController) RunTax(c *fiber.Ctx) error {
 	})
 }
 
+// GetAggregatedTaxForUser godoc
+//
+//	@Summary		Dohvatanje agregiranih poreskih podataka za korisnika
+//	@Description	Vraća sumu plaćenog poreza za tekuću godinu i sumu neplaćenog poreza za tekući mesec za specificiranog korisnika.
+//	@Tags			Tax
+//	@Produce		json
+//	@Param			userID	path		int									true	"ID korisnika čiji se podaci traže"	example(123)
+//	@Success		200		{object}	types.Response{data=types.AggregatedTaxResponse}	"Agregirani poreski podaci za korisnika"
+//	@Failure		400		{object}	types.Response									"Neispravan ID korisnika (nije validan broj ili <= 0)"
+//	@Failure		500		{object}	types.Response									"Interna greška servera pri dohvatanju podataka iz baze"
+//	@Router			/tax/dashboard/{userID} [get]
+func GetAggregatedTaxForUser(c *fiber.Ctx) error {
+	userID, err := c.ParamsInt("userID")
+	if err != nil || userID <= 0 {
+		return c.Status(400).JSON(types.Response{
+			Success: false,
+			Error:   "Neispravan userID parametar",
+		})
+	}
+
+	year := time.Now().Format("2006")
+	yearMonth := time.Now().Format("2006-01")
+
+	var paid float64
+	db.DB.Raw(`
+		SELECT COALESCE(SUM(tax_amount), 0)
+		FROM tax
+		WHERE is_paid = 1 AND user_id = ? AND substr(created_at, 1, 4) = ?
+	`, userID, year).Scan(&paid)
+
+	var unpaid float64
+	db.DB.Raw(`
+		SELECT COALESCE(SUM(tax_amount), 0)
+		FROM tax
+		WHERE is_paid = 0 AND user_id = ? AND substr(created_at, 1, 7) = ?
+	`, userID, yearMonth).Scan(&unpaid)
+
+	var isActuary bool
+	db.DB.Raw(`
+		SELECT COUNT(*) > 0
+		FROM actuary
+		WHERE user_id = ?
+	`, userID).Scan(&isActuary)
+
+	response := types.AggregatedTaxResponse{
+		UserID:          uint(userID),
+		PaidThisYear:    paid,
+		UnpaidThisMonth: unpaid,
+		IsActuary:       isActuary,
+	}
+
+	return c.JSON(types.Response{
+		Success: true,
+		Data:    response,
+	})
+}
+
 func InitTaxRoutes(app *fiber.App) {
 	taxController := NewTaxController()
 
 	app.Get("/tax", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), taxController.GetTaxForAllUsers)
 	app.Post("/tax/run", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), taxController.RunTax)
+	app.Get("/tax/dashboard/:userID", middlewares.Auth, GetAggregatedTaxForUser)
 }

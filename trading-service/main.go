@@ -1,9 +1,14 @@
 package main
 
 import (
-	"banka1.com/controllers"
-	"fmt"
+	"banka1.com/listings/securities"
+	"banka1.com/listings/tax"
+	"banka1.com/routes"
 	fiberSwagger "github.com/swaggo/fiber-swagger"
+
+	"banka1.com/controllers/orders"
+
+	"fmt"
 	"os"
 	"time"
 
@@ -12,19 +17,12 @@ import (
 	// options "banka1.com/listings/options"
 	"banka1.com/middlewares"
 
-	"banka1.com/listings/futures"
-	"banka1.com/routes"
-
-	"banka1.com/controllers"
 	"banka1.com/db"
 	_ "banka1.com/docs"
 	"banka1.com/exchanges"
-	"banka1.com/listings/finhub"
 	"banka1.com/listings/forex"
 	"banka1.com/listings/futures"
 	"banka1.com/listings/stocks"
-	"banka1.com/orders"
-	"banka1.com/tax"
 	"banka1.com/types"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
@@ -90,13 +88,13 @@ func main() {
 
 	func() {
 		log.Println("Starting to load default securities...")
-		LoadSecurities()
+		securities.LoadSecurities()
 		log.Println("Finished loading default securities")
 	}()
 
 	func() {
 		log.Println("Starting to load default taxes...")
-		LoadTax()
+		tax.LoadTax()
 		log.Println("Finished loading default taxes")
 	}()
 
@@ -121,17 +119,9 @@ func main() {
 		return c.SendStatus(200)
 	})
 
-	controllers.InitActuaryRoutes(app)
-	controllers.InitOrderRoutes(app)
-	controllers.InitSecuritiesRoutes(app)
-	controllers.InitExchangeRoutes(app)
-	controllers.InitStockRoutes(app)
-	controllers.InitForexRoutes(app)
-	controllers.InitFutureRoutes(app)
-	controllers.InitTaxRoutes(app)
-	controllers.InitOptionsRoutes(app)
+	routes.SetupRoutes(app)
 
-	// svaki put kad menjate swagger dokumentaciju (komentari iznad funkcija u controllerima, uradite "swag init" da bi se azuriralo)
+	// svaki put kad menjate swagger dokumentaciju (komentari iznad funkcija u controllerima), uradite "swag init" da bi se azuriralo
 	app.Get("/swagger/*", fiberSwagger.WrapHandler)
 
 	ticker := time.NewTicker(5000 * time.Millisecond)
@@ -147,9 +137,11 @@ func main() {
 			}
 		}
 	}()
+
 	port := os.Getenv("LISTEN_PATH")
 	log.Printf("Swagger UI available at http://localhost%s/swagger/index.html", port)
 	log.Fatal(app.Listen(port))
+
 	ticker.Stop()
 	done <- true
 }
@@ -174,197 +166,4 @@ func checkUncompletedOrders() {
 		previousLength = len(undoneOrders)
 		db.DB.Where("status = ? AND is_done = ?", "approved", false).Find(&undoneOrders)
 	}
-}
-
-func getSecurities() func(c *fiber.Ctx) error {
-	return func(c *fiber.Ctx) error {
-		var listings []types.Listing
-		if result := db.DB.Preload("Exchange").Find(&listings); result.Error != nil {
-			return c.Status(500).JSON(types.Response{
-				Success: false,
-				Data:    nil,
-				Error:   "Failed to fetch securities: " + result.Error.Error(),
-			})
-		}
-		var securities []types.Security
-		for _, listing := range listings {
-			security, err := listingToSecurity(&listing)
-			if err != nil || security == nil {
-				return c.Status(500).JSON(types.Response{
-					Success: false,
-					Data:    nil,
-					Error:   "Failed to convert listing to security: " + err.Error(),
-				})
-			}
-			securities = append(securities, *security)
-		}
-
-		return c.JSON(types.Response{
-			Success: true,
-			Data:    securities,
-			Error:   "",
-		})
-	}
-}
-
-func LoadSecurities() {
-
-	settlementDate := time.Now().AddDate(0, 0, 2).Format("2006-01-02")
-
-	security := types.Security{
-		Ticker:         "AAPL",
-		Name:           "Apple Inc.",
-		Type:           "Stock",
-		Exchange:       "NASDAQ",
-		LastPrice:      178.56,
-		AskPrice:       179.00,
-		BidPrice:       178.50,
-		Volume:         123456789,
-		SettlementDate: &settlementDate,
-		StrikePrice:    nil,
-		OptionType:     nil,
-		UserID:         3,
-	}
-
-	if err := db.DB.Create(&security).Error; err != nil {
-		log.Println("Failed to insert security:", err)
-		return
-	}
-
-	log.Println("Security inserted successfully!")
-}
-
-func LoadTax() {
-
-	monthYear := time.Now().Format("2006-01")
-
-	taxData := types.Tax{
-		UserID:        3,
-		MonthYear:     monthYear,
-		TaxableProfit: 50000.00,
-		TaxAmount:     15000.00,
-		IsPaid:        false,
-		CreatedAt:     time.Now().Format("2006-01-02"),
-	}
-
-	if err := db.DB.Create(&taxData).Error; err != nil {
-		log.Println("Failed to insert tax:", err)
-		return
-	}
-
-	log.Println("Tax record inserted successfully!")
-}
-
-func listingToSecurity(l *types.Listing) (*types.Security, error) {
-	var security types.Security
-	previousClose := getPreviousCloseForListing(l.ID)
-	switch l.Type {
-	case "Stock":
-		{
-			security = types.Security{
-				ID:            l.ID,
-				Ticker:        l.Ticker,
-				Name:          l.Name,
-				Type:          l.Type,
-				Exchange:      l.Exchange.Name,
-				LastPrice:     float64(l.Price),
-				AskPrice:      float64(l.Ask),
-				BidPrice:      float64(l.Bid),
-				Volume:        int64(l.ContractSize * 10),
-				ContractSize:  int64(l.ContractSize),
-				PreviousClose: previousClose,
-			}
-		}
-	case "Forex":
-		{
-			security = types.Security{
-				ID:            l.ID,
-				Ticker:        l.Ticker,
-				Name:          l.Name,
-				Type:          l.Type,
-				Exchange:      l.Exchange.Name,
-				LastPrice:     float64(l.Price),
-				AskPrice:      float64(l.Ask),
-				BidPrice:      float64(l.Bid),
-				Volume:        int64(l.ContractSize * 10),
-				ContractSize:  int64(l.ContractSize),
-				PreviousClose: previousClose,
-			}
-		}
-	case "Future":
-		{
-			var future types.FuturesContract
-			if result := db.DB.Where("listing_id = ?", l.ID).First(&future); result.Error != nil {
-				return nil, result.Error
-			}
-			settlementDate := future.SettlementDate.Format("2006-01-02")
-			security = types.Security{
-				ID:             l.ID,
-				Ticker:         l.Ticker,
-				Name:           l.Name,
-				Type:           l.Type,
-				Exchange:       l.Exchange.Name,
-				LastPrice:      float64(l.Price),
-				AskPrice:       float64(l.Ask),
-				BidPrice:       float64(l.Bid),
-				Volume:         int64(l.ContractSize * 10),
-				SettlementDate: &settlementDate,
-				ContractSize:   int64(l.ContractSize),
-				PreviousClose:  previousClose,
-			}
-		}
-	case "Option":
-		{
-			var option types.Option
-			if result := db.DB.Where("listing_id = ?", l.ID).First(&option); result.Error != nil {
-				return nil, result.Error
-			}
-			settlementDate := option.SettlementDate.Format("2006-01-02")
-			security = types.Security{
-				ID:             l.ID,
-				Ticker:         l.Ticker,
-				Name:           l.Name,
-				Type:           l.Type,
-				Exchange:       l.Exchange.Name,
-				LastPrice:      float64(l.Price),
-				AskPrice:       float64(l.Ask),
-				BidPrice:       float64(l.Bid),
-				Volume:         int64(l.ContractSize * 10),
-				StrikePrice:    &option.StrikePrice,
-				OptionType:     &option.OptionType,
-				SettlementDate: &settlementDate,
-				ContractSize:   int64(l.ContractSize),
-				PreviousClose:  previousClose,
-			}
-
-		}
-
-	}
-	return &security, nil
-}
-
-func getPreviousCloseForListing(listingID uint) float64 {
-	var dailyInfo types.ListingDailyPriceInfo
-
-	yesterday := time.Now().AddDate(0, 0, -1)
-
-	err := db.DB.
-		Where("listing_id = ? AND DATE(date) = ?", listingID, yesterday.Format("2006-01-02")).
-		Order("date DESC").
-		First(&dailyInfo).Error
-
-	if err == nil {
-		return dailyInfo.Price
-	}
-
-	err = db.DB.
-		Where("listing_id = ?", listingID).
-		Order("date DESC").
-		First(&dailyInfo).Error
-
-	if err == nil {
-		return dailyInfo.Price
-	}
-
-	return 0
 }
