@@ -5,6 +5,7 @@ import (
 	"banka1.com/dto"
 	"banka1.com/types"
 	"github.com/gofiber/fiber/v2"
+	"log"
 )
 
 type PortfolioController struct{}
@@ -33,13 +34,27 @@ func (pc *PortfolioController) GetUserSecurities(c *fiber.Ctx) error {
 	var response []dto.PortfolioSecurityDTO
 	for _, p := range portfolios {
 		profit := (p.Security.LastPrice - p.PurchasePrice) * float64(p.Quantity)
+
+		var lastMod int64
+		err := db.DB.
+			Table("order").
+			Select("MAX(last_modified)").
+			Where("user_id = ? AND security_id = ?", p.UserID, p.SecurityID).
+			Scan(&lastMod).Error
+		if err != nil || lastMod == 0 {
+			log.Println("Error fetching lastModified:", err)
+			lastMod = p.CreatedAt // fallback
+		}
+
 		item := dto.PortfolioSecurityDTO{
 			Ticker:       p.Security.Ticker,
 			Type:         p.Security.Type,
+			Symbol:       p.Security.Ticker, // koristiš isto kao symbol
 			Amount:       p.Quantity,
 			Price:        p.PurchasePrice,
 			Profit:       profit,
-			LastModified: p.CreatedAt,
+			LastModified: lastMod,
+			Public:       p.Security.Exchange != "", // ako postoji exchange, smatra se javnim
 		}
 		response = append(response, item)
 	}

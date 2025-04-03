@@ -74,9 +74,21 @@ func main() {
 	//}()
 
 	func() {
-		log.Println("Starting to load default securities...")
-		LoadSecurities()
-		log.Println("Finished loading default securities")
+		log.Println("Starting initial load of securities from listings...")
+		LoadAvailableSecurities()
+		log.Println("Finished loading securities from listings.")
+	}()
+
+	func() {
+		log.Println("Starting to load default portfolios...")
+		LoadPortfolios()
+		log.Println("Finished loading default portfolios")
+	}()
+
+	func() {
+		log.Println("Starting to load orders...")
+		LoadOrders()
+		log.Println("Finished loading orders")
 	}()
 
 	func() {
@@ -626,8 +638,6 @@ func main() {
 		})
 	})
 
-	app.Get("/securities/available", getSecurities())
-
 	app.Get("/securities", getSecurities())
 
 	app.Post("/actuaries", controllers.NewActuaryController().CreateActuary)
@@ -712,36 +722,174 @@ func getSecurities() func(c *fiber.Ctx) error {
 	}
 }
 
-func LoadSecurities() {
-
-	settlementDate := time.Now().AddDate(0, 0, 2).Format("2006-01-02")
-
-	security := types.Security{
-		Ticker:         "AAPL",
-		Name:           "Apple Inc.",
-		Type:           "Stock",
-		Exchange:       "NASDAQ",
-		LastPrice:      178.56,
-		AskPrice:       179.00,
-		BidPrice:       178.50,
-		Volume:         123456789,
-		SettlementDate: &settlementDate,
-		StrikePrice:    nil,
-		OptionType:     nil,
-		UserID:         3,
-	}
-
-	if err := db.DB.Create(&security).Error; err != nil {
-		log.Println("Failed to insert security:", err)
+func LoadAvailableSecurities() {
+	var listings []types.Listing
+	if err := db.DB.Preload("Exchange").Find(&listings).Error; err != nil {
+		log.Println("Cannot load listings:", err)
 		return
 	}
 
-	log.Println("Security inserted successfully!")
+	for _, listing := range listings {
+		security, err := listingToSecurity(&listing)
+		if err != nil || security == nil {
+			log.Println("Error converting listings:", listing.ID, err)
+			continue
+		}
+
+		var existing types.Security
+		if err := db.DB.First(&existing, "id = ?", security.ID).Error; err == nil {
+			log.Printf("Security already exists ID=%d, Ticker=%s", existing.ID, existing.Ticker)
+			continue
+		}
+
+		if err := db.DB.Create(security).Error; err != nil {
+			log.Printf("Failed insert for Security ID=%d: %v", security.ID, err)
+		} else {
+			log.Printf("Added security: ID=%d, Ticker=%s", security.ID, security.Ticker)
+		}
+	}
+}
+
+//func LoadSecurities() {
+//
+//	settlementDate := time.Now().AddDate(0, 0, 2).Format("2006-01-02")
+//
+//	security1 := types.Security{
+//		Ticker:         "AAPL",
+//		Name:           "Apple Inc.",
+//		Type:           "Stock",
+//		Exchange:       "NASDAQ",
+//		LastPrice:      178.56,
+//		AskPrice:       179.00,
+//		BidPrice:       178.50,
+//		Volume:         123456789,
+//		SettlementDate: &settlementDate,
+//		StrikePrice:    nil,
+//		OptionType:     nil,
+//		ContractSize:   1,
+//		PreviousClose:  177.80,
+//	}
+//
+//	security2 := types.Security{
+//		Ticker:         "MSFT",
+//		Name:           "Microsoft Corp.",
+//		Type:           "Stock",
+//		Exchange:       "NASDAQ",
+//		LastPrice:      314.67,
+//		AskPrice:       315.00,
+//		BidPrice:       314.00,
+//		Volume:         987654321,
+//		SettlementDate: &settlementDate,
+//		StrikePrice:    nil,
+//		OptionType:     nil,
+//		ContractSize:   1,
+//		PreviousClose:  313.00,
+//	}
+//
+//	if err := db.DB.Create(&security1).Error; err != nil {
+//		log.Println("Failed to insert security 1:", err)
+//	} else {
+//		log.Println("Security 1 inserted successfully!")
+//	}
+//
+//	if err := db.DB.Create(&security2).Error; err != nil {
+//		log.Println("Failed to insert security 2:", err)
+//	} else {
+//		log.Println("Security 2 inserted successfully!")
+//	}
+//
+//}
+
+func LoadPortfolios() {
+	p1 := types.Portfolio{
+		UserID:        3,
+		SecurityID:    1,
+		Quantity:      10,
+		PurchasePrice: 150.00,
+	}
+
+	p2 := types.Portfolio{
+		UserID:        3,
+		SecurityID:    2,
+		Quantity:      5,
+		PurchasePrice: 180.00,
+	}
+
+	if err := db.DB.FirstOrCreate(&p1, types.Portfolio{
+		UserID:     p1.UserID,
+		SecurityID: p1.SecurityID,
+	}).Error; err != nil {
+		log.Printf("Failed to insert p1: %v\\n", err)
+	} else {
+		log.Println("Portfolio p1 inserted or already exists.")
+	}
+
+	if err := db.DB.FirstOrCreate(&p2, types.Portfolio{
+		UserID:     p2.UserID,
+		SecurityID: p2.SecurityID,
+	}).Error; err != nil {
+		log.Printf("Failed to insert p2: %v\\n", err)
+	} else {
+		log.Println("Portfolio p2 inserted or already exists.")
+	}
+}
+
+func LoadOrders() {
+	order1 := types.Order{
+		UserID:       3,
+		AccountID:    1,
+		SecurityID:   1,
+		OrderType:    "Market",
+		Quantity:     10,
+		ContractSize: 1,
+		Direction:    "Buy",
+		Status:       "Approved",
+		IsDone:       true,
+	}
+
+	order2 := types.Order{
+		UserID:       3,
+		AccountID:    1,
+		SecurityID:   2,
+		OrderType:    "Market",
+		Quantity:     5,
+		ContractSize: 1,
+		Direction:    "Buy",
+		Status:       "Approved",
+		IsDone:       true,
+	}
+
+	if err := db.DB.FirstOrCreate(&order1, types.Order{
+		UserID:     order1.UserID,
+		SecurityID: order1.SecurityID,
+		Direction:  order1.Direction,
+	}).Error; err != nil {
+		log.Println("Error while adding order1:", err)
+	} else {
+		log.Printf("Order succesfully added to Security ID %d (order1)\n", order1.SecurityID)
+	}
+
+	if err := db.DB.FirstOrCreate(&order2, types.Order{
+		UserID:     order2.UserID,
+		SecurityID: order2.SecurityID,
+		Direction:  order2.Direction,
+	}).Error; err != nil {
+		log.Println("Error while adding order2:", err)
+	} else {
+		log.Printf("Order succesfully added to Security ID %d (order2)\n", order2.SecurityID)
+	}
 }
 
 func LoadTax() {
 
 	monthYear := time.Now().Format("2006-01")
+
+	var count int64
+	db.DB.Model(&types.Tax{}).Where("user_id = ? AND month_year = ?", 3, monthYear).Count(&count)
+	if count > 0 {
+		log.Println("Tax already exists, skip adding.")
+		return
+	}
 
 	taxData := types.Tax{
 		UserID:        3,
