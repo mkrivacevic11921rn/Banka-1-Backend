@@ -65,15 +65,18 @@ public class AccountService {
         Account account = modelMapper.map(createAccountDTO, Account.class);
 
         if (account.getSubtype().equals(AccountSubtype.BUSINESS) && createAccountDTO.getCompanyData() != null) {
+            System.out.println("Company data: " + createAccountDTO.getCompanyData());
             CreateCompanyDTO companyDTO = createAccountDTO.getCompanyData();
 
             Company existingCompany = companyService.findByCompanyNumber(companyDTO.getCompanyNumber());
 
             Company companyToUse;
             if (existingCompany == null) {
+                System.out.println("Company does not exist, creating new one");
                 companyToUse = companyService.createCompany(companyDTO);
                 companyToUse.setOwnerID(owner.getId());
             } else {
+                System.out.println("Company exists, using existing one");
                 companyToUse = existingCompany;
                 if (!companyToUse.getOwnerID().equals(owner.getId())) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Korisnik nije vlasnik kompanije");
