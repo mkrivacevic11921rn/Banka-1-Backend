@@ -75,6 +75,7 @@ type Portfolio struct {
 	SecurityID    uint     `gorm:"not null" json:"security_id,omitempty"`
 	Quantity      int      `gorm:"not null" json:"quantity,omitempty"`
 	PurchasePrice float64  `gorm:"not null" json:"purchase_price,omitempty"`
+	PublicCount   int      `gorm:"default:0" json:"public"`
 	CreatedAt     int64    `gorm:"autoCreateTime" json:"created_at,omitempty"`
 	User          uint     `gorm:"foreignKey:UserID" json:"user,omitempty"`
 	Security      Security `gorm:"foreignKey:SecurityID" json:"security"`
