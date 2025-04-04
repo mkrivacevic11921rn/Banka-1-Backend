@@ -23,6 +23,8 @@ public class AccountListener {
     public void onActivationMessage(Message message) throws JMSException {
         var dto = messageHelper.getMessage(message, CreateAccountByEmployeeDTO.class);
         try {
+            System.out.println("---------------------------");
+            System.out.println(dto);
             if (dto != null)
                 accountService.createAccount(dto.getCreateAccountDTO(), dto.getEmployeeId());
         } catch (Exception e) {
@@ -30,6 +32,6 @@ public class AccountListener {
             jmsTemplate.convertAndSend(message.getJMSReplyTo(), messageHelper.createTextMessage(e.getMessage()));
             return;
         }
-        jmsTemplate.convertAndSend(message.getJMSReplyTo(), messageHelper.createTextMessage(null));
+        jmsTemplate.convertAndSend(message.getJMSReplyTo(), messageHelper.createTextMessage("null"));
     }
 }
