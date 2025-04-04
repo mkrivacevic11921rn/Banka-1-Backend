@@ -14,6 +14,11 @@ type PortfolioController struct {
 
 func NewPortfolioController() *PortfolioController { return &PortfolioController{} }
 
+type UpdatePublicCountRequest struct {
+	SecurityID  uint `json:"security_id"`
+	PublicCount int  `json:"public"`
+}
+
 // UpdatePublicCount godoc
 //
 //	@Summary		Ažuriranje broja javno oglašenih hartija
@@ -22,18 +27,14 @@ func NewPortfolioController() *PortfolioController { return &PortfolioController
 //	@Accept			json
 //	@Produce		json
 //	@Param			id	path		int									true	"User ID"
-//	@Param			body	body	{ "security_id": 1, "public": 2 }	true	"Podaci za ažuriranje"
+//	@Param			body	body	UpdatePublicCountRequest			true	"Podaci za ažuriranje"
 //	@Success		200	{object}	types.Response{data=string}			"Uspešna izmena"
 //	@Failure		400	{object}	types.Response						"Nedostaje user ID ili telo nije ispravno"
 //	@Failure		500	{object}	types.Response						"Greška pri ažuriranju"
 //	@Router			/securities/{id}/public-count [put]
 func (sc *PortfolioController) UpdatePublicCount(c *fiber.Ctx) error {
-	type RequestBody struct {
-		SecurityID  uint `json:"security_id"`
-		PublicCount int  `json:"public"`
-	}
 
-	var req RequestBody
+	var req UpdatePublicCountRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(types.Response{
 			Success: false,
