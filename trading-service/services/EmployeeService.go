@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-const userServiceURL = "https://bank1.djues3.com/api/user/api/users/employees"
+//const userServiceURL = "https://bank1.djues3.com/api/user/api/users/employees"
 
 //const userServiceURL = "https://bank1.djues3.com/api/user/api/users/employees/filtered"
 
