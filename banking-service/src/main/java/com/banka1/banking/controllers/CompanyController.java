@@ -125,7 +125,7 @@ public class CompanyController {
         }
     }
 
-    @GetMapping("/{company_id}")
+    @GetMapping("/info/{company_id}")
     @Operation(summary = "Pregled detalja kompanije", description = "Detalji o kompaniji kojima pristupa zaposleni")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Detalji kompanije.", content = @Content(mediaType = "application/json",
