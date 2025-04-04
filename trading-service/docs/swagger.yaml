@@ -1,5 +1,11 @@
-basePath: /
 definitions:
+  controllers.UpdatePublicCountRequest:
+    properties:
+      public:
+        type: integer
+      security_id:
+        type: integer
+    type: object
   dto.ActuaryDTO:
     properties:
       limitAmount:
@@ -19,25 +25,6 @@ definitions:
     - role
     - userID
     type: object
-  dto.FilteredActuaryDTO:
-    properties:
-      email:
-        type: string
-      firstName:
-        type: string
-      id:
-        type: integer
-      lastName:
-        type: string
-      limitAmount:
-        type: number
-      needApproval:
-        type: boolean
-      role:
-        type: string
-      usedLimit:
-        type: number
-    type: object
   dto.PortfolioSecurityDTO:
     properties:
       amount:
@@ -48,6 +35,10 @@ definitions:
         type: number
       profit:
         type: number
+      public:
+        type: integer
+      symbol:
+        type: string
       ticker:
         type: string
       type:
@@ -364,7 +355,6 @@ definitions:
       user_id:
         type: integer
     type: object
-host: localhost:3000
 info:
   contact: {}
   description: Trading Service API
@@ -467,48 +457,6 @@ paths:
           schema:
             $ref: '#/definitions/types.Response'
       summary: Izmena limita aktuara
-      tags:
-      - Actuaries
-  /actuaries/filter:
-    get:
-      description: Vraća listu aktuara filtriranu po imenu, prezimenu, email-u i/ili
-        poziciji..
-      parameters:
-      - description: Filter po imenu (case-insensitive, partial match)
-        in: query
-        name: name
-        type: string
-      - description: Filter po prezimenu (case-insensitive, partial match)
-        in: query
-        name: surname
-        type: string
-      - description: Filter po email-u (case-insensitive, partial match)
-        in: query
-        name: email
-        type: string
-      - description: Filter po poziciji (exact match from user-service)
-        in: query
-        name: position
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Uspešno filtrirani aktuari
-          schema:
-            allOf:
-            - $ref: '#/definitions/types.Response'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/dto.FilteredActuaryDTO'
-                  type: array
-              type: object
-        "500":
-          description: Greska pri preuzimanju aktuara.
-          schema:
-            $ref: '#/definitions/types.Response'
-      summary: Filtriranje aktuara
       tags:
       - Actuaries
   /exchanges:
@@ -1147,6 +1095,46 @@ paths:
       summary: Dohvatanje svih hartija od vrednosti za korisnika
       tags:
       - Securities
+  /securities/{id}/public-count:
+    put:
+      consumes:
+      - application/json
+      description: Menja broj hartija koje su označene kao javne u portfoliju korisnika.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Podaci za ažuriranje
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.UpdatePublicCountRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Uspešna izmena
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Nedostaje user ID ili telo nije ispravno
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Greška pri ažuriranju
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Ažuriranje broja javno oglašenih hartija
+      tags:
+      - Portfolio
   /stocks:
     get:
       description: Vraća listu svih listinga koji predstavljaju akcije.
