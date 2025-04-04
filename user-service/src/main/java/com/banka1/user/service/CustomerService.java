@@ -144,7 +144,7 @@ public class CustomerService {
             var message = jmsTemplate.sendAndReceive(destinationAccount, session -> session.createTextMessage(messageHelper.createTextMessage(dto)));
 
             var error = messageHelper.getMessage(message, String.class);
-            if (!error.equals("null"))
+            if (error != null && !error.equals("null"))
                 throw new RuntimeException(error);
         } catch (Exception e) {
             log.error("Error while creating account: ", e);
