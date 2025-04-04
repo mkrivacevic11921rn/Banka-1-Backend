@@ -8,7 +8,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"strconv"
-	"strings"
 )
 
 type ActuaryController struct {
@@ -291,11 +290,11 @@ func (ac *ActuaryController) ResetActuaryLimit(c *fiber.Ctx) error {
 	})
 }
 
-func containsIgnoreCase(source, search string) bool {
-	sourceLower := strings.ToLower(source)
-	searchLower := strings.ToLower(search)
-	return strings.Contains(sourceLower, searchLower)
-}
+//func containsIgnoreCase(source, search string) bool {
+//	sourceLower := strings.ToLower(source)
+//	searchLower := strings.ToLower(search)
+//	return strings.Contains(sourceLower, searchLower)
+//}
 
 func InitActuaryRoutes(app *fiber.App) {
 	actuaryController := NewActuaryController()
