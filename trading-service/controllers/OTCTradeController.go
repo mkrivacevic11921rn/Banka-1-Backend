@@ -348,6 +348,44 @@ func (c *OTCTradeController) ExecuteOptionContract(ctx *fiber.Ctx) error {
 	})
 }
 
+func (c *OTCTradeController) GetActiveOffers(ctx *fiber.Ctx) error {
+	userID := uint(ctx.Locals("user_id").(float64))
+	var trades []types.OTCTrade
+
+	if err := db.DB.
+		Where("status = ? AND (buyer_id = ? OR seller_id = ?)", "pending", userID, userID).
+		Find(&trades).Error; err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
+			Success: false,
+			Error:   "Greška prilikom dohvatanja aktivnih ponuda",
+		})
+	}
+
+	return ctx.JSON(types.Response{
+		Success: true,
+		Data:    trades,
+	})
+}
+
+func (c *OTCTradeController) GetUserOptionContracts(ctx *fiber.Ctx) error {
+	userID := uint(ctx.Locals("user_id").(float64))
+	var contracts []types.OptionContract
+
+	if err := db.DB.
+		Where("buyer_id = ? OR seller_id = ?", userID, userID).
+		Find(&contracts).Error; err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
+			Success: false,
+			Error:   "Greška prilikom dohvatanja ugovora",
+		})
+	}
+
+	return ctx.JSON(types.Response{
+		Success: true,
+		Data:    contracts,
+	})
+}
+
 func InitOTCTradeRoutes(app *fiber.App) {
 	otcController := NewOTCTradeController()
 	otc := app.Group("/otctrade", middlewares.Auth)
@@ -356,4 +394,6 @@ func InitOTCTradeRoutes(app *fiber.App) {
 	otc.Put("/offer/:id/counter", otcController.CounterOfferOTCTrade)
 	otc.Put("/offer/:id/accept", otcController.AcceptOTCTrade)
 	otc.Put("/option/:id/execute", otcController.ExecuteOptionContract)
+	otc.Get("/offer/active", otcController.GetActiveOffers)
+	otc.Get("/option/contracts", otcController.GetUserOptionContracts)
 }
