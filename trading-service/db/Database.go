@@ -90,6 +90,7 @@ func migrate(db *gorm.DB) {
 		&types.ForexPair{},
 		&types.FuturesContract{},
 		&types.Option{},
+		&types.OptionContract{},
 	)
 }
 

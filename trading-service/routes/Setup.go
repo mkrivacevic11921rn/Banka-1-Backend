@@ -17,4 +17,5 @@ func SetupRoutes(app *fiber.App) {
 	controllers.InitOptionsRoutes(app)
 	controllers.InitPortfolioRoutes(app)
 	controllers.InitOTCTradeRoutes(app)
+	controllers.InitPortfolioRoutess(app)
 }

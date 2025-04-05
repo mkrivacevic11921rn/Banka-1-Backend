@@ -4,9 +4,14 @@ import (
 	"banka1.com/db"
 	"banka1.com/middlewares"
 	"banka1.com/types"
+	"encoding/json"
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
+	"io"
+	"net/http"
+	"os"
 	"time"
 )
 
@@ -265,6 +270,7 @@ func (c *OTCTradeController) AcceptOTCTrade(ctx *fiber.Ctx) error {
 		PortfolioID:  trade.PortfolioID,
 		Quantity:     trade.Quantity,
 		StrikePrice:  trade.PricePerUnit,
+		SecurityID:   trade.SecurityId,
 		Premium:      trade.Premium,
 		SettlementAt: trade.SettlementAt,
 		IsExercised:  false,
@@ -386,6 +392,35 @@ func (c *OTCTradeController) GetUserOptionContracts(ctx *fiber.Ctx) error {
 	})
 }
 
+type PortfolioControllerr struct{}
+
+func NewPortfolioControllerr() *PortfolioControllerr {
+	return &PortfolioControllerr{}
+}
+
+func (c *PortfolioControllerr) GetAllPortfolios(ctx *fiber.Ctx) error {
+	var portfolios []types.Portfolio
+
+	if err := db.DB.Preload("Security").Find(&portfolios).Error; err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"error":   "Greška prilikom dohvatanja portfolija",
+		})
+	}
+
+	return ctx.JSON(fiber.Map{
+		"success": true,
+		"data":    portfolios,
+	})
+}
+
+func InitPortfolioRoutess(app *fiber.App) {
+	portfolioController := NewPortfolioControllerr()
+	api := app.Group("/portfolio") // osnovni path
+
+	api.Get("/", portfolioController.GetAllPortfolios)
+}
+
 func InitOTCTradeRoutes(app *fiber.App) {
 	otcController := NewOTCTradeController()
 	otc := app.Group("/otctrade", middlewares.Auth)
@@ -396,4 +431,51 @@ func InitOTCTradeRoutes(app *fiber.App) {
 	otc.Put("/option/:id/execute", otcController.ExecuteOptionContract)
 	otc.Get("/offer/active", otcController.GetActiveOffers)
 	otc.Get("/option/contracts", otcController.GetUserOptionContracts)
+}
+
+type CustomerResponse struct {
+	ID          uint     `json:"id"`
+	FirstName   string   `json:"firstName"`
+	LastName    string   `json:"lastName"`
+	Username    string   `json:"username"`
+	BirthDate   string   `json:"birthDate"`
+	Gender      string   `json:"gender"`
+	Email       string   `json:"email"`
+	PhoneNumber string   `json:"phoneNumber"`
+	Address     string   `json:"address"`
+	Permissions []string `json:"permissions"`
+}
+
+type CustomerAPIResponse struct {
+	Success bool             `json:"success"`
+	Data    CustomerResponse `json:"data"`
+}
+
+func GetCustomerByID(userID uint) (*CustomerAPIResponse, error) {
+	basePath := os.Getenv("USER_SERVICE")
+	url := fmt.Sprintf("%s/api/customer/%d", basePath, userID)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Infof("Failed to fetch %s: %v\n", url, err)
+		return nil, err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Errorf("Failed to close response body: %v", err)
+		}
+	}(resp.Body)
+
+	if resp.StatusCode != 200 {
+		log.Infof("Error fetching %s: HTTP %d\n", url, resp.StatusCode)
+		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
+	}
+
+	var apiResponse *CustomerAPIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
+		log.Infof("Failed to parse JSON: %v\n", err)
+		return nil, err
+	}
+	return apiResponse, nil
 }

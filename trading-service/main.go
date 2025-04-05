@@ -107,7 +107,11 @@ func main() {
 		orders.LoadOrders()
 		log.Println("Finished loading default orders")
 	}()
-
+	func() {
+		log.Println("Starting to load default portfolios...")
+		orders.LoadPortfolios()
+		log.Println("Finished loading default portfolios")
+	}()
 	app := fiber.New()
 
 	app.Use(func(c *fiber.Ctx) error {
