@@ -14,6 +14,10 @@ services:
     image: 'apache/activemq-classic:latest'
     ports:
       - '61616:61616'
+      - '5672:5672'
+    configs:
+      - source: activemq_config
+        target: /opt/apache-activemq/conf/activemq.xml
   dev-banking-db:
     image: 'postgres:17-alpine'
     ports:
@@ -30,3 +34,7 @@ services:
       POSTGRES_USER: user_service_user
       POSTGRES_PASSWORD: user_service_password
       POSTGRES_DB: user_service_db
+
+configs:
+  activemq_config:
+    file: ./message-broker-service/activemq.xml

@@ -33,6 +33,10 @@ services:
     image: 'apache/activemq-classic:latest'
     ports:
       - '61616:61616'
+      - '5672:5672'
+    configs:
+      - source: activemq_config
+        target: /opt/apache-activemq/conf/activemq.xml
     healthcheck:
       test: [ "CMD-SHELL", "echo 'OK'" ]
       interval: 10s
@@ -220,3 +224,7 @@ networks:
   proxy-net: null
   banking-net: null
   trading-net: null
+
+configs:
+  activemq_config:
+    file: ./message-broker-service/activemq.xml
