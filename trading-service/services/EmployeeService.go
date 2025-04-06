@@ -4,6 +4,7 @@ import (
 	"banka1.com/dto"
 	"encoding/json"
 	"fmt"
+	"github.com/gofiber/fiber/v2"
 	"io"
 	"net/http"
 	"os"
@@ -34,8 +35,14 @@ import (
 //	return employees, nil
 //}
 
-func GetEmployeesFiltered(name, surname, email, position string) ([]dto.EmployeeResponse, error) {
-	// Preuzimanje base URL iz okruženja
+func GetEmployeesFiltered(c *fiber.Ctx, name, surname, email, position string) ([]dto.FilteredActuaryDTO, error) {
+
+	tokenValue := c.Locals("token")
+	tokenStr, ok := tokenValue.(string)
+	if !ok || tokenStr == "" {
+		return nil, fmt.Errorf("token nije pronađen u kontekstu")
+	}
+
 	basePath := os.Getenv("USER_SERVICE")
 	if basePath == "" {
 		return nil, fmt.Errorf("USER_SERVICE environment variable is not set")
@@ -67,14 +74,11 @@ func GetEmployeesFiltered(name, surname, email, position string) ([]dto.Employee
 	}
 	req.URL.RawQuery = q.Encode()
 
-	token := "eyJhbGciOiJIUzI1NiJ9.eyJpZCI6NCwicG9zaXRpb24iOiJXT1JLRVIiLCJwZXJtaXNzaW9ucyI6WyJ1c2VyLmN1c3RvbWVyLnZpZXciLCJ1c2VyLmN1c3RvbWVyLmNyZWF0ZSIsInVzZXIuY3VzdG9tZXIuZGVsZXRlIiwidXNlci5jdXN0b21lci5saXN0IiwidXNlci5jdXN0b21lci5lZGl0Il0sImlzRW1wbG95ZWQiOnRydWUsImlzQWRtaW4iOmZhbHNlLCJkZXBhcnRtZW50IjoiU1VQRVJWSVNPUiIsImlhdCI6MTc0MzczODc2NCwiZXhwIjoxNzQzNzQwNTY0fQ.nuVfA_qortYSSnPmM0HYJizcQBcdHq8U2oBL67uXnn4" // Zamenite sa stvarnim tokenom
-	req.Header.Add("Authorization", "Bearer "+token)
-
-	// Ispisivanje URL-a koji se šalje
-	fmt.Println("Request URL: ", req.URL.String()+"HEADER + "+req.Header.Get("Authorization")) // Ispisuje ceo URL sa parametrima
+	req.Header.Add("Authorization", "Bearer "+tokenStr)
 
 	// Slanje GET zahteva
-	resp, err := http.Get(req.URL.String())
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("ERROR: Failed to send HTTP request:", err)
 		return nil, err
@@ -94,12 +98,14 @@ func GetEmployeesFiltered(name, surname, email, position string) ([]dto.Employee
 	}
 
 	// Dekodiranje JSON odgovora
-	var employees []dto.EmployeeResponse
-	if err := json.NewDecoder(resp.Body).Decode(&employees); err != nil {
-		fmt.Println("ERROR: Failed to decode response body:", err)
+	var response dto.FilteredActuaryResponse
 
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		fmt.Println("ERROR: Failed to decode response body:", err)
 		return nil, err
 	}
 
+	employees := response.Data
 	return employees, nil
+
 }
