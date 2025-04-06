@@ -9,6 +9,7 @@ import (
 
 	"banka1.com/controllers/orders"
 
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -18,6 +19,7 @@ import (
 	// options "banka1.com/listings/options"
 	"banka1.com/middlewares"
 
+	"banka1.com/broker"
 	"banka1.com/db"
 	_ "banka1.com/docs"
 	"banka1.com/exchanges"
@@ -40,12 +42,13 @@ import (
 // @name						Authorization
 // @description				Unesite token. Primer: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 func main() {
-
+	ctx := context.Background()
 	err := godotenv.Load()
 	if err != nil {
 		panic("Error loading .env file")
 	}
 
+	broker.Connect(ctx)
 	db.Init()
 	cron.StartScheduler()
 
