@@ -111,6 +111,12 @@ func main() {
 		log.Println("Finished loading default orders")
 	}()
 
+	func() {
+		log.Println("Starting to load default portfolios...")
+		orders.LoadPortfolios()
+		log.Println("Finished loading default portfolios")
+	}()
+
 	broker.StartListeners(ctx)
 
 	app := fiber.New()
