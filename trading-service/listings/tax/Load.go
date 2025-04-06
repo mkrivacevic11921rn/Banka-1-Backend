@@ -11,6 +11,13 @@ func LoadTax() {
 
 	monthYear := time.Now().Format("2006-01")
 
+	var count int64
+	db.DB.Model(&types.Tax{}).Where("user_id = ? AND month_year = ?", 3, monthYear).Count(&count)
+	if count > 0 {
+		log.Println("Tax already exists, skip adding.")
+		return
+	}
+
 	taxData := types.Tax{
 		UserID:        3,
 		MonthYear:     monthYear,

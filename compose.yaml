@@ -28,9 +28,6 @@ services:
     # Required on linux for host.docker.internal to be accessible
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    depends_on:
-      - user-service
-      - banking-service
   #  TODO: Change message broker to RabbitMQ
   message-broker:
     image: 'apache/activemq-classic:latest'

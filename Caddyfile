@@ -4,11 +4,11 @@
 
 localhost {
 	handle_path /api/user/* {
-		reverse_proxy user-service:8081
+		reverse_proxy host.docker.internal:8081
 	}
 
 	handle_path /api/banking/* {
-		reverse_proxy banking-service:8082
+		reverse_proxy host.docker.internal:8082
 	}
 
 	handle_path /api/trading/* {

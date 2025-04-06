@@ -112,73 +112,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/actuaries/filter": {
-            "get": {
-                "description": "Vraća listu aktuara filtriranu po imenu, prezimenu, email-u i/ili poziciji..",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Actuaries"
-                ],
-                "summary": "Filtriranje aktuara",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Filter po imenu (case-insensitive, partial match)",
-                        "name": "name",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter po prezimenu (case-insensitive, partial match)",
-                        "name": "surname",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter po email-u (case-insensitive, partial match)",
-                        "name": "email",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter po poziciji (exact match from user-service)",
-                        "name": "position",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Uspešno filtrirani aktuari",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/types.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/dto.FilteredActuaryDTO"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "500": {
-                        "description": "Greska pri preuzimanju aktuara.",
-                        "schema": {
-                            "$ref": "#/definitions/types.Response"
-                        }
-                    }
-                }
-            }
-        },
         "/actuaries/{id}": {
             "put": {
                 "description": "Ažurira iznos limita za određeni aktuar prema ID-ju.",
@@ -1268,6 +1201,71 @@ const docTemplate = `{
                 }
             }
         },
+        "/securities/{id}/public-count": {
+            "put": {
+                "description": "Menja broj hartija koje su označene kao javne u portfoliju korisnika.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portfolio"
+                ],
+                "summary": "Ažuriranje broja javno oglašenih hartija",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Podaci za ažuriranje",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.UpdatePublicCountRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Uspešna izmena",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Nedostaje user ID ili telo nije ispravno",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Greška pri ažuriranju",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/stocks": {
             "get": {
                 "description": "Vraća listu svih listinga koji predstavljaju akcije.",
@@ -1603,8 +1601,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Tax",
-                    "Users"
+                    "Tax"
                 ],
                 "summary": "Dohvatanje agregiranih poreskih podataka za korisnika",
                 "parameters": [
@@ -1679,6 +1676,17 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "controllers.UpdatePublicCountRequest": {
+            "type": "object",
+            "properties": {
+                "public": {
+                    "type": "integer"
+                },
+                "security_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "dto.ActuaryDTO": {
             "type": "object",
             "required": [
@@ -1707,35 +1715,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.FilteredActuaryDTO": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "firstName": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "lastName": {
-                    "type": "string"
-                },
-                "limitAmount": {
-                    "type": "number"
-                },
-                "needApproval": {
-                    "type": "boolean"
-                },
-                "role": {
-                    "type": "string"
-                },
-                "usedLimit": {
-                    "type": "number"
-                }
-            }
-        },
         "dto.PortfolioSecurityDTO": {
             "type": "object",
             "properties": {
@@ -1750,6 +1729,12 @@ const docTemplate = `{
                 },
                 "profit": {
                     "type": "number"
+                },
+                "public": {
+                    "type": "integer"
+                },
+                "symbol": {
+                    "type": "string"
                 },
                 "ticker": {
                     "type": "string"
@@ -2238,8 +2223,8 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:3000",
-	BasePath:         "/",
+	Host:             "",
+	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "Trading Service",
 	Description:      "Trading Service API",
