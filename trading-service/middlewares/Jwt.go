@@ -9,8 +9,6 @@ import (
 	// "strings"
 )
 
-var localToken string
-
 func keyFunc(token *jwt.Token) (interface{}, error) {
 	return getSigningKey()
 }
