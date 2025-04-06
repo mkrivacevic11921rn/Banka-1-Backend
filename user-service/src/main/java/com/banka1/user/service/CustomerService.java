@@ -115,6 +115,7 @@ public class CustomerService {
      * @return The created customer entity.
      */
     public Customer createCustomer(CreateCustomerRequest customerDTO, Long employeeId) {
+        System.out.println("------------------");
         Customer customer = CustomerMapper.dtoToCustomer(customerDTO);
 
         String verificationCode = UUID.randomUUID().toString();
@@ -131,17 +132,22 @@ public class CustomerService {
 
 
         // Saving the customer in the database gives it an ID, which can be used to generate the set-password token
-        customer = customerRepository.save(customer);
+
 
         try {
+
+            customer = customerRepository.save(customer);
+
             setPasswordService.saveSetPasswordRequest(verificationCode, customer.getId(), true);
 
             var dto = new CreateAccountByEmployeeDTO(new CreateAccountDTO(customerDTO.getAccountInfo(), customer.getId()), employeeId);
             var message = jmsTemplate.sendAndReceive(destinationAccount, session -> session.createTextMessage(messageHelper.createTextMessage(dto)));
+
             var error = messageHelper.getMessage(message, String.class);
-            if (error != null)
+            if (error != null && !error.equals("null"))
                 throw new RuntimeException(error);
         } catch (Exception e) {
+            log.error("Error while creating account: ", e);
             customerRepository.delete(customer);
             throw new RuntimeException(e);
         }

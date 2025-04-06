@@ -3,6 +3,7 @@ package main
 import (
 	"banka1.com/listings/securities"
 	"banka1.com/listings/tax"
+	"banka1.com/portfolio"
 	"banka1.com/routes"
 	fiberSwagger "github.com/swaggo/fiber-swagger"
 
@@ -33,9 +34,6 @@ import (
 //	@title			Trading Service
 //	@version		1.0
 //	@description	Trading Service API
-
-//	@host		localhost:3000
-//	@BasePath	/
 
 // @securityDefinitions.apikey	BearerAuth
 // @in							header
@@ -88,7 +86,7 @@ func main() {
 
 	func() {
 		log.Println("Starting to load default securities...")
-		securities.LoadSecurities()
+		securities.LoadAvailableSecurities()
 		log.Println("Finished loading default securities")
 	}()
 
@@ -96,6 +94,18 @@ func main() {
 		log.Println("Starting to load default taxes...")
 		tax.LoadTax()
 		log.Println("Finished loading default taxes")
+	}()
+
+	func() {
+		log.Println("Starting to load default portfolios...")
+		portfolio.LoadPortfolios()
+		log.Println("Finished loading default portfolios")
+	}()
+
+	func() {
+		log.Println("Starting to load default orders...")
+		orders.LoadOrders()
+		log.Println("Finished loading default orders")
 	}()
 
 	app := fiber.New()
