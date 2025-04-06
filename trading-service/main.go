@@ -111,6 +111,8 @@ func main() {
 		log.Println("Finished loading default orders")
 	}()
 
+	broker.StartListeners(ctx)
+
 	app := fiber.New()
 
 	app.Use(func(c *fiber.Ctx) error {

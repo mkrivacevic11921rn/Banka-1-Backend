@@ -28,6 +28,19 @@ func Connect(ctx context.Context) {
 	session = s
 }
 
+func messageValueAsBytes(message *amqp.Message) []byte {
+	var bytes []byte
+	if uints, success := message.Value.([]uint8); success {
+		bytes = []byte(uints)
+	} else if str, success := message.Value.(string); success {
+		bytes = []byte(str)
+	} else {
+		log.Printf("Neuspelo pretvaranje u []byte poruke: %v", message)
+		bytes = []byte{}
+	}
+	return bytes
+}
+
 func sendAndRecieve(address string, object any, response any) error {
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Minute)
 	defer cancel()
@@ -52,16 +65,16 @@ func sendAndRecieve(address string, object any, response any) error {
 			return
 		}
 
-		err = json.Unmarshal([]byte(responseMessage.Value.(string)), response)
+		err = reciever.AcceptMessage(ctx, responseMessage)
 		if err != nil {
-			log.Printf("Neuspesno parsiranje reply-a: %v", err)
+			log.Printf("Neuspesno prihvatanje reply-a: %v", err)
 			errorChan <- err
 			return
 		}
 
-		err = reciever.AcceptMessage(ctx, responseMessage)
+		err = json.Unmarshal(messageValueAsBytes(responseMessage), response)
 		if err != nil {
-			log.Printf("Neuspesno prihvatanje reply-a: %v", err)
+			log.Printf("Neuspesno parsiranje reply-a: %v", err)
 			errorChan <- err
 			return
 		}
@@ -134,4 +147,22 @@ func send(address string, object any) error {
 	}
 
 	return nil
+}
+
+func listen(ctx context.Context, address string, handler func(context.Context, *amqp.Receiver, *amqp.Message), handlerErr func(context.Context, *amqp.Receiver, error)) {
+	reciever, err := session.NewReceiver(ctx, address, nil)
+	if err != nil {
+		log.Fatalf("Neuspelo kreiranje receiver-a za listener %v: %v", address, err)
+	}
+	defer reciever.Close(ctx)
+
+	for true {
+		responseMessage, err := reciever.Receive(ctx, nil)
+		if err != nil {
+			handlerErr(ctx, reciever, err)
+			continue
+		}
+
+		go handler(ctx, reciever, responseMessage)
+	}
 }
