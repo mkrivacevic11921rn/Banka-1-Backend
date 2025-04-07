@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"banka1.com/broker"
 	"banka1.com/db"
 	"banka1.com/middlewares"
 	"banka1.com/types"
@@ -272,6 +273,7 @@ func (c *OTCTradeController) AcceptOTCTrade(ctx *fiber.Ctx) error {
 		StrikePrice:  trade.PricePerUnit,
 		SecurityID:   trade.SecurityId,
 		Premium:      trade.Premium,
+		Status:       "active",
 		SettlementAt: trade.SettlementAt,
 		IsExercised:  false,
 		CreatedAt:    time.Now().Unix(),
@@ -322,19 +324,29 @@ func (c *OTCTradeController) ExecuteOptionContract(ctx *fiber.Ctx) error {
 		})
 	}
 
-	// TODO: SAGA transakcija
-	// 1. Rezervacija novca kupca
-	// 2. Rezervacija akcija prodavca
-	// 3. Transfer novca
-	// 4. Transfer vlasništva
-	// 5. Finalizacija
+	uid := fmt.Sprintf("OTC-%d-%d", contract.ID, time.Now().Unix())
 
-	now := time.Now().Unix()
-	contract.IsExercised = true
-	contract.ExercisedAt = &now
-	//contract.Status = "completed"
+	dto := &types.OTCTransactionInitiationDTO{
+		Uid:             uid,
+		SellerAccountId: contract.SellerID,
+		BuyerAccountId:  userID,
+		Amount:          contract.StrikePrice * float64(contract.Quantity),
+	}
+
+	if err := broker.SendOTCTransactionInit(dto); err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
+			Success: false,
+			Error:   "Greška prilikom slanja OTC transakcije",
+		})
+	}
+
+	//now := time.Now().Unix()
+	//contract.IsExercised = true
+	//contract.ExercisedAt = &now
+	//contract.Status = "closed"
 
 	if err := db.DB.Save(&contract).Error; err != nil {
+		_ = broker.SendOTCTransactionFailure(uid, "Greška prilikom čuvanja statusa ugovora")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
 			Success: false,
 			Error:   "Greška prilikom čuvanja statusa ugovora",
@@ -342,11 +354,14 @@ func (c *OTCTradeController) ExecuteOptionContract(ctx *fiber.Ctx) error {
 	}
 
 	if err := db.DB.Model(&types.OTCTrade{}).Where("id = ?", contract.OTCTradeID).Update("status", "completed").Error; err != nil {
+		_ = broker.SendOTCTransactionFailure(uid, "Greška pri ažuriranju OTC ponude")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
 			Success: false,
 			Error:   "Greška pri ažuriranju OTC ponude",
 		})
 	}
+
+	_ = broker.SendOTCTransactionSuccess(uid)
 
 	return ctx.Status(fiber.StatusOK).JSON(types.Response{
 		Success: true,
