@@ -1,11 +1,12 @@
 package controllers
 
 import (
+	"time"
+
 	"banka1.com/db"
 	"banka1.com/middlewares"
 	"banka1.com/types"
 	"github.com/gofiber/fiber/v2"
-	"time"
 )
 
 type TaxController struct {
