@@ -3,7 +3,7 @@ package types
 type Actuary struct {
 	ID           uint    `gorm:"primaryKey" json:"id,omitempty"`
 	UserID       uint    `gorm:"uniqueIndex;not null" json:"userId"`
-	Role         string  `gorm:"type:text;not null" json:"role,omitempty"`
+	Role         string  `gorm:"type:text;not null" json:"role,omitempty"` //Test proba
 	FullName     string  `gorm:"not null" json:"fullName"`
 	Email        string  `gorm:"not null" json:"email"`
 	LimitAmount  float64 `gorm:"default:null" json:"limit"`         // Samo za agente
