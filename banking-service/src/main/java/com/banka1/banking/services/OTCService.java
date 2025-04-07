@@ -5,12 +5,11 @@ import com.banka1.banking.models.Account;
 import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.saga.OTCTransaction;
 import com.banka1.common.listener.MessageHelper;
-import jakarta.jms.JMSException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jms.JmsException;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.scheduling.TaskScheduler;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -23,12 +22,12 @@ public class OTCService {
     private final JmsTemplate jmsTemplate;
     private final MessageHelper messageHelper;
     @Value("${destination.otc.ack.trade}")
-    private final String destinationOtcAck;
+    private String destinationOtcAck;
     private final Map<String, OTCTransaction> activeTransactions = new HashMap<>();
     private final AccountRepository accountRepository;
     private final TaskScheduler taskScheduler;
 
-    private void sendFailureMessage(String uid, String message) throws JMSException {
+    private void sendFailureMessage(String uid, String message) throws JmsException {
         jmsTemplate.convertAndSend(destinationOtcAck, messageHelper.createTextMessage(new OTCTransactionACKDTO(
                 uid, true, message
         )));
@@ -38,7 +37,7 @@ public class OTCService {
         try {
             sendFailureMessage(uid, message);
             if(rollback) rollback(uid);
-        } catch(JMSException jms) {
+        } catch(JmsException jms) {
             taskScheduler.schedule(() -> retryableFailureMessage(uid, message, rollback), Instant.now().plusSeconds(5));
         }
     }
@@ -53,7 +52,7 @@ public class OTCService {
                     uid, false, ""
             )));
             transaction.nextStage();
-        } catch (JMSException jms) {
+        } catch (JmsException jms) {
             taskScheduler.schedule(() -> nextStage(uid), Instant.now().plusSeconds(5));
         }
     }
