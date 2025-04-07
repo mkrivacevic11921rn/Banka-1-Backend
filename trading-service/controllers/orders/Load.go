@@ -54,21 +54,27 @@ func LoadOrders() {
 
 func LoadPortfolios() {
 	portfolio1 := types.Portfolio{
-		UserID:        3,
-		SecurityID:    1, // AAPL
-		Quantity:      20,
-		PurchasePrice: 190.00,
-		PublicCount:   10,
-		CreatedAt:     1743892011,
+		UserID:        5,
+		SecurityID:    3, // MSFT
+		Quantity:      200,
+		PurchasePrice: 190.11,
+		PublicCount:   20,
 	}
 
 	portfolio2 := types.Portfolio{
 		UserID:        5,
 		SecurityID:    2, // MSFT
-		Quantity:      15,
-		PurchasePrice: 360.00,
-		PublicCount:   10,
-		CreatedAt:     1743892011,
+		Quantity:      30,
+		PurchasePrice: 360.22,
+		PublicCount:   20,
+	}
+
+	portfolio3 := types.Portfolio{
+		UserID:        5,
+		SecurityID:    1, // MSFT
+		Quantity:      150,
+		PurchasePrice: 199.99,
+		PublicCount:   20,
 	}
 
 	if err := db.DB.FirstOrCreate(&portfolio1, types.Portfolio{
@@ -89,4 +95,12 @@ func LoadPortfolios() {
 		log.Println("Portfolio2 uspešno dodat")
 	}
 
+	if err := db.DB.FirstOrCreate(&portfolio3, types.Portfolio{
+		UserID:     portfolio3.UserID,
+		SecurityID: portfolio3.SecurityID,
+	}).Error; err != nil {
+		log.Println("Greška pri dodavanju portfolio3:", err)
+	} else {
+		log.Println("Portfolio3 uspešno dodat")
+	}
 }

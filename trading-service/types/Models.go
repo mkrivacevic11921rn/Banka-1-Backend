@@ -74,7 +74,7 @@ type OTCTrade struct {
 	CreatedAt  int64 `gorm:"autoCreateTime"`
 	//Seller       *uint      `gorm:"foreignKey:SellerID"`
 	//Buyer        *uint     `gorm:"foreignKey:BuyerID"`
-	Portfolio Portfolio `gorm:"foreignKey:PortfolioID"`
+	Portfolio Portfolio `gorm:"foreignKey:PortfolioID" json:"portfolio"`
 }
 
 type Portfolio struct {
@@ -104,9 +104,8 @@ type OptionContract struct {
 	IsExercised  bool      `gorm:"default:false"`
 	CreatedAt    int64     `gorm:"autoCreateTime"`
 	ExercisedAt  *int64    `gorm:"default:null"`
-	// relacije
-	// OTCTrade   OTCTrade  `gorm:"foreignKey:OTCTradeID"`
-	// Portfolio  Portfolio `gorm:"foreignKey:PortfolioID"`
+	OTCTrade     OTCTrade  `gorm:"foreignKey:OTCTradeID" json:"otc_trade"`
+	Portfolio    Portfolio `gorm:"foreignKey:PortfolioID" json:"portfolio"`
 	// Security   Security  `gorm:"foreignKey:SecurityID"`
 }
 

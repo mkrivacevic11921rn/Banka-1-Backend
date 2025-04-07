@@ -113,7 +113,7 @@ func (c *OTCTradeController) CreateOTCTrade(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusCreated).JSON(types.Response{
 		Success: true,
-		Data:    otcTrade.ID,
+		Data:    fmt.Sprintf("Ponuda uspešno poslata,kreirana ponuda: %d", otcTrade.ID),
 	})
 }
 
@@ -191,7 +191,7 @@ func (c *OTCTradeController) CounterOfferOTCTrade(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusOK).JSON(types.Response{
 		Success: true,
-		Data:    trade,
+		Data:    fmt.Sprintf("Ponuda uspešno poslata,ažurirana ponuda: %d", trade.ID),
 	})
 }
 
@@ -359,6 +359,7 @@ func (c *OTCTradeController) GetActiveOffers(ctx *fiber.Ctx) error {
 	var trades []types.OTCTrade
 
 	if err := db.DB.
+		Preload("Portfolio.Security").
 		Where("status = ? AND (buyer_id = ? OR seller_id = ?)", "pending", userID, userID).
 		Find(&trades).Error; err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
@@ -378,6 +379,8 @@ func (c *OTCTradeController) GetUserOptionContracts(ctx *fiber.Ctx) error {
 	var contracts []types.OptionContract
 
 	if err := db.DB.
+		Preload("Portfolio.Security").
+		Preload("OTCTrade.Portfolio.Security").
 		Where("buyer_id = ? OR seller_id = ?", userID, userID).
 		Find(&contracts).Error; err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
@@ -416,7 +419,7 @@ func (c *PortfolioControllerr) GetAllPortfolios(ctx *fiber.Ctx) error {
 
 func InitPortfolioRoutess(app *fiber.App) {
 	portfolioController := NewPortfolioControllerr()
-	api := app.Group("/portfolio") // osnovni path
+	api := app.Group("/portfolio")
 
 	api.Get("/", portfolioController.GetAllPortfolios)
 }
