@@ -200,6 +200,8 @@ services:
       test: [ "CMD-SHELL", "echo OK"]
   trading-db:
     image: 'postgres:17-alpine'
+    ports:
+      - '5435:5432'
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U trading_service_user -d trading_db" ]
       interval: 10s
