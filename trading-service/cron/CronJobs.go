@@ -114,7 +114,7 @@ func createNewActuaries() {
 func employeeToActuary(employee Employee) types.Actuary {
 	actuary := types.Actuary{
 		UserID:      uint(employee.ID),
-		Role:        employee.Department,
+		Department:  employee.Department,
 		FullName:    employee.FirstName + " " + employee.LastName,
 		Email:       employee.Email,
 		LimitAmount: 100000,
