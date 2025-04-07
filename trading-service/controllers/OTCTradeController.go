@@ -428,10 +428,10 @@ func InitOTCTradeRoutes(app *fiber.App) {
 	otcController := NewOTCTradeController()
 	otc := app.Group("/otctrade", middlewares.Auth)
 
-	otc.Post("/offer", otcController.CreateOTCTrade)
-	otc.Put("/offer/:id/counter", otcController.CounterOfferOTCTrade)
-	otc.Put("/offer/:id/accept", otcController.AcceptOTCTrade)
-	otc.Put("/option/:id/execute", otcController.ExecuteOptionContract)
+	otc.Post("/offer", middlewares.RequirePermission("user.customer.otc_trade"), otcController.CreateOTCTrade)
+	otc.Put("/offer/:id/counter", middlewares.RequirePermission("user.customer.otc_trade"), otcController.CounterOfferOTCTrade)
+	otc.Put("/offer/:id/accept", middlewares.RequirePermission("user.customer.otc_trade"), otcController.AcceptOTCTrade)
+	otc.Put("/option/:id/execute", middlewares.RequirePermission("user.customer.otc_trade"), otcController.ExecuteOptionContract)
 	otc.Get("/offer/active", otcController.GetActiveOffers)
 	otc.Get("/option/contracts", otcController.GetUserOptionContracts)
 }

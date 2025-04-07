@@ -41,7 +41,7 @@ create table if not exists  customer_permissions
     permission  varchar(255)
         constraint customer_permissions_permission_check
             check ((permission)::text = ANY
-                   ((ARRAY ['CREATE_EMPLOYEE'::character varying, 'EDIT_EMPLOYEE'::character varying, 'DELETE_EMPLOYEE'::character varying, 'LIST_EMPLOYEE'::character varying, 'READ_EMPLOYEE'::character varying, 'SET_EMPLOYEE_PERMISSION'::character varying, 'CREATE_CUSTOMER'::character varying, 'EDIT_CUSTOMER'::character varying, 'DELETE_CUSTOMER'::character varying, 'LIST_CUSTOMER'::character varying, 'READ_CUSTOMER'::character varying, 'SET_CUSTOMER_PERMISSION'::character varying])::text[]))
+                   ((ARRAY ['CREATE_EMPLOYEE'::character varying, 'EDIT_EMPLOYEE'::character varying, 'DELETE_EMPLOYEE'::character varying, 'LIST_EMPLOYEE'::character varying, 'READ_EMPLOYEE'::character varying, 'SET_EMPLOYEE_PERMISSION'::character varying, 'CREATE_CUSTOMER'::character varying, 'EDIT_CUSTOMER'::character varying, 'DELETE_CUSTOMER'::character varying, 'LIST_CUSTOMER'::character varying, 'READ_CUSTOMER'::character varying, 'SET_CUSTOMER_PERMISSION'::character varying, 'OTC_TRADING'::character varying])::text[]))
 );
 
 alter table customer_permissions

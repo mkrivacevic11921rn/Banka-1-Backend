@@ -54,15 +54,15 @@ func LoadOrders() {
 
 func LoadPortfolios() {
 	portfolio1 := types.Portfolio{
-		UserID:        5,
-		SecurityID:    3, // MSFT
+		UserID:        3,
+		SecurityID:    1, // MSFT
 		Quantity:      200,
 		PurchasePrice: 190.11,
 		PublicCount:   20,
 	}
 
 	portfolio2 := types.Portfolio{
-		UserID:        5,
+		UserID:        3,
 		SecurityID:    2, // MSFT
 		Quantity:      30,
 		PurchasePrice: 360.22,
@@ -70,8 +70,8 @@ func LoadPortfolios() {
 	}
 
 	portfolio3 := types.Portfolio{
-		UserID:        5,
-		SecurityID:    1, // MSFT
+		UserID:        4,
+		SecurityID:    2, // MSFT
 		Quantity:      150,
 		PurchasePrice: 199.99,
 		PublicCount:   20,
