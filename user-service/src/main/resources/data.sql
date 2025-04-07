@@ -70,7 +70,7 @@ VALUES (4, 'Nikolina', 'Jovanović', 'nikolina.jovanovic@banka.com', 'nikolinaaa
 -- Permissions for Nikolina password: Jovan@12345
 INSERT INTO employee_permissions (employee_id, permission)
 SELECT 4, unnest(ARRAY[
-                     'READ_CUSTOMER', 'CREATE_CUSTOMER', 'DELETE_CUSTOMER', 'LIST_CUSTOMER', 'EDIT_CUSTOMER'
+                     'READ_CUSTOMER', 'CREATE_CUSTOMER', 'DELETE_CUSTOMER', 'LIST_CUSTOMER', 'EDIT_CUSTOMER', 'READ_EMPLOYEE'
                      ]);
 
 -- Employee 4: Milica password: Jovan@12345
