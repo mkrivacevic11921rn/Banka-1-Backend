@@ -49,6 +49,8 @@ services:
       - broker-net
   notification-service:
     image: 'notification-service:0.0.1-SNAPSHOT'
+    ports:
+      - '8083:8080'
     networks:
       - broker-net
       - notification-net
