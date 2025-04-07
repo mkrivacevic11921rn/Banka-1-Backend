@@ -42,6 +42,8 @@ services:
       - broker-net
   notification-service:
     image: 'harbor.k8s.elab.rs/banka-1/notification-service:latest'
+    ports:
+      - '8083:8080'
     networks:
       - broker-net
       - notification-net
