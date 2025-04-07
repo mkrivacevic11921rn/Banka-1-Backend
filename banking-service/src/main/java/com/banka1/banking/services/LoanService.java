@@ -64,7 +64,9 @@ public class LoanService {
                 .orElseThrow(() -> new RuntimeException("Racun nije pronadjen"));
 
         if (account == null) {return null;}
-
+        if(createLoanDTO.getLoanAmount() <= 0){
+            throw new RuntimeException("Vrednost kredita mora biti pozitivna");
+        }
         // Create new loan manually
         var loan = new Loan();
         loan.setAccount(account);
