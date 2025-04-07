@@ -19,7 +19,7 @@ public class OTCListener {
     private final OTCService otcService;
     private final MessageHelper messageHelper;
 
-    @JmsListener(destination = "${destination.otc.ack}", concurrency = "5-10")
+    @JmsListener(destination = "${destination.otc.ack.bank}", concurrency = "5-10")
     public void onAckMessage(Message message) throws JMSException {
         OTCTransactionACKDTO dto = messageHelper.getMessage(message, OTCTransactionACKDTO.class);
         if(dto.isFailure()) {

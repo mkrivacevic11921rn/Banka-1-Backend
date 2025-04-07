@@ -12,4 +12,8 @@ public class OTCTransaction {
     private final Long buyerAccountId;
     private final Double amount;
     private OTCTransactionStage stage = OTCTransactionStage.INITIALIZED;
+
+    public void nextStage() {
+        setStage(OTCTransactionStage.values()[getStage().ordinal() + 1]);
+    }
 }

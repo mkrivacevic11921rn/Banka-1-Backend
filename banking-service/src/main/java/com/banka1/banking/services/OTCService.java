@@ -4,12 +4,16 @@ import com.banka1.banking.dto.OTCTransactionACKDTO;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.saga.OTCTransaction;
-import com.banka1.banking.saga.OTCTransactionStage;
 import com.banka1.common.listener.MessageHelper;
+import jakarta.jms.JMSException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,9 +22,41 @@ import java.util.Map;
 public class OTCService {
     private final JmsTemplate jmsTemplate;
     private final MessageHelper messageHelper;
+    @Value("${destination.otc.ack.trade}")
     private final String destinationOtcAck;
     private final Map<String, OTCTransaction> activeTransactions = new HashMap<>();
     private final AccountRepository accountRepository;
+    private final TaskScheduler taskScheduler;
+
+    private void sendFailureMessage(String uid, String message) throws JMSException {
+        jmsTemplate.convertAndSend(destinationOtcAck, messageHelper.createTextMessage(new OTCTransactionACKDTO(
+                uid, true, message
+        )));
+    }
+
+    private void retryableFailureMessage(String uid, String message, boolean rollback) {
+        try {
+            sendFailureMessage(uid, message);
+            if(rollback) rollback(uid);
+        } catch(JMSException jms) {
+            taskScheduler.schedule(() -> retryableFailureMessage(uid, message, rollback), Instant.now().plusSeconds(5));
+        }
+    }
+
+    private void nextStage(String uid) {
+        OTCTransaction transaction = activeTransactions.get(uid);
+        if(transaction == null)
+            return;
+
+        try {
+            jmsTemplate.convertAndSend(destinationOtcAck, messageHelper.createTextMessage(new OTCTransactionACKDTO(
+                    uid, false, ""
+            )));
+            transaction.nextStage();
+        } catch (JMSException jms) {
+            taskScheduler.schedule(() -> nextStage(uid), Instant.now().plusSeconds(5));
+        }
+    }
 
     public void rollback(String uid) {
         OTCTransaction transaction = activeTransactions.get(uid);
@@ -66,39 +102,24 @@ public class OTCService {
                     account.setBalance(account.getBalance() - transaction.getAmount());
                     accountRepository.save(account);
 
-                    jmsTemplate.convertAndSend(destinationOtcAck, messageHelper.createTextMessage(new OTCTransactionACKDTO(
-                            uid, false, ""
-                    )));
-
-                    transaction.setStage(OTCTransactionStage.ASSETS_RESERVED);
+                    nextStage(uid);
                 }
                 case ASSETS_RESERVED -> {
                     Account account = accountRepository.findById(transaction.getSellerAccountId()).orElseThrow();
                     account.setBalance(account.getBalance() + transaction.getAmount());
                     accountRepository.save(account);
 
-                    jmsTemplate.convertAndSend(destinationOtcAck, messageHelper.createTextMessage(new OTCTransactionACKDTO(
-                            uid, false, ""
-                    )));
-
-                    transaction.setStage(OTCTransactionStage.ASSETS_TRANSFERED);
+                    nextStage(uid);
                 }
                 case ASSETS_TRANSFERED -> {
-                    transaction.setStage(OTCTransactionStage.FINISHED);
+                    // provera konzistentnog stanja?
 
-                    // TODO: provera konzistentnog stanja?
-
-                    jmsTemplate.convertAndSend(destinationOtcAck, messageHelper.createTextMessage(new OTCTransactionACKDTO(
-                            uid, false, ""
-                    )));
+                    nextStage(uid);
                 }
                 case FINISHED -> activeTransactions.remove(uid);
             }
         } catch(Exception e) {
-            jmsTemplate.convertAndSend(destinationOtcAck, messageHelper.createTextMessage(new OTCTransactionACKDTO(
-                    uid, true, e.getMessage()
-            )));
-            rollback(uid);
+            retryableFailureMessage(uid, e.getMessage(), true);
         }
     }
 
@@ -115,9 +136,7 @@ public class OTCService {
 
             activeTransactions.put(uid, transaction);
         } catch (Exception e) {
-            jmsTemplate.convertAndSend(destinationOtcAck, messageHelper.createTextMessage(new OTCTransactionACKDTO(
-                    uid, true, e.getMessage()
-            )));
+            retryableFailureMessage(uid, e.getMessage(), false);
         }
     }
 }
