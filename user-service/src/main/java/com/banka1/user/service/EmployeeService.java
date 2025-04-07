@@ -214,7 +214,7 @@ public class EmployeeService {
     public List<Employee> getFilteredEmployees(String firstName, String lastName, String email, String position) {
         if (!StringUtils.hasText(firstName) && !StringUtils.hasText(lastName) &&
                 !StringUtils.hasText(email) && !StringUtils.hasText(position)) {
-            return employeeRepository.findAll(); // Ako nema filtera, vrati sve
+            return employeeRepository.getActuaries();
         }
 
         return employeeRepository.findFilteredEmployees(firstName, lastName, email, position);

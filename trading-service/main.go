@@ -141,6 +141,7 @@ func main() {
 	})
 
 	routes.SetupRoutes(app)
+	routes.Setup(app)
 
 	// svaki put kad menjate swagger dokumentaciju (komentari iznad funkcija u controllerima), uradite "swag init" da bi se azuriralo
 	app.Get("/swagger/*", fiberSwagger.WrapHandler)

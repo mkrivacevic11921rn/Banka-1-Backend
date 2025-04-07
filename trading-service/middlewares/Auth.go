@@ -35,6 +35,10 @@ func Auth(c *fiber.Ctx) error {
 
 	fmt.Println(claims)
 
+	fmt.Println("token: ", token)
+
+	c.Locals("token", token)
+
 	c.Locals("claims", claims)
 	c.Locals("user_id", claims["id"])
 	c.Locals("position", claims["position"])

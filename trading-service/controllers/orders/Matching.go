@@ -152,7 +152,7 @@ func executePartial(order types.Order, quantity int, price float64) {
 
 	if match.Margin {
 		var actuary types.Actuary
-		if err := db.DB.Where("user_id = ?", match.UserID).First(&actuary).Error; err != nil || actuary.Role != "agent" {
+		if err := db.DB.Where("user_id = ?", match.UserID).First(&actuary).Error; err != nil || actuary.Department != "agent" {
 			fmt.Println("Matchovani margin order nema validnog aktuara")
 			return
 		}
