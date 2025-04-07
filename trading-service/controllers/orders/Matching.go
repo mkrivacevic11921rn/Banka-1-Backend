@@ -1,14 +1,16 @@
 package orders
 
 import (
-	"banka1.com/db"
-	"banka1.com/middlewares"
-	"banka1.com/types"
 	"fmt"
 	"math/rand"
 	"os"
 	"strings"
 	"time"
+
+	"banka1.com/db"
+	"banka1.com/middlewares"
+	"banka1.com/types"
+	"gorm.io/gorm"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -43,25 +45,21 @@ func MatchOrder(order types.Order) {
 			if err == nil {
 				agent := fiber.Post(url)
 
-				if err == nil {
-					statusCode, _, errs := agent.Bytes()
+				statusCode, _, errs := agent.Bytes()
 
-					if len(errs) != 0 || statusCode != 200 {
-						hadError = true
-					}
-				} else {
+				if len(errs) != 0 || statusCode != 200 {
 					hadError = true
 				}
+
 			} else {
 				hadError = true
 			}
 
 			if hadError {
-				tx.Rollback()
 				fmt.Printf("Nalog %v nije izvršen\n", order.ID)
 				break
 			} else {
-				executePartial(order, quantityToExecute, price)
+				executePartial(order, quantityToExecute, price, tx)
 
 				*order.RemainingParts -= quantityToExecute
 
@@ -71,7 +69,7 @@ func MatchOrder(order types.Order) {
 					order.Status = "done"
 				}
 
-				db.DB.Model(&types.Order{}).Where("id = ?", order.ID).Updates(map[string]interface{}{
+				tx.Model(&types.Order{}).Where("id = ?", order.ID).Updates(map[string]interface{}{
 					"remaining_parts": *order.RemainingParts,
 					"is_done":         order.IsDone,
 					"status":          order.Status,
@@ -79,6 +77,7 @@ func MatchOrder(order types.Order) {
 
 				if err := tx.Commit().Error; err != nil {
 					fmt.Printf("Nalog %v nije izvršen: %v\n", order.ID, err)
+					tx.Rollback()
 					break
 				} else {
 					fmt.Printf("Nalog %v izvršen\n", order.ID)
@@ -128,7 +127,7 @@ func getOrderPrice(order types.Order) float64 {
 	return 0.0
 }
 
-func executePartial(order types.Order, quantity int, price float64) {
+func executePartial(order types.Order, quantity int, price float64, tx *gorm.DB) {
 	var match types.Order
 	direction := "buy"
 	if order.Direction == "buy" {
@@ -187,7 +186,7 @@ func executePartial(order types.Order, quantity int, price float64) {
 		PricePerUnit: price,
 		TotalPrice:   price * float64(matchQuantity),
 	}
-	db.DB.Create(&txn)
+	tx.Create(&txn)
 
 	*order.RemainingParts -= matchQuantity
 	*match.RemainingParts -= matchQuantity
@@ -195,25 +194,25 @@ func executePartial(order types.Order, quantity int, price float64) {
 		match.IsDone = true
 		match.Status = "done"
 	}
-	db.DB.Save(&order)
-	db.DB.Save(&match)
+	tx.Save(&order)
+	tx.Save(&match)
 
-	updatePortfolio(getBuyerID(order, match), order.SecurityID, matchQuantity)
-	updatePortfolio(getSellerID(order, match), order.SecurityID, -matchQuantity)
+	updatePortfolio(getBuyerID(order, match), order.SecurityID, matchQuantity, tx)
+	updatePortfolio(getSellerID(order, match), order.SecurityID, -matchQuantity, tx)
 
 	if order.Margin {
 		var actuary types.Actuary
 		if err := db.DB.Where("user_id = ?", order.UserID).First(&actuary).Error; err == nil {
 			initialMargin := price * float64(matchQuantity) * 0.3 * 1.1
 			actuary.UsedLimit += initialMargin
-			db.DB.Save(&actuary)
+			tx.Save(&actuary)
 		}
 	}
 
 	fmt.Printf("Match success: Order %d ↔ Order %d za %d @ %.2f\n", order.ID, match.ID, matchQuantity, price)
 }
 
-func updatePortfolio(userID uint, securityID uint, delta int) {
+func updatePortfolio(userID uint, securityID uint, delta int, tx *gorm.DB) {
 	var portfolio types.Portfolio
 	err := db.DB.Where("user_id = ? AND security_id = ?", userID, securityID).First(&portfolio).Error
 	if err != nil {
@@ -224,16 +223,16 @@ func updatePortfolio(userID uint, securityID uint, delta int) {
 				Quantity:      delta,
 				PurchasePrice: 0,
 			}
-			db.DB.Create(&portfolio)
+			tx.Create(&portfolio)
 		}
 		return
 	}
 
 	portfolio.Quantity += delta
 	if portfolio.Quantity <= 0 {
-		db.DB.Delete(&portfolio)
+		tx.Delete(&portfolio)
 	} else {
-		db.DB.Save(&portfolio)
+		tx.Save(&portfolio)
 	}
 }
 
