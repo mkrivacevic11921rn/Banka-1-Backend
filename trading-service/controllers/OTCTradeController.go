@@ -401,13 +401,16 @@ func NewPortfolioControllerr() *PortfolioControllerr {
 	return &PortfolioControllerr{}
 }
 
-func (c *PortfolioControllerr) GetAllPortfolios(ctx *fiber.Ctx) error {
+func (c *PortfolioControllerr) GetAllPublicPortfolios(ctx *fiber.Ctx) error {
 	var portfolios []types.Portfolio
 
-	if err := db.DB.Preload("Security").Find(&portfolios).Error; err != nil {
+	if err := db.DB.
+		Where("public_count > 0").
+		Preload("Security").
+		Find(&portfolios).Error; err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
-			"error":   "Greška prilikom dohvatanja portfolija",
+			"error":   "Greška prilikom dohvatanja javnih portfolija",
 		})
 	}
 
@@ -419,9 +422,9 @@ func (c *PortfolioControllerr) GetAllPortfolios(ctx *fiber.Ctx) error {
 
 func InitPortfolioRoutess(app *fiber.App) {
 	portfolioController := NewPortfolioControllerr()
-	api := app.Group("/portfolio")
+	api := app.Group("/portfolio/public")
 
-	api.Get("/", portfolioController.GetAllPortfolios)
+	api.Get("/", portfolioController.GetAllPublicPortfolios)
 }
 
 func InitOTCTradeRoutes(app *fiber.App) {
