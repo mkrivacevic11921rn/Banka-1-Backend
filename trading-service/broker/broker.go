@@ -149,8 +149,42 @@ func send(address string, object any) error {
 	return nil
 }
 
+func sendReliable(address string, object any) error {
+	ctx := context.TODO()
+
+	body, err := json.Marshal(object)
+	if err != nil {
+		log.Printf("Neuspelo pretvaranje poruke u JSON: %v", err)
+		return err
+	}
+
+	message := &amqp.Message{
+		Value: body,
+	}
+
+	sender, err := session.NewSender(ctx, address, &amqp.SenderOptions{
+		SettlementMode: amqp.SenderSettleModeUnsettled.Ptr(),
+	})
+	if err != nil {
+		log.Printf("Neuspelo kreiranje sender-a: %v", err)
+		return err
+	}
+	defer sender.Close(ctx)
+
+	err = sender.Send(ctx, message, nil)
+
+	if err != nil {
+		log.Printf("Neuspesan send: %v", err)
+		return err
+	}
+
+	return nil
+}
+
 func listen(ctx context.Context, address string, handler func(context.Context, *amqp.Receiver, *amqp.Message), handlerErr func(context.Context, *amqp.Receiver, error)) {
-	reciever, err := session.NewReceiver(ctx, address, nil)
+	reciever, err := session.NewReceiver(ctx, address, &amqp.ReceiverOptions{
+		Durability: amqp.DurabilityUnsettledState,
+	})
 	if err != nil {
 		log.Fatalf("Neuspelo kreiranje receiver-a za listener %v: %v", address, err)
 	}
