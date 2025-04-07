@@ -78,7 +78,7 @@ func MatchOrder(order types.Order) {
 				})
 
 				if err := tx.Commit().Error; err != nil {
-					fmt.Printf("Nalog %v nije izvršen: %w\n", order.ID, err)
+					fmt.Printf("Nalog %v nije izvršen: %v\n", order.ID, err)
 					break
 				} else {
 					fmt.Printf("Nalog %v izvršen\n", order.ID)
