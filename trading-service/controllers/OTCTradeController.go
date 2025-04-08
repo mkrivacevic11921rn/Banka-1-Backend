@@ -472,9 +472,8 @@ func (c *PortfolioControllerr) GetAllPublicPortfolios(ctx *fiber.Ctx) error {
 
 func InitPortfolioRoutess(app *fiber.App) {
 	portfolioController := NewPortfolioControllerr()
-	api := app.Group("/portfolio/public")
 
-	api.Get("/", portfolioController.GetAllPublicPortfolios)
+	app.Get("/portfolio/public", portfolioController.GetAllPublicPortfolios)
 }
 
 func InitOTCTradeRoutes(app *fiber.App) {

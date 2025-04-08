@@ -53,35 +53,59 @@ func LoadOrders() {
 }
 
 func LoadPortfolios() {
-	portfolio3 := types.Portfolio{
-		UserID:        4,
-		SecurityID:    2, // MSFT
-		Quantity:      150,
+	portfolio1 := types.Portfolio{
+		UserID:        1,
+		SecurityID:    2,
+		Quantity:      20,
 		PurchasePrice: 199.99,
-		PublicCount:   20,
+		PublicCount:   10,
+	}
+
+	portfolio2 := types.Portfolio{
+		UserID:        1,
+		SecurityID:    1,
+		Quantity:      20,
+		PurchasePrice: 299.99,
+		PublicCount:   10,
+	}
+
+	portfolio3 := types.Portfolio{
+		UserID:        3,
+		SecurityID:    3, // MSFT
+		Quantity:      20,
+		PurchasePrice: 299.99,
+		PublicCount:   10,
 	}
 
 	portfolio4 := types.Portfolio{
-		UserID:        4,
-		SecurityID:    1, // MSFT
-		Quantity:      80,
-		PurchasePrice: 299.99,
-		PublicCount:   30,
-	}
-
-	portfolio5 := types.Portfolio{
 		UserID:        3,
-		SecurityID:    3, // MSFT
-		Quantity:      80,
+		SecurityID:    4,
+		Quantity:      20,
 		PurchasePrice: 299.99,
-		PublicCount:   30,
+		PublicCount:   10,
 	}
 
+	if err := db.DB.FirstOrCreate(&portfolio1, types.Portfolio{
+		UserID:     portfolio1.UserID,
+		SecurityID: portfolio1.SecurityID,
+	}).Error; err != nil {
+		log.Println("Greška pri dodavanju portfolio3:", err)
+	} else {
+		log.Println("Portfolio1 uspešno dodat")
+	}
+	if err := db.DB.FirstOrCreate(&portfolio2, types.Portfolio{
+		UserID:     portfolio2.UserID,
+		SecurityID: portfolio2.SecurityID,
+	}).Error; err != nil {
+		log.Println("Greška pri dodavanju portfolio4:", err)
+	} else {
+		log.Println("Portfolio2 uspešno dodat")
+	}
 	if err := db.DB.FirstOrCreate(&portfolio3, types.Portfolio{
 		UserID:     portfolio3.UserID,
 		SecurityID: portfolio3.SecurityID,
 	}).Error; err != nil {
-		log.Println("Greška pri dodavanju portfolio3:", err)
+		log.Println("Greška pri dodavanju portfolio5:", err)
 	} else {
 		log.Println("Portfolio3 uspešno dodat")
 	}
@@ -89,16 +113,8 @@ func LoadPortfolios() {
 		UserID:     portfolio4.UserID,
 		SecurityID: portfolio4.SecurityID,
 	}).Error; err != nil {
-		log.Println("Greška pri dodavanju portfolio4:", err)
-	} else {
-		log.Println("Portfolio3 uspešno dodat")
-	}
-	if err := db.DB.FirstOrCreate(&portfolio5, types.Portfolio{
-		UserID:     portfolio5.UserID,
-		SecurityID: portfolio5.SecurityID,
-	}).Error; err != nil {
 		log.Println("Greška pri dodavanju portfolio5:", err)
 	} else {
-		log.Println("Portfolio3 uspešno dodat")
+		log.Println("Portfolio4 uspešno dodat")
 	}
 }

@@ -98,6 +98,9 @@ VALUES (1, 'Marko', 'Marković', 'marko.markovic@banka.com', 'okram',
 INSERT INTO customer_permissions (customer_id, permission)
 VALUES (1, 'READ_EMPLOYEE');
 
+INSERT INTO customer_permissions (customer_id, permission)
+VALUES (1, 'OTC_TRADING');
+
 -- Customer 2: Anastasija password: Anastas12345
 INSERT INTO customer (id, first_name, last_name, email, username, phone_number,
                       birth_date, gender, address, salt_password, password)
