@@ -492,4 +492,21 @@ public class LoanService {
 
         installmentsRepository.save(installment);
     }
+
+    public boolean hasApprovedLoan(Long userId) {
+        List<Account> userAccounts = accountRepository.findByOwnerID(userId);
+
+        for (Account acc : userAccounts) {
+            List<Loan> loans = loanRepository.getLoansByAccount(acc);
+
+            for (Loan loan : loans) {
+                if (loan.getPaymentStatus() != PaymentStatus.PAID_OFF && loan.getPaymentStatus() == PaymentStatus.APPROVED) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+
 }
