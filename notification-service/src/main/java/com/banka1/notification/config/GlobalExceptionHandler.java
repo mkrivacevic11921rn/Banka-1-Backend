@@ -1,6 +1,6 @@
-package com.banka1.user.config;
+package com.banka1.notification.config;
 
-import com.banka1.user.utils.ResponseTemplate;
+import com.banka1.notification.utils.ResponseTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
