@@ -1,12 +1,10 @@
 package com.banka1.banking.services;
 
-import com.banka1.banking.dto.InternalTransferDTO;
-import com.banka1.banking.dto.OTCPremiumFeeDTO;
 import com.banka1.banking.dto.OTCTransactionACKDTO;
-import com.banka1.banking.dto.OTCTransactionInitiationDTO;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.saga.OTCTransaction;
+import com.banka1.banking.saga.OTCTransactionStage;
 import com.banka1.common.listener.MessageHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +29,6 @@ public class OTCService {
     private final Map<String, OTCTransaction> activeTransactions = new HashMap<>();
     private final AccountRepository accountRepository;
     private final TaskScheduler taskScheduler;
-    private final TransferService transferService;
 
     private void sendFailureMessage(String uid, String message) throws JmsException {
         jmsTemplate.convertAndSend(destinationOtcAck, messageHelper.createTextMessage(new OTCTransactionACKDTO(
@@ -48,9 +45,9 @@ public class OTCService {
         }
     }
 
-    private void nextStage(String uid) {
+    private void nextStage(String uid, OTCTransactionStage expectedStage) {
         OTCTransaction transaction = activeTransactions.get(uid);
-        if(transaction == null)
+        if(transaction == null || transaction.getStage() != expectedStage)
             return;
 
         try {
@@ -59,11 +56,11 @@ public class OTCService {
             )));
             transaction.nextStage();
         } catch (JmsException jms) {
-            taskScheduler.schedule(() -> nextStage(uid), Instant.now().plusSeconds(5));
+            taskScheduler.schedule(() -> nextStage(uid, expectedStage), Instant.now().plusSeconds(5));
         }
     }
 
-    public void rollback(String uid) {
+    public synchronized void rollback(String uid) {
         OTCTransaction transaction = activeTransactions.get(uid);
         if(transaction == null)
             return;
@@ -91,11 +88,13 @@ public class OTCService {
         }
     }
 
-    public void proceed(String uid) {
+    public synchronized void proceed(String uid) {
         try {
             OTCTransaction transaction = activeTransactions.get(uid);
             if(transaction == null)
                 throw new Exception("Invalid UID");
+
+            log.info(transaction.getStage().toString());
 
             switch (transaction.getStage()) {
                 case INITIALIZED -> {
@@ -107,19 +106,19 @@ public class OTCService {
                     account.setBalance(account.getBalance() - transaction.getAmount());
                     accountRepository.save(account);
 
-                    nextStage(uid);
+                    nextStage(uid, transaction.getStage());
                 }
                 case ASSETS_RESERVED -> {
                     Account account = accountRepository.findById(transaction.getSellerAccountId()).orElseThrow();
                     account.setBalance(account.getBalance() + transaction.getAmount());
                     accountRepository.save(account);
 
-                    nextStage(uid);
+                    nextStage(uid, transaction.getStage());
                 }
                 case ASSETS_TRANSFERED -> {
                     // provera konzistentnog stanja?
 
-                    nextStage(uid);
+                    nextStage(uid, transaction.getStage());
                 }
                 case FINISHED -> {
                     log.info("Finished transaction " + uid);
@@ -131,7 +130,7 @@ public class OTCService {
         }
     }
 
-    public void initiate(String uid, OTCTransaction transaction) {
+    public synchronized void initiate(String uid, OTCTransaction transaction) {
         try {
             if(activeTransactions.containsKey(uid))
                 throw new Exception("Invalid UID");
@@ -160,12 +159,15 @@ public class OTCService {
             if(fromAccount.getCurrencyType() != toAccount.getCurrencyType())
                 throw new Exception("Currency type mismatch");
 
-            InternalTransferDTO dto = new InternalTransferDTO();
-            dto.setToAccountId(toAccountId);
-            dto.setFromAccountId(fromAccountId);
-            dto.setAmount(amount);
+            if(fromAccount.getBalance() < amount)
+                throw new Exception("Insufficient funds");
 
-            transferService.processTransfer(transferService.createInternalTransfer(dto));
+            fromAccount.setBalance(fromAccount.getBalance() - amount);
+            toAccount.setBalance(toAccount.getBalance() + amount);
+
+            accountRepository.save(fromAccount);
+            accountRepository.save(toAccount);
+
             log.info("Premium paid");
         } catch(Exception e) {
             log.error("Unable to pay premium: " + e.getMessage());
