@@ -1,34 +1,36 @@
 package broker
 
 import (
+	"banka1.com/types"
+	"encoding/json"
+	"fmt"
+	"log"
+	"time"
+
 	"banka1.com/db"
 	"banka1.com/dto"
 	"banka1.com/saga"
-	"banka1.com/types"
-	"context"
-	"encoding/json"
-	"fmt"
-	"github.com/Azure/go-amqp"
+
+	"github.com/go-stomp/stomp/v3"
 	"gorm.io/gorm"
-	"log"
-	"time"
 )
 
-func handle(ctx context.Context, reciever *amqp.Receiver, message *amqp.Message, makeObject func() any, handler func(any) any) {
-	err := reciever.AcceptMessage(ctx, message)
+func handle(_ *stomp.Subscription, message *stomp.Message, makeObject func() any, handler func(any) any) {
+	err := conn.Ack(message)
 	if err != nil {
 		log.Printf("Neuspesno prihvatanje poruke: %v", err)
 		return
 	}
 
-	if message.Properties.ReplyTo == nil {
+	replyTo := message.Header.Get("reply-to")
+	if replyTo == "" {
 		log.Printf("Poruka nema postavljenu ReplyTo adresu: %v", message)
 		return
 	}
 
 	object := makeObject()
 
-	err = json.Unmarshal(messageValueAsBytes(message), object)
+	err = json.Unmarshal(message.Body, object)
 	if err != nil {
 		log.Printf("Neuspesno parsiranje poruke: %v", err)
 		return
@@ -36,15 +38,15 @@ func handle(ctx context.Context, reciever *amqp.Receiver, message *amqp.Message,
 
 	response := handler(object)
 
-	err = send(*message.Properties.ReplyTo, response)
+	err = send(replyTo, response)
 	if err != nil {
 		log.Printf("Neuspesno slanje reply-a: %v", err)
 		return
 	}
 }
 
-func handleNoReply(ctx context.Context, reciever *amqp.Receiver, message *amqp.Message, makeObject func() any, handler func(any)) {
-	err := reciever.AcceptMessage(ctx, message)
+func handleNoReply(_ *stomp.Subscription, message *stomp.Message, makeObject func() any, handler func(any)) {
+	err := conn.Ack(message)
 	if err != nil {
 		log.Printf("Neuspesno prihvatanje poruke: %v", err)
 		return
@@ -52,7 +54,7 @@ func handleNoReply(ctx context.Context, reciever *amqp.Receiver, message *amqp.M
 
 	object := makeObject()
 
-	err = json.Unmarshal(messageValueAsBytes(message), object)
+	err = json.Unmarshal(message.Body, object)
 	if err != nil {
 		log.Printf("Neuspesno parsiranje poruke: %v", err)
 		return
@@ -61,10 +63,10 @@ func handleNoReply(ctx context.Context, reciever *amqp.Receiver, message *amqp.M
 	handler(object)
 }
 
-func handleReliable(ctx context.Context, reciever *amqp.Receiver, message *amqp.Message, makeObject func() any, handler func(any) error) {
+func handleReliable(_ *stomp.Subscription, message *stomp.Message, makeObject func() any, handler func(any) error) {
 	object := makeObject()
 
-	err := json.Unmarshal(messageValueAsBytes(message), object)
+	err := json.Unmarshal(message.Body, object)
 	if err != nil {
 		log.Printf("Neuspesno parsiranje poruke: %v", err)
 		return
@@ -79,32 +81,32 @@ func handleReliable(ctx context.Context, reciever *amqp.Receiver, message *amqp.
 		time.Sleep(5 * time.Second)
 	}
 
-	err = reciever.AcceptMessage(ctx, message)
+	err = conn.Ack(message)
 	if err != nil {
 		log.Printf("Neuspesno prihvatanje poruke: %v", err)
 		return
 	}
 }
 
-func defaultErrHandler(_ context.Context, _ *amqp.Receiver, err error) {
+func defaultErrHandler(_ *stomp.Subscription, err error) {
 	log.Fatalf("Greska u primanju poruke: %v", err)
 }
 
-func wrap(makeObject func() any, handler func(any) any) func(context.Context, *amqp.Receiver, *amqp.Message) {
-	return func(ctx context.Context, reciever *amqp.Receiver, message *amqp.Message) {
-		handle(ctx, reciever, message, makeObject, handler)
+func wrap(makeObject func() any, handler func(any) any) func(*stomp.Subscription, *stomp.Message) {
+	return func(subscription *stomp.Subscription, message *stomp.Message) {
+		handle(subscription, message, makeObject, handler)
 	}
 }
 
-func wrapNoReply(makeObject func() any, handler func(any)) func(context.Context, *amqp.Receiver, *amqp.Message) {
-	return func(ctx context.Context, reciever *amqp.Receiver, message *amqp.Message) {
-		handleNoReply(ctx, reciever, message, makeObject, handler)
+func wrapNoReply(makeObject func() any, handler func(any)) func(*stomp.Subscription, *stomp.Message) {
+	return func(subscription *stomp.Subscription, message *stomp.Message) {
+		handleNoReply(subscription, message, makeObject, handler)
 	}
 }
 
-func wrapReliable(makeObject func() any, handler func(any) error) func(context.Context, *amqp.Receiver, *amqp.Message) {
-	return func(ctx context.Context, reciever *amqp.Receiver, message *amqp.Message) {
-		handleReliable(ctx, reciever, message, makeObject, handler)
+func wrapReliable(makeObject func() any, handler func(any) error) func(*stomp.Subscription, *stomp.Message) {
+	return func(subscription *stomp.Subscription, message *stomp.Message) {
+		handleReliable(subscription, message, makeObject, handler)
 	}
 }
 
@@ -337,7 +339,7 @@ func GetAccountsForUser(userId int64) ([]dto.Account, error) {
 	return response.Accounts, nil
 }
 
-func StartListeners(ctx context.Context) {
-	go listen(ctx, "get-actuary", wrap(func() any { var id int; return &id }, getActuary), defaultErrHandler)
-	go listen(ctx, "otc-ack-trading", wrapReliable(func() any { return &types.OTCTransactionACKDTO{} }, handleOTCACK), defaultErrHandler)
+func StartListeners() {
+	go listen("get-actuary", wrap(func() any { var id int; return &id }, getActuary), defaultErrHandler)
+	go listen("otc-ack-trading", wrapReliable(func() any { return &types.OTCTransactionACKDTO{} }, handleOTCACK), defaultErrHandler)
 }

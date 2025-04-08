@@ -9,7 +9,6 @@ import (
 
 	"banka1.com/controllers/orders"
 
-	"context"
 	"fmt"
 	"os"
 	"time"
@@ -42,13 +41,12 @@ import (
 // @name						Authorization
 // @description				Unesite token. Primer: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 func main() {
-	ctx := context.Background()
 	err := godotenv.Load()
 	if err != nil {
 		panic("Error loading .env file")
 	}
 
-	broker.Connect(ctx)
+	broker.Connect(os.Getenv("MESSAGE_BROKER_NETWORK"), os.Getenv("MESSAGE_BROKER_HOSTNAME_PORT"))
 	db.Init()
 	cron.StartScheduler()
 
@@ -117,7 +115,7 @@ func main() {
 		log.Println("Finished loading default portfolios")
 	}()
 
-	broker.StartListeners(ctx)
+	broker.StartListeners()
 
 	app := fiber.New()
 
