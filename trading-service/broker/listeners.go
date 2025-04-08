@@ -315,11 +315,12 @@ func verifyFinalState(uid string) error {
 }
 
 func markContractAsExercised(uid string) error {
+	now := time.Now().Unix()
 	return db.DB.Model(&types.OptionContract{}).
-		Where("concat('OTC-', otc_trade_id, '-', exercised_at) = ?", uid).
+		Where("uid = ?", uid).
 		Updates(map[string]interface{}{
 			"is_exercised": true,
-			"exercised_at": time.Now(),
+			"exercised_at": now,
 		}).Error
 }
 
