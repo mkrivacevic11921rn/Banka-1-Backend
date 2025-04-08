@@ -104,6 +104,7 @@ type OptionContract struct {
 	IsExercised  bool      `gorm:"default:false"`
 	CreatedAt    int64     `gorm:"autoCreateTime"`
 	ExercisedAt  *int64    `gorm:"default:null"`
+	UID          string    `gorm:"type:varchar(255);uniqueIndex"`
 	OTCTrade     OTCTrade  `gorm:"foreignKey:OTCTradeID" json:"otc_trade"`
 	Portfolio    Portfolio `gorm:"foreignKey:PortfolioID" json:"portfolio"`
 	// Security   Security  `gorm:"foreignKey:SecurityID"`

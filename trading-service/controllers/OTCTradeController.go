@@ -380,7 +380,7 @@ func (c *OTCTradeController) ExecuteOptionContract(ctx *fiber.Ctx) error {
 	}
 	saga.StateManager.UpdatePhase(uid, saga.PhaseInit)
 
-	//contract.UID = uid
+	contract.UID = uid
 
 	if err := db.DB.Save(&contract).Error; err != nil {
 		_ = broker.SendOTCTransactionFailure(uid, "Greška prilikom čuvanja statusa ugovora")

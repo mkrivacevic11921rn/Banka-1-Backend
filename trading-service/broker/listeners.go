@@ -188,7 +188,7 @@ func handleOTCACK(data any) error {
 func removeOwnership(uid string) error {
 	return db.DB.Transaction(func(tx *gorm.DB) error {
 		var contract types.OptionContract
-		if err := tx.Where("concat('OTC-', otc_trade_id, '-', exercised_at) = ?", uid).First(&contract).Error; err != nil {
+		if err := tx.Where("uid = ?", uid).First(&contract).Error; err != nil {
 			return fmt.Errorf("Neuspešno pronalaženje ugovora: %w", err)
 		}
 
@@ -221,7 +221,7 @@ func removeOwnership(uid string) error {
 func assignOwnership(uid string) error {
 	return db.DB.Transaction(func(tx *gorm.DB) error {
 		var contract types.OptionContract
-		if err := tx.Where("concat('OTC-', otc_trade_id, '-', exercised_at) = ?", uid).First(&contract).Error; err != nil {
+		if err := tx.Where("uid = ?", uid).First(&contract).Error; err != nil {
 			return fmt.Errorf("Neuspešno pronalaženje ugovora: %w", err)
 		}
 
@@ -244,7 +244,7 @@ func assignOwnership(uid string) error {
 func rollbackOwnership(uid string) error {
 	return db.DB.Transaction(func(tx *gorm.DB) error {
 		var contract types.OptionContract
-		if err := tx.Where("concat('OTC-', otc_trade_id, '-', exercised_at) = ?", uid).First(&contract).Error; err != nil {
+		if err := tx.Where("uid = ?", uid).First(&contract).Error; err != nil {
 			return fmt.Errorf("Neuspešno pronalaženje ugovora: %w", err)
 		}
 
@@ -283,7 +283,7 @@ func rollbackOwnership(uid string) error {
 func verifyFinalState(uid string) error {
 	return db.DB.Transaction(func(tx *gorm.DB) error {
 		var contract types.OptionContract
-		if err := tx.Where("concat('OTC-', otc_trade_id, '-', exercised_at) = ?", uid).First(&contract).Error; err != nil {
+		if err := tx.Where("uid = ?", uid).First(&contract).Error; err != nil {
 			return fmt.Errorf("Neuspešno pronalaženje ugovora za proveru integriteta: %w", err)
 		}
 
