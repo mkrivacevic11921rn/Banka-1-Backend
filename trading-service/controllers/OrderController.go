@@ -221,8 +221,8 @@ func (oc *OrderController) CreateOrder(c *fiber.Ctx) error {
 				Error:   "Korisnik nema margin nalog (nije agent ili nije registrovan kao aktuar)",
 			})
 		}
-    
-		if actuary.Role != "AGENT" || actuary.Role != "SUPERVISOR" {
+
+		if actuary.Department != "AGENT" && actuary.Department != "SUPERVISOR" {
 			return c.Status(403).JSON(types.Response{
 				Success: false,
 				Error:   "Samo agenti mogu da koriste margin",
