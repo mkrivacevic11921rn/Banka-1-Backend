@@ -138,7 +138,7 @@ func (c *OTCTradeController) CounterOfferOTCTrade(ctx *fiber.Ctx) error {
 		})
 	}
 
-	userID := uint(ctx.Locals("user_id").(float64))
+	userID := ctx.Locals("user_id").(uint)
 
 	settlementDate, err := time.Parse("2006-01-02", req.SettlementDate)
 	if err != nil {
