@@ -3,15 +3,15 @@ package broker
 import (
 	"banka1.com/db"
 	"banka1.com/dto"
+	"banka1.com/saga"
 	"banka1.com/types"
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Azure/go-amqp"
 	"gorm.io/gorm"
 	"log"
 	"time"
-
-	"github.com/Azure/go-amqp"
 )
 
 func handle(ctx context.Context, reciever *amqp.Receiver, message *amqp.Message, makeObject func() any, handler func(any) any) {
@@ -126,28 +126,58 @@ func handleOTCACK(data any) error {
 
 	log.Println("Saga progressed for", dto.Uid)
 
-	if err := transferOwnership(dto.Uid); err != nil {
-		log.Printf("Ownership transfer error: %v", err)
-
-		_ = SendOTCTransactionFailure(dto.Uid, "Ownership transfer failed")
-		return err
+	phase, exists := saga.StateManager.GetPhase(dto.Uid)
+	if !exists {
+		log.Printf("[SAGA] Nepoznat UID: %s", dto.Uid)
+		return nil
 	}
 
-	if err := verifyFinalState(dto.Uid); err != nil {
-		log.Printf("Finalna provera neuspešna: %v", err)
-
-		_ = SendOTCTransactionFailure(dto.Uid, "Finalna provera neuspešna: "+err.Error())
-
-		if err := rollbackOwnership(dto.Uid); err != nil {
-			log.Printf("Rollback nakon neuspešne provere nije uspeo: %v", err)
+	switch phase {
+	case saga.PhaseOwnershipRemoved:
+		log.Println("[SAGA] OwnershipRemove faza za", dto.Uid)
+		if err := removeOwnership(dto.Uid); err != nil {
+			log.Printf("Ownership REMOVE error: %v", err)
+			_ = SendOTCTransactionFailure(dto.Uid, "Ownership remove failed")
+			return err
 		}
-		return err
-	}
+		saga.StateManager.UpdatePhase(dto.Uid, saga.PhaseOwnershipTransferred)
+		return SendOTCTransactionSuccess(dto.Uid)
 
-	return nil
+	case saga.PhaseOwnershipTransferred:
+		log.Println("[SAGA] OwnershipAssign faza za", dto.Uid)
+		if err := assignOwnership(dto.Uid); err != nil {
+			log.Printf("Ownership ASSIGN error: %v", err)
+			_ = SendOTCTransactionFailure(dto.Uid, "Ownership assign failed")
+			return err
+		}
+		saga.StateManager.UpdatePhase(dto.Uid, saga.PhaseVerified)
+		return SendOTCTransactionSuccess(dto.Uid)
+
+	case saga.PhaseVerified:
+		log.Println("[SAGA] FinalCheck faza za", dto.Uid)
+		if err := verifyFinalState(dto.Uid); err != nil {
+			log.Printf("Finalna provera neuspešna: %v", err)
+			_ = SendOTCTransactionFailure(dto.Uid, "Finalna provera neuspešna: "+err.Error())
+			if err := rollbackOwnership(dto.Uid); err != nil {
+				log.Printf("Rollback ownership nije uspeo: %v", err)
+			}
+			return err
+		}
+		saga.StateManager.Remove(dto.Uid)
+		log.Println("[SAGA] Uspešno završena saga za", dto.Uid)
+		if err := markContractAsExercised(dto.Uid); err != nil {
+			log.Printf("Greška prilikom označavanja ugovora kao izvršenog: %v", err)
+		}
+
+		return SendOTCTransactionSuccess(dto.Uid)
+
+	default:
+		log.Printf("Nepoznata faza SAGA-e za uid: %s", dto.Uid)
+		return nil
+	}
 }
 
-func transferOwnership(uid string) error {
+func removeOwnership(uid string) error {
 	return db.DB.Transaction(func(tx *gorm.DB) error {
 		var contract types.OptionContract
 		if err := tx.Where("concat('OTC-', otc_trade_id, '-', exercised_at) = ?", uid).First(&contract).Error; err != nil {
@@ -171,8 +201,20 @@ func transferOwnership(uid string) error {
 		if sellerPortfolio.PublicCount < 0 {
 			sellerPortfolio.PublicCount = 0
 		}
+
 		if err := tx.Save(&sellerPortfolio).Error; err != nil {
 			return fmt.Errorf("Greška prilikom ažuriranja portfolija prodavca: %w", err)
+		}
+
+		return nil
+	})
+}
+
+func assignOwnership(uid string) error {
+	return db.DB.Transaction(func(tx *gorm.DB) error {
+		var contract types.OptionContract
+		if err := tx.Where("concat('OTC-', otc_trade_id, '-', exercised_at) = ?", uid).First(&contract).Error; err != nil {
+			return fmt.Errorf("Neuspešno pronalaženje ugovora: %w", err)
 		}
 
 		buyerPortfolio := types.Portfolio{
@@ -182,6 +224,7 @@ func transferOwnership(uid string) error {
 			PurchasePrice: contract.StrikePrice,
 			PublicCount:   0,
 		}
+
 		if err := tx.Create(&buyerPortfolio).Error; err != nil {
 			return fmt.Errorf("Greška prilikom kreiranja portfolija kupca: %w", err)
 		}
@@ -191,36 +234,42 @@ func transferOwnership(uid string) error {
 }
 
 func rollbackOwnership(uid string) error {
-	var contract types.OptionContract
-	if err := db.DB.Where("concat('OTC-', otc_trade_id, '-', exercised_at) = ?", uid).First(&contract).Error; err != nil {
-		return err
-	}
-
-	var sellerPortfolio types.Portfolio
-	if err := db.DB.First(&sellerPortfolio, contract.PortfolioID).Error; err == nil {
-		sellerPortfolio.Quantity += contract.Quantity
-		sellerPortfolio.PublicCount += contract.Quantity
-		if err := db.DB.Save(&sellerPortfolio).Error; err != nil {
-			return err
+	return db.DB.Transaction(func(tx *gorm.DB) error {
+		var contract types.OptionContract
+		if err := tx.Where("concat('OTC-', otc_trade_id, '-', exercised_at) = ?", uid).First(&contract).Error; err != nil {
+			return fmt.Errorf("Neuspešno pronalaženje ugovora: %w", err)
 		}
-	}
 
-	var buyerPortfolio types.Portfolio
-	err := db.DB.Where("user_id = ? AND security_id = ?", contract.BuyerID, contract.SecurityID).First(&buyerPortfolio).Error
-	if err == nil && buyerPortfolio.Quantity >= contract.Quantity {
-		buyerPortfolio.Quantity -= contract.Quantity
-		if buyerPortfolio.Quantity == 0 {
-			if err := db.DB.Delete(&buyerPortfolio).Error; err != nil {
-				return err
-			}
-		} else {
-			if err := db.DB.Save(&buyerPortfolio).Error; err != nil {
-				return err
+		var sellerPortfolio types.Portfolio
+		if err := tx.First(&sellerPortfolio, contract.PortfolioID).Error; err == nil {
+			sellerPortfolio.Quantity += contract.Quantity
+			sellerPortfolio.PublicCount += contract.Quantity
+			if err := tx.Save(&sellerPortfolio).Error; err != nil {
+				return fmt.Errorf("Greška prilikom vraćanja portfolija prodavcu: %w", err)
 			}
 		}
-	}
 
-	return nil
+		// VODITI RACUNA O TOME DA LI JE TO DOBAR PORTFOLIO ZA BRISANJE
+		var buyerPortfolio types.Portfolio
+		err := tx.Where("user_id = ? AND security_id = ?", contract.BuyerID, contract.SecurityID).First(&buyerPortfolio).Error
+		if err == nil {
+			if buyerPortfolio.Quantity < contract.Quantity {
+				return fmt.Errorf("Kupčev portfolio ima manje hartija nego što je predviđeno za rollback")
+			}
+			buyerPortfolio.Quantity -= contract.Quantity
+			if buyerPortfolio.Quantity == 0 {
+				if err := tx.Delete(&buyerPortfolio).Error; err != nil {
+					return fmt.Errorf("Greška prilikom brisanja portfolija kupca: %w", err)
+				}
+			} else {
+				if err := tx.Save(&buyerPortfolio).Error; err != nil {
+					return fmt.Errorf("Greška prilikom ažuriranja portfolija kupca: %w", err)
+				}
+			}
+		}
+
+		return nil
+	})
 }
 
 func verifyFinalState(uid string) error {
@@ -255,6 +304,15 @@ func verifyFinalState(uid string) error {
 
 		return nil
 	})
+}
+
+func markContractAsExercised(uid string) error {
+	return db.DB.Model(&types.OptionContract{}).
+		Where("concat('OTC-', otc_trade_id, '-', exercised_at) = ?", uid).
+		Updates(map[string]interface{}{
+			"is_exercised": true,
+			"exercised_at": time.Now(),
+		}).Error
 }
 
 func GetAccountsForUser(userId int64) ([]dto.Account, error) {

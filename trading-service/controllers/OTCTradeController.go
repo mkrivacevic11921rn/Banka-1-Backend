@@ -396,8 +396,6 @@ func (c *OTCTradeController) ExecuteOptionContract(ctx *fiber.Ctx) error {
 		})
 	}
 
-	_ = broker.SendOTCTransactionSuccess(uid)
-
 	return ctx.Status(fiber.StatusOK).JSON(types.Response{
 		Success: true,
 		Data:    "Ugovor uspešno realizovan",
