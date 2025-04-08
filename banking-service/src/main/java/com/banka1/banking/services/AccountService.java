@@ -1,9 +1,6 @@
 package com.banka1.banking.services;
 
-import com.banka1.banking.dto.CreateCardDTO;
-import com.banka1.banking.dto.CreateCompanyDTO;
-import com.banka1.banking.dto.CustomerDTO;
-import com.banka1.banking.dto.NotificationDTO;
+import com.banka1.banking.dto.*;
 import com.banka1.banking.dto.request.CreateAccountDTO;
 import com.banka1.banking.dto.request.UpdateAccountDTO;
 import com.banka1.banking.dto.request.UserUpdateAccountDTO;
@@ -180,7 +177,7 @@ public class AccountService {
     }
     //realno metode mogu da se spoje i ne treba odvojen dto al ajde kao da ni ne dam opciju useru da slucajno sam sebi menja status
 
-    public List<Transaction> getTransactionsForAccount(Long accountId) {
+    public List<TransactionResponseDTO> getTransactionsForAccount(Long accountId) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Račun sa ID-jem " + accountId + " nije pronađen"));
 
@@ -197,7 +194,21 @@ public class AccountService {
 
         if(!Objects.equals(bankAccountUtils.getBankAccountForCurrency(CurrencyType.RSD).getOwnerID(), account.getOwnerID()))
             allTransactions.removeIf(Transaction::getBankOnly);
-        return allTransactions;
+
+        List<TransactionResponseDTO> responseDTOs = new ArrayList<>();
+        for (Transaction transaction : allTransactions) {
+            TransactionResponseDTO dto = modelMapper.map(transaction, TransactionResponseDTO.class);
+
+            CustomerDTO sender = userServiceCustomer.getCustomerById(dto.getFromAccountId().getOwnerID());
+            CustomerDTO reciever = userServiceCustomer.getCustomerById(dto.getToAccountId().getOwnerID());
+
+            dto.setSenderName(sender.getFirstName() + " " + sender.getLastName());
+            dto.setReceiverName(reciever.getFirstName() + " " + reciever.getLastName());
+
+            responseDTOs.add(dto);
+        }
+
+        return responseDTOs;
     }
 
     public static String generateAccountNumber(Account account){
