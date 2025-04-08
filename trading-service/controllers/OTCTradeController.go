@@ -4,6 +4,7 @@ import (
 	"banka1.com/broker"
 	"banka1.com/db"
 	"banka1.com/middlewares"
+	"banka1.com/saga"
 	"banka1.com/types"
 	"encoding/json"
 	"fmt"
@@ -377,6 +378,7 @@ func (c *OTCTradeController) ExecuteOptionContract(ctx *fiber.Ctx) error {
 			Error:   "Greška prilikom slanja OTC transakcije",
 		})
 	}
+	saga.StateManager.UpdatePhase(uid, saga.PhaseInit)
 
 	//contract.UID = uid
 
