@@ -1,15 +1,15 @@
 package broker
 
 import (
+	"banka1.com/db"
+	"banka1.com/dto"
+	"banka1.com/types"
 	"context"
 	"encoding/json"
 	"fmt"
 	"gorm.io/gorm"
 	"log"
 	"time"
-
-	"banka1.com/db"
-	"banka1.com/types"
 
 	"github.com/Azure/go-amqp"
 )
@@ -116,18 +116,11 @@ func getActuary(id any) any {
 	return &actuary
 }
 
-func StartListeners(ctx context.Context) {
-	go listen(ctx, "get-actuary", wrap(func() any { var id int; return &id }, getActuary), defaultErrHandler)
-}
-
 func handleOTCACK(data any) error {
 	dto := data.(*types.OTCTransactionACKDTO)
 
 	if dto.Failure {
 		log.Println("Saga failed:", dto.Message)
-		if err := rollbackOwnership(dto.Uid); err != nil {
-			log.Printf("Rollback ownership error: %v", err)
-		}
 		return nil
 	}
 
@@ -135,7 +128,19 @@ func handleOTCACK(data any) error {
 
 	if err := transferOwnership(dto.Uid); err != nil {
 		log.Printf("Ownership transfer error: %v", err)
+
 		_ = SendOTCTransactionFailure(dto.Uid, "Ownership transfer failed")
+		return err
+	}
+
+	if err := verifyFinalState(dto.Uid); err != nil {
+		log.Printf("Finalna provera neuspešna: %v", err)
+
+		_ = SendOTCTransactionFailure(dto.Uid, "Finalna provera neuspešna: "+err.Error())
+
+		if err := rollbackOwnership(dto.Uid); err != nil {
+			log.Printf("Rollback nakon neuspešne provere nije uspeo: %v", err)
+		}
 		return err
 	}
 
@@ -217,6 +222,55 @@ func rollbackOwnership(uid string) error {
 
 	return nil
 }
-func StartOTCListeners(ctx context.Context) {
+
+func verifyFinalState(uid string) error {
+	return db.DB.Transaction(func(tx *gorm.DB) error {
+		var contract types.OptionContract
+		if err := tx.Where("concat('OTC-', otc_trade_id, '-', exercised_at) = ?", uid).First(&contract).Error; err != nil {
+			return fmt.Errorf("Neuspešno pronalaženje ugovora za proveru integriteta: %w", err)
+		}
+
+		var sellerPortfolio types.Portfolio
+		if err := tx.First(&sellerPortfolio, contract.PortfolioID).Error; err != nil {
+			return fmt.Errorf("Neuspešno pronalaženje portfolija prodavca: %w", err)
+		}
+		expectedSellerQuantity := sellerPortfolio.Quantity
+		if expectedSellerQuantity < 0 {
+			return fmt.Errorf("Integritet neuspešan: negativna količina kod prodavca")
+		}
+
+		var buyerPortfolios []types.Portfolio
+		if err := tx.Where("user_id = ? AND security_id = ?", contract.BuyerID, contract.SecurityID).Find(&buyerPortfolios).Error; err != nil {
+			return fmt.Errorf("Greška pri traženju portfolija kupca: %w", err)
+		}
+
+		totalBuyerQuantity := 0
+		for _, p := range buyerPortfolios {
+			totalBuyerQuantity += p.Quantity
+		}
+
+		if totalBuyerQuantity < contract.Quantity {
+			return fmt.Errorf("Integritet neuspešan: kupac nije dobio sve hartije – očekivano %d, ima %d", contract.Quantity, totalBuyerQuantity)
+		}
+
+		return nil
+	})
+}
+
+func GetAccountsForUser(userId int64) ([]dto.Account, error) {
+	req := dto.UserRequest{UserId: userId}
+	var response dto.UserAccountsResponse
+
+	err := sendAndRecieve("get-accounts-by-user", req, &response)
+	if err != nil {
+		log.Printf("Greška prilikom dohvatanja računa korisnika %d: %v", userId, err)
+		return nil, err
+	}
+
+	return response.Accounts, nil
+}
+
+func StartListeners(ctx context.Context) {
+	go listen(ctx, "get-actuary", wrap(func() any { var id int; return &id }, getActuary), defaultErrHandler)
 	go listen(ctx, "otc-ack-trade", wrapReliable(func() any { return &types.OTCTransactionACKDTO{} }, handleOTCACK), defaultErrHandler)
 }

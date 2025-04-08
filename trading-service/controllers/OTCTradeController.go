@@ -324,12 +324,50 @@ func (c *OTCTradeController) ExecuteOptionContract(ctx *fiber.Ctx) error {
 		})
 	}
 
+	buyerAccounts, err := broker.GetAccountsForUser(int64(contract.BuyerID))
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
+			Success: false,
+			Error:   "Neuspešno dohvatanje računa kupca",
+		})
+	}
+
+	sellerAccounts, err := broker.GetAccountsForUser(int64(contract.SellerID))
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
+			Success: false,
+			Error:   "Neuspešno dohvatanje računa prodavca",
+		})
+	}
+
+	var buyerAccountID, sellerAccountID int64 = -1, -1
+
+	for _, acc := range buyerAccounts {
+		if acc.CurrencyType == "USD" {
+			buyerAccountID = acc.ID
+			break
+		}
+	}
+	for _, acc := range sellerAccounts {
+		if acc.CurrencyType == "USD" {
+			sellerAccountID = acc.ID
+			break
+		}
+	}
+
+	if buyerAccountID == -1 || sellerAccountID == -1 {
+		return ctx.Status(fiber.StatusBadRequest).JSON(types.Response{
+			Success: false,
+			Error:   "Kupac ili prodavac nema USD račun",
+		})
+	}
+
 	uid := fmt.Sprintf("OTC-%d-%d", contract.ID, time.Now().Unix())
 
 	dto := &types.OTCTransactionInitiationDTO{
 		Uid:             uid,
-		SellerAccountId: contract.SellerID,
-		BuyerAccountId:  userID,
+		SellerAccountId: uint(sellerAccountID),
+		BuyerAccountId:  uint(buyerAccountID),
 		Amount:          contract.StrikePrice * float64(contract.Quantity),
 	}
 
@@ -340,10 +378,7 @@ func (c *OTCTradeController) ExecuteOptionContract(ctx *fiber.Ctx) error {
 		})
 	}
 
-	//now := time.Now().Unix()
-	//contract.IsExercised = true
-	//contract.ExercisedAt = &now
-	//contract.Status = "closed"
+	//contract.UID = uid
 
 	if err := db.DB.Save(&contract).Error; err != nil {
 		_ = broker.SendOTCTransactionFailure(uid, "Greška prilikom čuvanja statusa ugovora")
