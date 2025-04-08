@@ -33,7 +33,6 @@ type APIResponse struct {
 
 // cron posao koji resetuje limit agentu svakog dana u 23 59
 func StartScheduler() {
-	createNewActuaries()
 	c := cron.New(cron.WithSeconds())
 	_, err := c.AddFunc("0 59 23 * * *", func() {
 		resetDailyLimits()
@@ -72,7 +71,7 @@ func resetDailyLimits() {
 func createNewActuaries() {
 	data, err := GetActuaries()
 
-	if data == nil && err == nil {
+	if err != nil {
 		return
 	}
 
