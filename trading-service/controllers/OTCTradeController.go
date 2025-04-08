@@ -319,6 +319,28 @@ func (c *OTCTradeController) AcceptOTCTrade(ctx *fiber.Ctx) error {
 		})
 	}
 
+	var buyerAccount *dto.Account
+	for _, acc := range buyerAccounts {
+		if acc.ID == buyerAccountID {
+			buyerAccount = &acc
+			break
+		}
+
+	}
+	if buyerAccount == nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
+			Success: false,
+			Error:   "Greška pri pronalaženju kupčevog računa",
+		})
+	}
+
+	if buyerAccount.Balance < contract.Premium {
+		return ctx.Status(fiber.StatusBadRequest).JSON(types.Response{
+			Success: false,
+			Error:   "Kupčev račun nema dovoljno sredstava za plaćanje premije",
+		})
+	}
+
 	if err := db.DB.Create(&contract).Error; err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
 			Success: false,
