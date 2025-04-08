@@ -11,8 +11,8 @@ import (
 
 var conn *stomp.Conn
 
-func Connect() {
-	c, err := stomp.Dial("tcp", "127.0.0.1:61613",
+func Connect(network, hostname string) {
+	c, err := stomp.Dial(network, hostname,
 		stomp.ConnOpt.Login("guest", "guest"),
 		stomp.ConnOpt.Host("/"))
 	if err != nil {

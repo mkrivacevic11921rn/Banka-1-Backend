@@ -206,6 +206,8 @@ services:
       - POSTGRES_DSN=postgres://trading_service_user:trading_service_password@trading-db:5432/trading_db?sslmode=disable
       - USER_SERVICE=http://user-service:8081
       - BANKING_SERVICE=http://banking-service:8082
+      - MESSAGE_BROKER_NETWORK=tcp
+      - MESSAGE_BROKER_HOSTNAME_PORT=message-broker:61613
     healthcheck:
       test: [ "CMD-SHELL", "echo OK" ]
   trading-db:
