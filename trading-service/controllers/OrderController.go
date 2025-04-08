@@ -5,9 +5,11 @@ import (
 	"banka1.com/db"
 	"banka1.com/middlewares"
 	"banka1.com/types"
+	"encoding/json"
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"net/http"
 	"strings"
 )
 
@@ -150,17 +152,15 @@ func (oc *OrderController) CreateOrder(c *fiber.Ctx) error {
 		})
 	}
 
-	department, ok := c.Locals("department").(string)
-	if !ok {
-		return c.Status(500).JSON(types.Response{
-			Success: false,
-			Error:   "[MIDDLEWARE] Greska prilikom dohvatanja department vrednosti",
-		})
-	}
-
 	status := "pending"
-	if department == "SUPERVISOR" {
-		status = "approved"
+	var approvedBy *uint = nil
+
+	if deptRaw := c.Locals("department"); deptRaw != nil {
+		if department, ok := deptRaw.(string); ok && department == "SUPERVISOR" {
+			status = "approved"
+			id := uint(userId)
+			approvedBy = &id
+		}
 	}
 
 	var orderType string
@@ -186,7 +186,7 @@ func (oc *OrderController) CreateOrder(c *fiber.Ctx) error {
 		OrderType:         orderType,
 		Direction:         orderRequest.Direction,
 		Status:            status, // TODO: pribaviti needs approval vrednost preko token-a?
-		ApprovedBy:        nil,
+		ApprovedBy:        approvedBy,
 		IsDone:            false,
 		RemainingParts:    &orderRequest.Quantity,
 		AfterHours:        false, // TODO: dodati check za ovo
@@ -214,26 +214,52 @@ func (oc *OrderController) CreateOrder(c *fiber.Ctx) error {
 		maintenanceMargin := security.LastPrice * 0.3
 		initialMarginCost := maintenanceMargin * 1.1
 
-		var actuary types.Actuary
-		if err := db.DB.Where("user_id = ?", orderRequest.UserID).First(&actuary).Error; err != nil {
-			return c.Status(403).JSON(types.Response{
-				Success: false,
-				Error:   "Korisnik nema margin nalog (nije agent ili nije registrovan kao aktuar)",
-			})
-		}
+		department, hasDepartment := c.Locals("department").(string)
 
-		if actuary.Department != "AGENT" && actuary.Department != "SUPERVISOR" {
-			return c.Status(403).JSON(types.Response{
-				Success: false,
-				Error:   "Samo agenti mogu da koriste margin",
-			})
-		}
+		if hasDepartment && (department == "AGENT" || department == "SUPERVISOR") {
+			var actuary types.Actuary
+			if err := db.DB.Where("user_id = ?", orderRequest.UserID).First(&actuary).Error; err != nil {
+				return c.Status(403).JSON(types.Response{
+					Success: false,
+					Error:   "Korisnik nema margin nalog (nije agent ili nije registrovan kao aktuar)",
+				})
+			}
 
-		if actuary.LimitAmount < initialMarginCost {
-			return c.Status(403).JSON(types.Response{
-				Success: false,
-				Error:   "Nedovoljan limit za margin order",
-			})
+			if actuary.LimitAmount < initialMarginCost {
+				return c.Status(403).JSON(types.Response{
+					Success: false,
+					Error:   "Nedovoljan limit za margin order",
+				})
+			}
+		} else {
+			client := &http.Client{}
+			req, _ := http.NewRequest("GET", fmt.Sprintf("http://localhost:8082/loans/has-approved-loan/%d", orderRequest.UserID), nil)
+			req.Header = http.Header{
+				"Authorization": []string{c.Get("Authorization")},
+			}
+			resp, err := client.Do(req)
+			if err != nil || resp.StatusCode != 200 {
+				return c.Status(500).JSON(types.Response{
+					Success: false,
+					Error:   "Greška pri proveri kredita iz banking servisa",
+				})
+			}
+
+			var body map[string]any
+			if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+				return c.Status(500).JSON(types.Response{
+					Success: false,
+					Error:   "Neuspešno parsiranje odgovora iz banking servisa",
+				})
+			}
+
+			approved, ok := body["approvedLoan"].(bool)
+			if !ok || !approved {
+				return c.Status(403).JSON(types.Response{
+					Success: false,
+					Error:   "Korisnik nema prava za margin order (nema kredit ni permisiju)",
+				})
+			}
 		}
 	}
 

@@ -492,4 +492,24 @@ public class LoanService {
 
         installmentsRepository.save(installment);
     }
+
+    public boolean hasApprovedLoan(Long userId) {
+        List<Account> userAccounts = accountRepository.findByOwnerID(userId);
+        System.out.println("🧪 Broj računa za user " + userId + ": " + userAccounts.size());
+
+        for (Account acc : userAccounts) {
+            List<Loan> loans = loanRepository.getLoansByAccount(acc);
+            System.out.println("➡️  Račun " + acc.getId() + " ima " + loans.size() + " kredita");
+
+            for (Loan loan : loans) {
+                System.out.println("🔍 Kredit status: " + loan.getPaymentStatus());
+                if (loan.getPaymentStatus() != PaymentStatus.PAID_OFF && loan.getPaymentStatus() == PaymentStatus.APPROVED) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+
 }
