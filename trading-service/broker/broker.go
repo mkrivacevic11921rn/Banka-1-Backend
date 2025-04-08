@@ -12,6 +12,12 @@ import (
 var conn *stomp.Conn
 
 func Connect(network, hostname string) {
+	if network == "" {
+		network = "tcp"
+	}
+	if hostname == "" {
+		hostname = "127.0.0.1:61613"
+	}
 	c, err := stomp.Dial(network, hostname,
 		stomp.ConnOpt.Login("guest", "guest"),
 		stomp.ConnOpt.Host("/"))
