@@ -27,3 +27,9 @@ type Account struct {
 type UserAccountsResponse struct {
 	Accounts []Account `json:"accounts"`
 }
+
+type OTCPremiumFeeDTO struct {
+	SellerAccountId uint    `json:"sellerAccountId"`
+	BuyerAccountId  uint    `json:"buyerAccountId"`
+	Amount          float64 `json:"amount"`
+}

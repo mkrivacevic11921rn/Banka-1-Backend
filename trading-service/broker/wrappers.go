@@ -1,6 +1,9 @@
 package broker
 
-import "banka1.com/types"
+import (
+	"banka1.com/dto"
+	"banka1.com/types"
+)
 
 func GetCustomerById(id int64) (*CustomerResponse, error) {
 	var m CustomerResponse
@@ -31,4 +34,8 @@ func SendOTCTransactionSuccess(uid string) error {
 		Message: "",
 	}
 	return sendReliable("otc-ack-banking", dto)
+}
+
+func SendOTCPremium(dto *dto.OTCPremiumFeeDTO) error {
+	return sendReliable("otc-pay-premium", dto)
 }
