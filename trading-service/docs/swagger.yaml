@@ -8,22 +8,43 @@ definitions:
     type: object
   dto.ActuaryDTO:
     properties:
-      limitAmount:
-        type: number
-      needApproval:
-        type: boolean
-      role:
+      department:
         enum:
         - supervisor
         - agent
         type: string
+      limitAmount:
+        type: number
+      needApproval:
+        type: boolean
       usedLimit:
         type: number
       userID:
         type: integer
     required:
-    - role
+    - department
     - userID
+    type: object
+  dto.FilteredActuaryDTO:
+    properties:
+      department:
+        type: string
+      email:
+        type: string
+      firstName:
+        type: string
+      id:
+        type: integer
+      lastName:
+        type: string
+      limitAmount:
+        type: number
+      needApproval:
+        type: boolean
+      position:
+        type: string
+      usedLimit:
+        type: number
     type: object
   dto.PortfolioSecurityDTO:
     properties:
@@ -53,6 +74,8 @@ definitions:
     type: object
   types.Actuary:
     properties:
+      department:
+        type: string
       email:
         type: string
       fullName:
@@ -65,8 +88,6 @@ definitions:
       needApproval:
         description: Da li orderi agenta trebaju supervizorsko odobrenje
         type: boolean
-      role:
-        type: string
       usedLimit:
         description: Samo za agente, resetuje se dnevno
         type: number
@@ -419,6 +440,38 @@ paths:
       summary: Kreiranje novog aktuara
       tags:
       - Actuaries
+  /actuaries/{ID}:
+    get:
+      description: Vraća detalje jednog aktuara na osnovu njegovog ID-ja.
+      parameters:
+      - description: ID aktuara
+        in: path
+        name: ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Uspešno dobavljen aktuar
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.Actuary'
+              type: object
+        "404":
+          description: Aktuar nije pronadjen
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Greška u bazi
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Dobavljanje aktuara po ID-ju
+      tags:
+      - Actuaries
   /actuaries/{id}:
     put:
       consumes:
@@ -457,6 +510,48 @@ paths:
           schema:
             $ref: '#/definitions/types.Response'
       summary: Izmena limita aktuara
+      tags:
+      - Actuaries
+  /actuaries/filter:
+    get:
+      description: Vraća listu aktuara filtriranu po imenu, prezimenu, email-u i/ili
+        poziciji..
+      parameters:
+      - description: Filter po imenu (case-insensitive, partial match)
+        in: query
+        name: name
+        type: string
+      - description: Filter po prezimenu (case-insensitive, partial match)
+        in: query
+        name: surname
+        type: string
+      - description: Filter po email-u (case-insensitive, partial match)
+        in: query
+        name: email
+        type: string
+      - description: Filter po poziciji (exact match from user-service)
+        in: query
+        name: position
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Uspešno filtrirani aktuari
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.FilteredActuaryDTO'
+                  type: array
+              type: object
+        "500":
+          description: Greska pri preuzimanju aktuara.
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Filtriranje aktuara
       tags:
       - Actuaries
   /exchanges:

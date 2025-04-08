@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"banka1.com/broker"
 	"banka1.com/db"
 	"banka1.com/middlewares"
 	"banka1.com/types"
@@ -113,7 +114,7 @@ func (c *OTCTradeController) CreateOTCTrade(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusCreated).JSON(types.Response{
 		Success: true,
-		Data:    otcTrade.ID,
+		Data:    fmt.Sprintf("Ponuda uspešno poslata,kreirana ponuda: %d", otcTrade.ID),
 	})
 }
 
@@ -191,7 +192,7 @@ func (c *OTCTradeController) CounterOfferOTCTrade(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusOK).JSON(types.Response{
 		Success: true,
-		Data:    trade,
+		Data:    fmt.Sprintf("Ponuda uspešno poslata,ažurirana ponuda: %d", trade.ID),
 	})
 }
 
@@ -272,6 +273,7 @@ func (c *OTCTradeController) AcceptOTCTrade(ctx *fiber.Ctx) error {
 		StrikePrice:  trade.PricePerUnit,
 		SecurityID:   trade.SecurityId,
 		Premium:      trade.Premium,
+		Status:       "active",
 		SettlementAt: trade.SettlementAt,
 		IsExercised:  false,
 		CreatedAt:    time.Now().Unix(),
@@ -322,19 +324,64 @@ func (c *OTCTradeController) ExecuteOptionContract(ctx *fiber.Ctx) error {
 		})
 	}
 
-	// TODO: SAGA transakcija
-	// 1. Rezervacija novca kupca
-	// 2. Rezervacija akcija prodavca
-	// 3. Transfer novca
-	// 4. Transfer vlasništva
-	// 5. Finalizacija
+	buyerAccounts, err := broker.GetAccountsForUser(int64(contract.BuyerID))
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
+			Success: false,
+			Error:   "Neuspešno dohvatanje računa kupca",
+		})
+	}
 
-	now := time.Now().Unix()
-	contract.IsExercised = true
-	contract.ExercisedAt = &now
-	//contract.Status = "completed"
+	sellerAccounts, err := broker.GetAccountsForUser(int64(contract.SellerID))
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
+			Success: false,
+			Error:   "Neuspešno dohvatanje računa prodavca",
+		})
+	}
+
+	var buyerAccountID, sellerAccountID int64 = -1, -1
+
+	for _, acc := range buyerAccounts {
+		if acc.CurrencyType == "USD" {
+			buyerAccountID = acc.ID
+			break
+		}
+	}
+	for _, acc := range sellerAccounts {
+		if acc.CurrencyType == "USD" {
+			sellerAccountID = acc.ID
+			break
+		}
+	}
+
+	if buyerAccountID == -1 || sellerAccountID == -1 {
+		return ctx.Status(fiber.StatusBadRequest).JSON(types.Response{
+			Success: false,
+			Error:   "Kupac ili prodavac nema USD račun",
+		})
+	}
+
+	uid := fmt.Sprintf("OTC-%d-%d", contract.ID, time.Now().Unix())
+
+	dto := &types.OTCTransactionInitiationDTO{
+		Uid:             uid,
+		SellerAccountId: uint(sellerAccountID),
+		BuyerAccountId:  uint(buyerAccountID),
+		Amount:          contract.StrikePrice * float64(contract.Quantity),
+	}
+
+	if err := broker.SendOTCTransactionInit(dto); err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
+			Success: false,
+			Error:   "Greška prilikom slanja OTC transakcije",
+		})
+	}
+
+	//contract.UID = uid
 
 	if err := db.DB.Save(&contract).Error; err != nil {
+		_ = broker.SendOTCTransactionFailure(uid, "Greška prilikom čuvanja statusa ugovora")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
 			Success: false,
 			Error:   "Greška prilikom čuvanja statusa ugovora",
@@ -342,11 +389,14 @@ func (c *OTCTradeController) ExecuteOptionContract(ctx *fiber.Ctx) error {
 	}
 
 	if err := db.DB.Model(&types.OTCTrade{}).Where("id = ?", contract.OTCTradeID).Update("status", "completed").Error; err != nil {
+		_ = broker.SendOTCTransactionFailure(uid, "Greška pri ažuriranju OTC ponude")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
 			Success: false,
 			Error:   "Greška pri ažuriranju OTC ponude",
 		})
 	}
+
+	_ = broker.SendOTCTransactionSuccess(uid)
 
 	return ctx.Status(fiber.StatusOK).JSON(types.Response{
 		Success: true,
@@ -359,6 +409,7 @@ func (c *OTCTradeController) GetActiveOffers(ctx *fiber.Ctx) error {
 	var trades []types.OTCTrade
 
 	if err := db.DB.
+		Preload("Portfolio.Security").
 		Where("status = ? AND (buyer_id = ? OR seller_id = ?)", "pending", userID, userID).
 		Find(&trades).Error; err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
@@ -378,6 +429,8 @@ func (c *OTCTradeController) GetUserOptionContracts(ctx *fiber.Ctx) error {
 	var contracts []types.OptionContract
 
 	if err := db.DB.
+		Preload("Portfolio.Security").
+		Preload("OTCTrade.Portfolio.Security").
 		Where("buyer_id = ? OR seller_id = ?", userID, userID).
 		Find(&contracts).Error; err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
@@ -398,13 +451,16 @@ func NewPortfolioControllerr() *PortfolioControllerr {
 	return &PortfolioControllerr{}
 }
 
-func (c *PortfolioControllerr) GetAllPortfolios(ctx *fiber.Ctx) error {
+func (c *PortfolioControllerr) GetAllPublicPortfolios(ctx *fiber.Ctx) error {
 	var portfolios []types.Portfolio
 
-	if err := db.DB.Preload("Security").Find(&portfolios).Error; err != nil {
+	if err := db.DB.
+		Where("public_count > 0").
+		Preload("Security").
+		Find(&portfolios).Error; err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
-			"error":   "Greška prilikom dohvatanja portfolija",
+			"error":   "Greška prilikom dohvatanja javnih portfolija",
 		})
 	}
 
@@ -416,19 +472,18 @@ func (c *PortfolioControllerr) GetAllPortfolios(ctx *fiber.Ctx) error {
 
 func InitPortfolioRoutess(app *fiber.App) {
 	portfolioController := NewPortfolioControllerr()
-	api := app.Group("/portfolio") // osnovni path
 
-	api.Get("/", portfolioController.GetAllPortfolios)
+	app.Get("/portfolio/public", portfolioController.GetAllPublicPortfolios)
 }
 
 func InitOTCTradeRoutes(app *fiber.App) {
 	otcController := NewOTCTradeController()
 	otc := app.Group("/otctrade", middlewares.Auth)
 
-	otc.Post("/offer", otcController.CreateOTCTrade)
-	otc.Put("/offer/:id/counter", otcController.CounterOfferOTCTrade)
-	otc.Put("/offer/:id/accept", otcController.AcceptOTCTrade)
-	otc.Put("/option/:id/execute", otcController.ExecuteOptionContract)
+	otc.Post("/offer", middlewares.RequirePermission("user.customer.otc_trade"), otcController.CreateOTCTrade)
+	otc.Put("/offer/:id/counter", middlewares.RequirePermission("user.customer.otc_trade"), otcController.CounterOfferOTCTrade)
+	otc.Put("/offer/:id/accept", middlewares.RequirePermission("user.customer.otc_trade"), otcController.AcceptOTCTrade)
+	otc.Put("/option/:id/execute", middlewares.RequirePermission("user.customer.otc_trade"), otcController.ExecuteOptionContract)
 	otc.Get("/offer/active", otcController.GetActiveOffers)
 	otc.Get("/option/contracts", otcController.GetUserOptionContracts)
 }
