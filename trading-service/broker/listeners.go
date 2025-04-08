@@ -133,11 +133,22 @@ func handleOTCACK(data any) error {
 	}
 
 	switch phase {
-	case saga.PhaseOwnershipRemoved:
-		log.Println("[SAGA] OwnershipRemove faza za", dto.Uid)
+
+	case saga.PhaseInit:
+		log.Println("[SAGA] PhaseInit (ACK rezer. para) za", dto.Uid)
 		if err := removeOwnership(dto.Uid); err != nil {
 			log.Printf("Ownership REMOVE error: %v", err)
 			_ = SendOTCTransactionFailure(dto.Uid, "Ownership remove failed")
+			return err
+		}
+		saga.StateManager.UpdatePhase(dto.Uid, saga.PhaseOwnershipRemoved)
+		return SendOTCTransactionSuccess(dto.Uid)
+
+	case saga.PhaseOwnershipRemoved:
+		log.Println("[SAGA] OwnershipRemove faza za", dto.Uid)
+		if err := assignOwnership(dto.Uid); err != nil {
+			log.Printf("Ownership ASSIGN error: %v", err)
+			_ = SendOTCTransactionFailure(dto.Uid, "Ownership assign failed")
 			return err
 		}
 		saga.StateManager.UpdatePhase(dto.Uid, saga.PhaseOwnershipTransferred)
@@ -145,11 +156,6 @@ func handleOTCACK(data any) error {
 
 	case saga.PhaseOwnershipTransferred:
 		log.Println("[SAGA] OwnershipAssign faza za", dto.Uid)
-		if err := assignOwnership(dto.Uid); err != nil {
-			log.Printf("Ownership ASSIGN error: %v", err)
-			_ = SendOTCTransactionFailure(dto.Uid, "Ownership assign failed")
-			return err
-		}
 		saga.StateManager.UpdatePhase(dto.Uid, saga.PhaseVerified)
 		return SendOTCTransactionSuccess(dto.Uid)
 
@@ -163,8 +169,10 @@ func handleOTCACK(data any) error {
 			}
 			return err
 		}
+
 		saga.StateManager.Remove(dto.Uid)
 		log.Println("[SAGA] Uspešno završena saga za", dto.Uid)
+
 		if err := markContractAsExercised(dto.Uid); err != nil {
 			log.Printf("Greška prilikom označavanja ugovora kao izvršenog: %v", err)
 		}
@@ -330,5 +338,5 @@ func GetAccountsForUser(userId int64) ([]dto.Account, error) {
 
 func StartListeners(ctx context.Context) {
 	go listen(ctx, "get-actuary", wrap(func() any { var id int; return &id }, getActuary), defaultErrHandler)
-	go listen(ctx, "otc-ack-trade", wrapReliable(func() any { return &types.OTCTransactionACKDTO{} }, handleOTCACK), defaultErrHandler)
+	go listen(ctx, "otc-ack-trading", wrapReliable(func() any { return &types.OTCTransactionACKDTO{} }, handleOTCACK), defaultErrHandler)
 }
