@@ -72,7 +72,7 @@ func resetDailyLimits() {
 func createNewActuaries() {
 	data, err := GetActuaries()
 
-	if err != nil {
+	if data == nil && err == nil {
 		return
 	}
 

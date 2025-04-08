@@ -222,7 +222,7 @@ func (oc *OrderController) CreateOrder(c *fiber.Ctx) error {
 			})
 		}
 
-		if actuary.Department != "agent" {
+		if actuary.Department != "AGENT" && actuary.Department != "SUPERVISOR" {
 			return c.Status(403).JSON(types.Response{
 				Success: false,
 				Error:   "Samo agenti mogu da koriste margin",
