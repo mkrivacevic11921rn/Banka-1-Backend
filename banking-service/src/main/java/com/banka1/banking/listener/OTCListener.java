@@ -1,5 +1,6 @@
 package com.banka1.banking.listener;
 
+import com.banka1.banking.dto.OTCPremiumFeeDTO;
 import com.banka1.banking.dto.OTCTransactionACKDTO;
 import com.banka1.banking.dto.OTCTransactionInitiationDTO;
 import com.banka1.banking.saga.OTCTransaction;
@@ -26,6 +27,7 @@ public class OTCListener {
             log.error(dto.getMessage());
             otcService.rollback(dto.getUid());
         } else {
+            log.info("Continuing OTC transaction " + dto.getUid());
             otcService.proceed(dto.getUid());
         }
     }
@@ -34,6 +36,15 @@ public class OTCListener {
     public void onInitMessage(Message message) throws JMSException {
         OTCTransactionInitiationDTO dto = messageHelper.getMessage(message, OTCTransactionInitiationDTO.class);
         OTCTransaction transaction = new OTCTransaction(dto.getSellerAccountId(), dto.getBuyerAccountId(), dto.getAmount());
+        log.info("Initiating OTC transaction " + dto.getUid());
         otcService.initiate(dto.getUid(), transaction);
+    }
+
+    @JmsListener(destination = "${destination.otc.premium}", concurrency = "5-10")
+    public void onPayPremiumMessage(Message message) throws JMSException {
+        OTCPremiumFeeDTO dto = messageHelper.getMessage(message, OTCPremiumFeeDTO.class);
+
+        log.info("Paying OTC transaction premium...");
+        otcService.payPremium(dto.getBuyerAccountId(), dto.getSellerAccountId(), dto.getAmount());
     }
 }
