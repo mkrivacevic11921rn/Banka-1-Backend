@@ -1,78 +1,54 @@
 package broker
 
 import (
-	"context"
 	"encoding/json"
+	"fmt"
 	"log"
-	"time"
+	"sync/atomic"
 
-	"github.com/Azure/go-amqp"
+	"github.com/go-stomp/stomp/v3"
 )
 
-var conn *amqp.Conn
-var session *amqp.Session
+var conn *stomp.Conn
 
-func Connect(ctx context.Context) {
-	c, err := amqp.Dial(ctx, "amqp://127.0.0.1", &amqp.ConnOptions{
-		SASLType: amqp.SASLTypeAnonymous(),
-	})
+func Connect() {
+	c, err := stomp.Dial("tcp", "127.0.0.1:61613",
+		stomp.ConnOpt.Login("guest", "guest"),
+		stomp.ConnOpt.Host("/"))
 	if err != nil {
 		log.Fatalf("Konekcija sa brokerom nije uspela: %v", err)
 	}
 	conn = c
-
-	s, err := conn.NewSession(ctx, nil)
-	if err != nil {
-		log.Fatalf("Pravljenje broker sesije nije uspelo: %v", err)
-	}
-	session = s
 }
 
-func messageValueAsBytes(message *amqp.Message) []byte {
-	var bytes []byte
-	if uints, success := message.Value.([]uint8); success {
-		bytes = []byte(uints)
-	} else if str, success := message.Value.(string); success {
-		bytes = []byte(str)
-	} else {
-		log.Printf("Neuspelo pretvaranje u []byte poruke: %v", message)
-		bytes = []byte{}
-	}
-	return bytes
-}
+var tempQueueNumber atomic.Uint64
 
 func sendAndRecieve(address string, object any, response any) error {
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Minute)
-	defer cancel()
-	reciever, err := session.NewReceiver(ctx, "4.45", &amqp.ReceiverOptions{
-		DynamicAddress: true,
-		ExpiryPolicy:   amqp.ExpiryPolicyLinkDetach,
-		ExpiryTimeout:  1,
-	})
+	subscription, err := conn.Subscribe(fmt.Sprintf("/temp-queue/%x", tempQueueNumber.Add(1)), stomp.AckClientIndividual)
 	if err != nil {
-		log.Printf("Neuspelo kreiranje receiver-a: %v", err)
+		log.Printf("Neuspelo kreiranje subscription-a: %v", err)
 		return err
 	}
 	errorChan := make(chan error)
 
 	go func() {
-		defer reciever.Close(ctx)
+		defer subscription.Unsubscribe()
 		var err error
-		responseMessage, err := reciever.Receive(ctx, nil)
+		responseMessage, err := subscription.Read()
 		if err != nil {
-			log.Printf("Neuspesan recieve: %v", err)
+			log.Printf("Neuspesno primanje reply-a: %v", err)
 			errorChan <- err
 			return
 		}
 
-		err = reciever.AcceptMessage(ctx, responseMessage)
+		err = conn.Ack(responseMessage)
 		if err != nil {
 			log.Printf("Neuspesno prihvatanje reply-a: %v", err)
 			errorChan <- err
 			return
 		}
 
-		err = json.Unmarshal(messageValueAsBytes(responseMessage), response)
+		err = json.Unmarshal(responseMessage.Body, response)
 		if err != nil {
 			log.Printf("Neuspesno parsiranje reply-a: %v", err)
 			errorChan <- err
@@ -88,22 +64,9 @@ func sendAndRecieve(address string, object any, response any) error {
 		return err
 	}
 
-	addr := reciever.Address()
-	message := &amqp.Message{
-		Value: body,
-		Properties: &amqp.MessageProperties{
-			ReplyTo: &addr,
-		},
-	}
-
-	sender, err := session.NewSender(ctx, address, nil)
-	if err != nil {
-		log.Printf("Neuspelo kreiranje sender-a: %v", err)
-		return err
-	}
-	defer sender.Close(ctx)
-
-	err = sender.Send(ctx, message, nil)
+	err = conn.Send(address, "application/json", body,
+		stomp.SendOpt.Header("reply-to", subscription.Destination()),
+		stomp.SendOpt.Receipt)
 
 	if err != nil {
 		log.Printf("Neuspesan send: %v", err)
@@ -113,33 +76,17 @@ func sendAndRecieve(address string, object any, response any) error {
 	select {
 	case err := <-errorChan:
 		return err
-	case <-ctx.Done():
-		return ctx.Err()
 	}
 }
 
 func send(address string, object any) error {
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Minute)
-	defer cancel()
-
 	body, err := json.Marshal(object)
 	if err != nil {
 		log.Printf("Neuspelo pretvaranje poruke u JSON: %v", err)
 		return err
 	}
 
-	message := &amqp.Message{
-		Value: body,
-	}
-
-	sender, err := session.NewSender(ctx, address, nil)
-	if err != nil {
-		log.Printf("Neuspelo kreiranje sender-a: %v", err)
-		return err
-	}
-	defer sender.Close(ctx)
-
-	err = sender.Send(ctx, message, nil)
+	err = conn.Send(address, "application/json", body)
 
 	if err != nil {
 		log.Printf("Neuspesan send: %v", err)
@@ -150,28 +97,13 @@ func send(address string, object any) error {
 }
 
 func sendReliable(address string, object any) error {
-	ctx := context.TODO()
-
 	body, err := json.Marshal(object)
 	if err != nil {
 		log.Printf("Neuspelo pretvaranje poruke u JSON: %v", err)
 		return err
 	}
 
-	message := &amqp.Message{
-		Value: body,
-	}
-
-	sender, err := session.NewSender(ctx, address, &amqp.SenderOptions{
-		SettlementMode: amqp.SenderSettleModeUnsettled.Ptr(),
-	})
-	if err != nil {
-		log.Printf("Neuspelo kreiranje sender-a: %v", err)
-		return err
-	}
-	defer sender.Close(ctx)
-
-	err = sender.Send(ctx, message, nil)
+	err = conn.Send(address, "application/json", body, stomp.SendOpt.Receipt)
 
 	if err != nil {
 		log.Printf("Neuspesan send: %v", err)
@@ -181,22 +113,20 @@ func sendReliable(address string, object any) error {
 	return nil
 }
 
-func listen(ctx context.Context, address string, handler func(context.Context, *amqp.Receiver, *amqp.Message), handlerErr func(context.Context, *amqp.Receiver, error)) {
-	reciever, err := session.NewReceiver(ctx, address, &amqp.ReceiverOptions{
-		Durability: amqp.DurabilityUnsettledState,
-	})
+func listen(address string, handler func(*stomp.Subscription, *stomp.Message), handlerErr func(*stomp.Subscription, error)) {
+	subscription, err := conn.Subscribe(address, stomp.AckClientIndividual)
 	if err != nil {
-		log.Fatalf("Neuspelo kreiranje receiver-a za listener %v: %v", address, err)
+		log.Fatalf("Neuspelo kreiranje subscription-a za listener %v: %v", address, err)
 	}
-	defer reciever.Close(ctx)
+	defer subscription.Unsubscribe()
 
 	for true {
-		responseMessage, err := reciever.Receive(ctx, nil)
+		message, err := subscription.Read()
 		if err != nil {
-			handlerErr(ctx, reciever, err)
+			handlerErr(subscription, err)
 			continue
 		}
 
-		go handler(ctx, reciever, responseMessage)
+		go handler(subscription, message)
 	}
 }
