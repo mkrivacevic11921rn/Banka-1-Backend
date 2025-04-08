@@ -1,7 +1,5 @@
 package orders
 
-/*
-
 import (
 	"banka1.com/db"
 	"banka1.com/types"
@@ -88,4 +86,3 @@ func ExecuteStopLimitOrders() {
 		}
 	}
 }
-*/
