@@ -1,13 +1,14 @@
 package cron
 
 import (
-	"banka1.com/db"
 	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
 	"os"
 	"time"
+
+	"banka1.com/db"
 
 	"github.com/gofiber/fiber/v2/log"
 	"gorm.io/gorm"
@@ -34,6 +35,8 @@ type APIResponse struct {
 
 // cron posao koji resetuje limit agentu svakog dana u 23 59
 func StartScheduler() {
+	SnapshotListingsToHistory()
+
 	c := cron.New(cron.WithSeconds())
 
 	_, err := c.AddFunc("0 59 23 * * *", func() {
@@ -48,12 +51,60 @@ func StartScheduler() {
 		createNewActuaries()
 	})
 
+	_, err = c.AddFunc("0 0 0 * * *", func() {
+		SnapshotListingsToHistory()
+	})
+
 	if err != nil {
 		log.Errorf("Greska pri pokretanju cron job-a:", err)
 		return
 	}
 
 	c.Start()
+}
+
+func SnapshotListingsToHistory() error {
+	var listings []types.Listing
+	if err := db.DB.Find(&listings).Error; err != nil {
+		return err
+	}
+
+	today := time.Now().Truncate(24 * time.Hour)
+
+	for _, l := range listings {
+		// proveri da li već postoji
+		var existing types.ListingHistory
+		err := db.DB.
+			Where("ticker = ? AND snapshot_date = ?", l.Ticker, today).
+			First(&existing).Error
+
+		if err == nil {
+			continue // već postoji → preskoči
+		}
+
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err // neki drugi error
+		}
+
+		history := types.ListingHistory{
+			Ticker:       l.Ticker,
+			Name:         l.Name,
+			ExchangeID:   l.ExchangeID,
+			LastRefresh:  l.LastRefresh,
+			Price:        l.Price,
+			Ask:          l.Ask,
+			Bid:          l.Bid,
+			Type:         l.Type,
+			Subtype:      l.Subtype,
+			ContractSize: l.ContractSize,
+			SnapshotDate: today,
+		}
+		if err := db.DB.Create(&history).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func expireOldOptionContracts() {
