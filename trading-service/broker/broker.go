@@ -19,7 +19,7 @@ func Connect(network, hostname string) {
 		hostname = "127.0.0.1:61613"
 	}
 	c, err := stomp.Dial(network, hostname,
-		stomp.ConnOpt.HeartBeatGracePeriodMultiplier(2.0),
+		stomp.ConnOpt.HeartBeatGracePeriodMultiplier(3.0),
 		stomp.ConnOpt.Login("guest", "guest"),
 		stomp.ConnOpt.Host("/"))
 	if err != nil {

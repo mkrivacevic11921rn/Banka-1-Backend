@@ -138,7 +138,7 @@ func (c *OTCTradeController) CounterOfferOTCTrade(ctx *fiber.Ctx) error {
 		})
 	}
 
-	userID := ctx.Locals("user_id").(uint)
+	userID := uint(ctx.Locals("user_id").(float64))
 
 	settlementDate, err := time.Parse("2006-01-02", req.SettlementDate)
 	if err != nil {
@@ -200,7 +200,7 @@ func (c *OTCTradeController) CounterOfferOTCTrade(ctx *fiber.Ctx) error {
 
 func (c *OTCTradeController) AcceptOTCTrade(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
-	userID := ctx.Locals("user_id").(uint)
+	userID := uint(ctx.Locals("user_id").(float64))
 
 	var trade types.OTCTrade
 	if err := db.DB.Preload("Portfolio").First(&trade, id).Error; err != nil {
@@ -364,13 +364,13 @@ func (c *OTCTradeController) AcceptOTCTrade(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusOK).JSON(types.Response{
 		Success: true,
-		Data:    fmt.Sprintf("Ponuda uspešno prihvaćena,kreiran ugovor: %d", contract.ID),
+		Data:    fmt.Sprintf("Ponuda uspešno prihvaćena.Premija uspešno isplaćena.Kreiran ugovor: %d", contract.ID),
 	})
 }
 
 func (c *OTCTradeController) ExecuteOptionContract(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
-	userID := ctx.Locals("user_id").(uint)
+	userID := uint(ctx.Locals("user_id").(float64))
 
 	var contract types.OptionContract
 	if err := db.DB.First(&contract, id).Error; err != nil {
@@ -481,7 +481,7 @@ func (c *OTCTradeController) ExecuteOptionContract(ctx *fiber.Ctx) error {
 }
 
 func (c *OTCTradeController) GetActiveOffers(ctx *fiber.Ctx) error {
-	userID := ctx.Locals("user_id").(uint)
+	userID := uint(ctx.Locals("user_id").(float64))
 	var trades []types.OTCTrade
 
 	if err := db.DB.
@@ -501,7 +501,7 @@ func (c *OTCTradeController) GetActiveOffers(ctx *fiber.Ctx) error {
 }
 
 func (c *OTCTradeController) GetUserOptionContracts(ctx *fiber.Ctx) error {
-	userID := ctx.Locals("user_id").(uint)
+	userID := uint(ctx.Locals("user_id").(float64))
 	var contracts []types.OptionContract
 
 	if err := db.DB.
