@@ -1,27 +1,25 @@
 package routes
 
 import (
-	"banka1.com/controllers"
+	"banka1.com/middlewares"
+	"fmt"
+
 	"github.com/gofiber/fiber/v2"
 )
 
 func Setup(app *fiber.App) {
 
-	actuaryController := controllers.NewActuaryController()
+	//actuaryController := controllers.NewActuaryController()
 
-	portfolioController := controllers.NewPortfolioController()
+	// Sve rute vezane za aktuare su dostupne iskljucivo supervizorima
 
-	app.Post("/actuaries", actuaryController.CreateActuary)
+	fmt.Println("usli u setup")
 
-	app.Get("/actuaries/all", actuaryController.GetAllActuaries)
+	app.Group("/actuaries", middlewares.Auth, middlewares.DepartmentCheck("supervisor"))
 
-	app.Put("/actuaries/:ID/reset-used-limit", actuaryController.ResetActuaryLimit)
-
-	app.Put("actuaries/:ID/limit", actuaryController.ChangeAgentLimits)
-
-	app.Get("/actuaries/filter", actuaryController.FilterActuaries)
 
 	app.Get("/actuaries/profits", actuaryController.GetActuaryProfits)
 
 	app.Get("/securities/:id", portfolioController.GetUserSecurities)
+
 }

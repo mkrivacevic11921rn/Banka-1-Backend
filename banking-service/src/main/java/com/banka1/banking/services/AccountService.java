@@ -1,19 +1,16 @@
 package com.banka1.banking.services;
 
-import com.banka1.banking.dto.CreateCardDTO;
-import com.banka1.banking.dto.CreateCompanyDTO;
-import com.banka1.banking.dto.CustomerDTO;
-import com.banka1.banking.dto.NotificationDTO;
+import com.banka1.banking.dto.*;
 import com.banka1.banking.dto.request.CreateAccountDTO;
 import com.banka1.banking.dto.request.UpdateAccountDTO;
 import com.banka1.banking.dto.request.UserUpdateAccountDTO;
-import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Company;
 import com.banka1.banking.models.Transaction;
 import com.banka1.banking.models.helper.*;
 import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.repository.TransactionRepository;
+import com.banka1.common.listener.MessageHelper;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -65,15 +62,22 @@ public class AccountService {
         Account account = modelMapper.map(createAccountDTO, Account.class);
 
         if (account.getSubtype().equals(AccountSubtype.BUSINESS) && createAccountDTO.getCompanyData() != null) {
+            System.out.println("Company data: " + createAccountDTO.getCompanyData());
             CreateCompanyDTO companyDTO = createAccountDTO.getCompanyData();
 
             Company existingCompany = companyService.findByCompanyNumber(companyDTO.getCompanyNumber());
 
             Company companyToUse;
             if (existingCompany == null) {
+                System.out.println("Company does not exist, creating new one");
                 companyToUse = companyService.createCompany(companyDTO);
+                companyToUse.setOwnerID(owner.getId());
             } else {
+                System.out.println("Company exists, using existing one");
                 companyToUse = existingCompany;
+                if (!companyToUse.getOwnerID().equals(owner.getId())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Korisnik nije vlasnik kompanije");
+                }
             }
 
             account.setCompany(companyToUse);
@@ -173,7 +177,7 @@ public class AccountService {
     }
     //realno metode mogu da se spoje i ne treba odvojen dto al ajde kao da ni ne dam opciju useru da slucajno sam sebi menja status
 
-    public List<Transaction> getTransactionsForAccount(Long accountId) {
+    public List<TransactionResponseDTO> getTransactionsForAccount(Long accountId) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Račun sa ID-jem " + accountId + " nije pronađen"));
 
@@ -190,7 +194,21 @@ public class AccountService {
 
         if(!Objects.equals(bankAccountUtils.getBankAccountForCurrency(CurrencyType.RSD).getOwnerID(), account.getOwnerID()))
             allTransactions.removeIf(Transaction::getBankOnly);
-        return allTransactions;
+
+        List<TransactionResponseDTO> responseDTOs = new ArrayList<>();
+        for (Transaction transaction : allTransactions) {
+            TransactionResponseDTO dto = modelMapper.map(transaction, TransactionResponseDTO.class);
+
+            CustomerDTO sender = userServiceCustomer.getCustomerById(dto.getFromAccountId().getOwnerID());
+            CustomerDTO reciever = userServiceCustomer.getCustomerById(dto.getToAccountId().getOwnerID());
+
+            dto.setSenderName(sender.getFirstName() + " " + sender.getLastName());
+            dto.setReceiverName(reciever.getFirstName() + " " + reciever.getLastName());
+
+            responseDTOs.add(dto);
+        }
+
+        return responseDTOs;
     }
 
     public static String generateAccountNumber(Account account){
