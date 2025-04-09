@@ -464,11 +464,10 @@ func (ac *ActuaryController) GetActuaryProfits(c *fiber.Ctx) error {
 		taxMap[t.UserID] = t.TaxableProfit
 	}
 
-	// 4. Formiraj konačni rezultat
 	var results []dto.ActuaryProfitDTO
 	for _, a := range actuaries {
 		if profit, exists := taxMap[a.UserID]; exists {
-			normalized := strings.ToLower(a.Role)
+			normalized := strings.ToLower(a.Department)
 			if normalized == "admin" {
 				normalized = "supervisor"
 			}
