@@ -1,10 +1,13 @@
 package controllers
 
 import (
+	"errors"
+	"time"
+
 	"banka1.com/db"
 	"banka1.com/types"
 	"github.com/gofiber/fiber/v2"
-	"time"
+	"gorm.io/gorm"
 )
 
 type ForexController struct {
@@ -106,16 +109,9 @@ func (fc *ForexController) GetForexHistoryRange(c *fiber.Ctx) error {
 	base := c.Params("base")
 	quote := c.Params("quote")
 	ticker := base + "/" + quote
+
 	startDateStr := c.Query("startDate", "")
 	endDateStr := c.Query("endDate", "")
-	var listing types.Listing
-	if result := db.DB.Where("ticker = ? AND type = ?", ticker, "Forex").First(&listing); result.Error != nil {
-		return c.Status(404).JSON(types.Response{
-			Success: false,
-			Data:    nil,
-			Error:   "Stock not found with ticker: " + ticker,
-		})
-	}
 
 	var startDate, endDate time.Time
 	var err error
@@ -130,7 +126,6 @@ func (fc *ForexController) GetForexHistoryRange(c *fiber.Ctx) error {
 			})
 		}
 	} else {
-		// Default to 30 days ago
 		startDate = time.Now().AddDate(0, 0, -30)
 	}
 
@@ -144,23 +139,93 @@ func (fc *ForexController) GetForexHistoryRange(c *fiber.Ctx) error {
 			})
 		}
 	} else {
-		// Default to today
 		endDate = time.Now()
 	}
 
-	// Fetch historical price data
-	var history []types.ListingDailyPriceInfo
-	if result := db.DB.Where("listing_id = ? AND date BETWEEN ? AND ?",
-		listing.ID, startDate, endDate).Order("date").Find(&history); result.Error != nil {
+	// Fetch from ListingHistory by ticker
+	var history []types.ListingHistory
+	if result := db.DB.Where("ticker = ? AND snapshot_date BETWEEN ? AND ?", ticker, startDate, endDate).
+		Order("snapshot_date").Find(&history); result.Error != nil {
 		return c.Status(500).JSON(types.Response{
 			Success: false,
 			Data:    nil,
 			Error:   "Failed to fetch historical price data: " + result.Error.Error(),
 		})
 	}
+
+	if len(history) == 0 {
+		return c.Status(404).JSON(types.Response{
+			Success: false,
+			Data:    nil,
+			Error:   "No historical data found for ticker: " + ticker,
+		})
+	}
+
 	return c.JSON(types.Response{
 		Success: true,
 		Data:    history,
+		Error:   "",
+	})
+}
+
+// GetForexHistoryByDate godoc
+//
+//	@Summary		Povrat dnevnog snapshot-a za forex par
+//	@Description	Preuzima snapshot forex para (cena, ask, bid) za tačno određeni dan.
+//	@Tags			Forex
+//	@Produce		json
+//	@Param			base	path	string	true	"Osnovna valuta"	example(EUR)
+//	@Param			quote	path	string	true	"Kvotna valuta"	example(USD)
+//	@Param			date	path	string	true	"Datum za koji se traži snapshot (YYYY-MM-DD)"	example(2025-04-09)	Format(date)
+//	@Success		200		{object}	types.Response{data=types.ListingHistory}	"Snapshot za taj dan"
+//	@Failure		400		{object}	types.Response	"Neispravan format datuma"
+//	@Failure		404		{object}	types.Response	"Forex par za traženi datum nije pronađen"
+//	@Failure		500		{object}	types.Response	"Greška pri preuzimanju podataka iz baze"
+//	@Router			/forex/{base}/{quote}/history/{date} [get]
+func (fc *ForexController) GetForexHistoryByDate(c *fiber.Ctx) error {
+	base := c.Params("base")
+	quote := c.Params("quote")
+	dateStr := c.Params("date")
+	ticker := base + "/" + quote
+
+	if dateStr == "" {
+		return c.Status(400).JSON(types.Response{
+			Success: false,
+			Data:    nil,
+			Error:   "Nedostaje parametar datuma (format: YYYY-MM-DD)",
+		})
+	}
+
+	targetDate, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		return c.Status(400).JSON(types.Response{
+			Success: false,
+			Data:    nil,
+			Error:   "Neispravan format datuma. Koristi YYYY-MM-DD",
+		})
+	}
+	targetDate = targetDate.Truncate(24 * time.Hour)
+
+	var entry types.ListingHistory
+	result := db.DB.Where("ticker = ? AND snapshot_date = ?", ticker, targetDate).First(&entry)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return c.Status(404).JSON(types.Response{
+				Success: false,
+				Data:    nil,
+				Error:   "Podaci nisu pronađeni za: " + ticker + " na datum " + dateStr,
+			})
+		}
+		return c.Status(500).JSON(types.Response{
+			Success: false,
+			Data:    nil,
+			Error:   "Greška baze: " + result.Error.Error(),
+		})
+	}
+
+	return c.JSON(types.Response{
+		Success: true,
+		Data:    entry,
 		Error:   "",
 	})
 }
@@ -171,4 +236,5 @@ func InitForexRoutes(app *fiber.App) {
 	app.Get("/forex", forexController.GetAllForex)
 	app.Get("/forex/:base/:quote", forexController.GetForexByPair)
 	app.Get("/forex/:base/:quote/history", forexController.GetForexHistoryRange)
+	app.Get("/forex/:base/:quote/history/:date", forexController.GetForexHistoryByDate)
 }

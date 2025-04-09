@@ -1,9 +1,13 @@
 package controllers
 
 import (
+	"errors"
+	"time"
+
 	"banka1.com/db"
 	"banka1.com/types"
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 type FutureController struct {
@@ -82,9 +86,146 @@ func (fc *FutureController) GetFutureByTicker(c *fiber.Ctx) error {
 	})
 }
 
+// GetFutureHistoryByDate godoc
+//
+//	@Summary		Povrat snapshot-a za future po datumu
+//	@Description	Preuzima snapshot (cenu, ask, bid...) za future ticker na tačno određeni dan.
+//	@Tags			Futures
+//	@Produce		json
+//	@Param			ticker	path	string	true	"Tiker future-a"	example(ESZ3)
+//	@Param			date	path	string	true	"Datum snapshot-a (YYYY-MM-DD)"	example(2025-04-09)	Format(date)
+//	@Success		200		{object}	types.Response{data=types.ListingHistory}	"Snapshot podaci za traženi datum"
+//	@Failure		400		{object}	types.Response	"Neispravan format datuma"
+//	@Failure		404		{object}	types.Response	"Podaci nisu pronađeni za dati future ticker i datum"
+//	@Failure		500		{object}	types.Response	"Greška baze"
+//	@Router			/future/{ticker}/history/{date} [get]
+func (fc *FutureController) GetFutureHistoryByDate(c *fiber.Ctx) error {
+	ticker := c.Params("ticker")
+	dateStr := c.Params("date")
+
+	if dateStr == "" {
+		return c.Status(400).JSON(types.Response{
+			Success: false,
+			Data:    nil,
+			Error:   "Nedostaje parametar datuma (format: YYYY-MM-DD)",
+		})
+	}
+
+	targetDate, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		return c.Status(400).JSON(types.Response{
+			Success: false,
+			Data:    nil,
+			Error:   "Neispravan format datuma. Koristi YYYY-MM-DD",
+		})
+	}
+	targetDate = targetDate.Truncate(24 * time.Hour)
+
+	var entry types.ListingHistory
+	result := db.DB.Where("ticker = ? AND snapshot_date = ?", ticker, targetDate).First(&entry)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return c.Status(404).JSON(types.Response{
+				Success: false,
+				Data:    nil,
+				Error:   "Nema istorijskih podataka za " + ticker + " na datum " + dateStr,
+			})
+		}
+		return c.Status(500).JSON(types.Response{
+			Success: false,
+			Data:    nil,
+			Error:   "Greška baze: " + result.Error.Error(),
+		})
+	}
+
+	return c.JSON(types.Response{
+		Success: true,
+		Data:    entry,
+		Error:   "",
+	})
+}
+
+// GetFutureHistoryRange godoc
+//
+//	@Summary		Istorijski podaci za future
+//	@Description	Preuzima sve ili opsežne istorijske snapshot podatke za future ticker.
+//	@Tags			Futures
+//	@Produce		json
+//	@Param			ticker		path	string	true	"Tiker future-a"							example(ESZ3)
+//	@Param			startDate	query	string	false	"Početni datum (YYYY-MM-DD)"					example(2025-03-01)
+//	@Param			endDate		query	string	false	"Krajnji datum (YYYY-MM-DD), podrazumevano danas"	example(2025-04-09)
+//	@Success		200	{object}	types.Response{data=[]types.ListingHistory}	"Istorijski podaci za future"
+//	@Failure		400	{object}	types.Response	"Neispravan format datuma"
+//	@Failure		404	{object}	types.Response	"Nema istorijskih podataka"
+//	@Failure		500	{object}	types.Response	"Greška baze"
+//	@Router			/future/{ticker}/history [get]
+func (fc *FutureController) GetFutureHistoryRange(c *fiber.Ctx) error {
+	ticker := c.Params("ticker")
+	startDateStr := c.Query("startDate")
+	endDateStr := c.Query("endDate")
+
+	var startDate time.Time
+	var endDate time.Time
+	var err error
+
+	if startDateStr != "" {
+		startDate, err = time.Parse("2006-01-02", startDateStr)
+		if err != nil {
+			return c.Status(400).JSON(types.Response{
+				Success: false,
+				Data:    nil,
+				Error:   "Neispravan format za startDate. Koristi YYYY-MM-DD",
+			})
+		}
+	} else {
+		startDate = time.Now().AddDate(0, 0, -30) // podrazumevano poslednjih 30 dana
+	}
+
+	if endDateStr != "" {
+		endDate, err = time.Parse("2006-01-02", endDateStr)
+		if err != nil {
+			return c.Status(400).JSON(types.Response{
+				Success: false,
+				Data:    nil,
+				Error:   "Neispravan format za endDate. Koristi YYYY-MM-DD",
+			})
+		}
+	} else {
+		endDate = time.Now()
+	}
+
+	var history []types.ListingHistory
+	result := db.DB.Where("ticker = ? AND snapshot_date BETWEEN ? AND ?", ticker, startDate, endDate).
+		Order("snapshot_date").Find(&history)
+
+	if result.Error != nil {
+		return c.Status(500).JSON(types.Response{
+			Success: false,
+			Data:    nil,
+			Error:   "Greška baze: " + result.Error.Error(),
+		})
+	}
+
+	if len(history) == 0 {
+		return c.Status(404).JSON(types.Response{
+			Success: false,
+			Data:    nil,
+			Error:   "Nema istorijskih podataka za " + ticker,
+		})
+	}
+
+	return c.JSON(types.Response{
+		Success: true,
+		Data:    history,
+		Error:   "",
+	})
+}
+
 func InitFutureRoutes(app *fiber.App) {
 	futureController := NewFutureController()
 
 	app.Get("/future", futureController.GetAllFutures)
 	app.Get("/future/:ticker", futureController.GetFutureByTicker)
+	app.Get("/future/:ticker/history", futureController.GetFutureHistoryRange)
+	app.Get("/future/:ticker/history/:date", futureController.GetFutureHistoryByDate)
 }
