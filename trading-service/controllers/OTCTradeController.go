@@ -558,7 +558,7 @@ func (c *OTCTradeController) GetUserOptionContracts(ctx *fiber.Ctx) error {
 
 func (c *OTCTradeController) RejectOTCTrade(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
-	userID := ctx.Locals("user_id").(uint)
+	userID := uint(ctx.Locals("user_id").(float64))
 
 	var trade types.OTCTrade
 	if err := db.DB.First(&trade, id).Error; err != nil {
