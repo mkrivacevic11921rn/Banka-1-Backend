@@ -18,9 +18,21 @@ import (
 type YahooOptionsApiResponse struct {
 	OptionChain struct {
 		Result []struct {
-			ExpirationDate int64 `json:"expirationDate"`
-			Options        []struct {
-				Calls []struct {
+			UnderlyingSymbol string    `json:"underlyingSymbol"`
+			ExpirationDates  []int64   `json:"expirationDates"`
+			Strikes          []float64 `json:"strikes"`
+			Quote            struct {
+				Symbol             string  `json:"symbol"`
+				ShortName          string  `json:"shortName"`
+				LongName           string  `json:"longName"`
+				RegularMarketPrice float64 `json:"regularMarketPrice"`
+				Bid                float64 `json:"bid"`
+				Ask                float64 `json:"ask"`
+			} `json:"quote"`
+			Options []struct {
+				ExpirationDate int64 `json:"expirationDate"`
+				HasMiniOptions bool  `json:"hasMiniOptions"`
+				Calls          []struct {
 					ContractSymbol    string  `json:"contractSymbol"`
 					Strike            float64 `json:"strike"`
 					LastPrice         float64 `json:"lastPrice"`
@@ -49,16 +61,63 @@ type YahooOptionsApiResponse struct {
 	} `json:"optionChain"`
 }
 
-func FetchYahoo(ticker string) (YahooOptionsApiResponse, error) {
-	// https://query1.finance.yahoo.com/v6/finance/options/AAPL
-
+func getYahooCookie() (*http.Cookie, error) {
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", "https://query1.finance.yahoo.com/v6/finance/options/"+ticker, nil)
+	req, _ := http.NewRequest("GET", "https://fc.yahoo.com", nil)
+	req.Header.Set("User-Agent", "Mozilla/5.0")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	for _, cookie := range resp.Cookies() {
+		fmt.Printf("Cookie: %s = %s\n", cookie.Name, cookie.Value)
+		if cookie.Name == "A3" {
+			return cookie, nil
+		}
+	}
+	return nil, errors.New("Yahoo cookie 'A3' not found")
+}
+
+func getYahooCrumb(cookie *http.Cookie) (string, error) {
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", "https://query2.finance.yahoo.com/v1/test/getcrumb", nil)
+	req.AddCookie(cookie)
+	req.Header.Set("User-Agent", "Mozilla/5.0")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	crumb, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(crumb), nil
+}
+
+func FetchYahoo(ticker string) (YahooOptionsApiResponse, error) {
+	cookie, err := getYahooCookie()
+	if err != nil {
+		return YahooOptionsApiResponse{}, err
+	}
+	crumb, err := getYahooCrumb(cookie)
 	if err != nil {
 		return YahooOptionsApiResponse{}, err
 	}
 
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
+	url := fmt.Sprintf("https://query1.finance.yahoo.com/v7/finance/options/%s?crumb=%s", ticker, crumb)
+	log.Infof("Fetching Yahoo options for ticker: %s", ticker)
+	log.Infof("URL: %s", url)
+
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", url, nil)
+	req.AddCookie(cookie)
+	req.Header.Set("User-Agent", "Mozilla/5.0")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Referer", "https://finance.yahoo.com/quote/"+ticker)
 
@@ -66,31 +125,24 @@ func FetchYahoo(ticker string) (YahooOptionsApiResponse, error) {
 	if err != nil {
 		return YahooOptionsApiResponse{}, err
 	}
+	defer resp.Body.Close()
 
-	_ = resp
-
-	// Parse response
-	yahooResp := YahooOptionsApiResponse{}
-
-	// read body
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return YahooOptionsApiResponse{}, err
 	}
 
-	// unmarshal
+	var yahooResp YahooOptionsApiResponse
 	if err := json.Unmarshal(body, &yahooResp); err != nil {
 		return YahooOptionsApiResponse{}, err
 	}
 
 	return yahooResp, nil
 }
-
 func LoadAllOptions() error {
-	log.Info("Hello")
 	// get all listings
 	var listings []types.Listing
-	if err := db.DB.Find(&listings).Error; err != nil {
+	if err := db.DB.Where("type = ?", "Stock").Find(&listings).Error; err != nil {
 		return err
 	}
 	log.Infof("Loaded %d listings", len(listings))
@@ -99,16 +151,18 @@ func LoadAllOptions() error {
 	if err := db.DB.Exec("DELETE FROM option").Error; err != nil {
 		return err
 	}
-	for i, listing := range listings {
-		if i%10 != 0 {
-			continue
-		}
+	for _, listing := range listings {
 		yahooResp, err := FetchYahoo(listing.Ticker)
 		if err != nil {
 			log.Infof("Error: %v", err)
 			continue
 		}
-		SaveOptionsToDB(listing.Ticker, yahooResp)
+		log.Infof("Fetched Yahoo options for ticker: %s", listing.Ticker)
+		err = SaveOptionsToDB(listing.Ticker, yahooResp)
+		if err != nil {
+			log.Infof("Error saving options: %v", err)
+			continue
+		}
 	}
 
 	return nil
@@ -138,27 +192,22 @@ func SaveOptionsToDB(ticker string, yahooResp YahooOptionsApiResponse) error {
 		return errors.New("listing not found for ticker: " + ticker)
 	}
 
-	for _, result := range yahooResp.OptionChain.Result {
-		expirationDate := time.Unix(result.ExpirationDate, 0)
+	fmt.Printf("Base listing: %s\n", baseListing.Ticker)
 
+	log.Infof("Yahoo response length: %d", len(yahooResp.OptionChain.Result))
+
+	for _, result := range yahooResp.OptionChain.Result {
+		log.Infof("Processing ticker: %s", result.UnderlyingSymbol)
 		for _, opt := range result.Options {
-			// Save CALL options
+			log.Infof("Processing option: %s", opt.ExpirationDate)
+			expirationDate := time.Unix(opt.ExpirationDate, 0)
+
 			for _, call := range opt.Calls {
+				log.Infof("Processing call option: %s", call.ContractSymbol)
 				optionTicker := GenerateOptionTicker(ticker, expirationDate, "C", call.Strike)
 
-				if expirationDate.IsZero() {
-					parsed, err := ParseOptionSettlementDate(optionTicker)
-					if err == nil {
-						expirationDate = parsed
-					} else {
-						log.Warnf("Fallback parsing failed for ticker %s: %v", optionTicker, err)
-					}
-				}
-
-				// Check if Listing already exists
 				var optionListing types.Listing
 				if err := db.DB.Where("ticker = ?", optionTicker).First(&optionListing).Error; err != nil {
-					// If not found, create a new Listing for the option
 					optionListing = types.Listing{
 						Ticker:       optionTicker,
 						Name:         baseListing.Name + " Option",
@@ -176,7 +225,6 @@ func SaveOptionsToDB(ticker string, yahooResp YahooOptionsApiResponse) error {
 					}
 				}
 
-				// Save Call Option
 				option := types.Option{
 					ListingID:      optionListing.ID,
 					OptionType:     "Call",
@@ -184,21 +232,18 @@ func SaveOptionsToDB(ticker string, yahooResp YahooOptionsApiResponse) error {
 					ImpliedVol:     call.ImpliedVolatility,
 					OpenInterest:   int64(call.OpenInterest),
 					SettlementDate: expirationDate,
-					ContractSize:   100, // Default contract size
+					ContractSize:   100,
 				}
 				if err := db.DB.Create(&option).Error; err != nil {
 					return err
 				}
 			}
 
-			// Save PUT options
 			for _, put := range opt.Puts {
 				optionTicker := GenerateOptionTicker(ticker, expirationDate, "P", put.Strike)
 
-				// Check if Listing already exists
 				var optionListing types.Listing
 				if err := db.DB.Where("ticker = ?", optionTicker).First(&optionListing).Error; err != nil {
-					// If not found, create a new Listing for the option
 					optionListing = types.Listing{
 						Ticker:       optionTicker,
 						Name:         baseListing.Name + " Option",
@@ -216,7 +261,6 @@ func SaveOptionsToDB(ticker string, yahooResp YahooOptionsApiResponse) error {
 					}
 				}
 
-				// Save Put Option
 				option := types.Option{
 					ListingID:      optionListing.ID,
 					OptionType:     "Put",

@@ -71,8 +71,9 @@ func (oc *OptionsController) GetOptionsByTicker(c *fiber.Ctx) error {
 //	@Failure		500		{object}	types.Response																"Interna greška servera pri preuzimanju detalja opcije"
 //	@Router			/options/symbol/{symbol} [get]
 func (oc *OptionsController) GetOptionsBySymbolPrefix(c *fiber.Ctx) error {
-	var listings []types.Listing
 	symbol := c.Params("symbol")
+
+	var listings []types.Listing
 	if result := db.DB.Preload("Exchange").Where("ticker LIKE ? AND type = ?", symbol+"%", "Option").Find(&listings); result.Error != nil {
 		return c.Status(404).JSON(types.Response{
 			Success: false,
@@ -83,15 +84,11 @@ func (oc *OptionsController) GetOptionsBySymbolPrefix(c *fiber.Ctx) error {
 
 	var options []types.Option
 	for _, listing := range listings {
-		var option types.Option
-		if result := db.DB.Preload("Listing.Exchange").Where("listing_id = ?", listing.ID).First(&option); result.Error != nil {
-			return c.Status(500).JSON(types.Response{
-				Success: false,
-				Data:    nil,
-				Error:   "Failed to fetch option details: " + result.Error.Error(),
-			})
+		var opt types.Option
+		if result := db.DB.Where("listing_id = ?", listing.ID).First(&opt); result.Error != nil {
+			continue // preskoči ako ne postoji option (kao kod futures)
 		}
-		options = append(options, option)
+		options = append(options, opt)
 	}
 
 	return c.JSON(types.Response{
