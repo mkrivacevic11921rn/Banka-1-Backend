@@ -196,9 +196,12 @@ services:
     depends_on:
       trading-db:
         condition: service_healthy
+      message-broker:
+        condition: service_healthy
     networks:
       - proxy-net
       - trading-net
+      - broker-net
     environment:
       - POSTGRES_DSN=postgres://trading_service_user:trading_service_password@trading-db:5432/trading_db?sslmode=disable
       - USER_SERVICE=http://user-service:8081
