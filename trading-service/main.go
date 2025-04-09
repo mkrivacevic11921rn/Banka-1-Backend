@@ -1,6 +1,8 @@
 package main
 
 import (
+	"banka1.com/controllers"
+	"banka1.com/listings/finhub"
 	"banka1.com/listings/forex"
 	"banka1.com/listings/futures"
 	options "banka1.com/listings/option"
@@ -656,21 +658,20 @@ func main() {
 		})
 	})
 
-	app.Get("/securities/available", getSecurities())
+	app.Get("/securities/available", controllers.NewSecuritiesController().GetSecurities())
 
-	app.Get("/securities", getSecurities())
+	app.Get("/securities", controllers.NewSecuritiesController().GetSecurities())
 
 	app.Post("/actuaries", controllers.NewActuaryController().CreateActuary)
-	app.Get("/actuaries", controllers.NewActuaryController().GetAllActuaries)
+	app.Get("/actuaries", controllers.NewActuaryController().GetAllActuariesDB)
 	app.Put("/actuaries/:ID", controllers.NewActuaryController().ChangeAgentLimits)
 	app.Get("/actuaries/filter", controllers.NewActuaryController().FilterActuaries)
 	app.Get("/actuaries/profits", controllers.NewActuaryController().GetActuaryProfits)
 
-	orders.InitRoutes(app)
+	controllers.InitOrderRoutes(app)
 
 	routes.SetupRoutes(app)
 	routes.Setup(app)
-
 
 	// svaki put kad menjate swagger dokumentaciju (komentari iznad funkcija u controllerima), uradite "swag init" da bi se azuriralo
 	app.Get("/swagger/*", fiberSwagger.WrapHandler)

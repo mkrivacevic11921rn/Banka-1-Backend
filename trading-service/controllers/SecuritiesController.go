@@ -25,7 +25,7 @@ func NewSecuritiesController() *SecuritiesController {
 //	@Success		200	{object}	types.Response{data=[]types.Security}	"Lista svih hartija od vrednosti"
 //	@Failure		500	{object}	types.Response							"Interna greška servera pri preuzimanju ili konverziji hartija od vrednosti"
 //	@Router			/securities [get]
-func (sc *SecuritiesController) getSecurities() func(c *fiber.Ctx) error {
+func (sc *SecuritiesController) GetSecurities() func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		var listings []types.Listing
 		if result := db.DB.Preload("Exchange").Find(&listings); result.Error != nil {
@@ -236,7 +236,7 @@ func getPreviousCloseForListing(listingID uint) float64 {
 func InitSecuritiesRoutes(app *fiber.App) {
 	securitiesController := NewSecuritiesController()
 
-	app.Get("/securities", securitiesController.getSecurities())
-	app.Get("/securities/available", securitiesController.getSecurities())
+	app.Get("/securities", securitiesController.GetSecurities())
+	app.Get("/securities/available", securitiesController.GetSecurities())
 	app.Get("/securities/:id", securitiesController.GetUserSecurities)
 }
