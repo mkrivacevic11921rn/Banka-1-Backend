@@ -302,7 +302,7 @@ func (ac *ActuaryController) GetActuaryProfits(c *fiber.Ctx) error {
 			results = append(results, dto.ActuaryProfitDTO{
 				FullName: a.FullName,
 				Profit:   profit,
-				Position: normalized,
+				Role:     normalized,
 			})
 		}
 	}

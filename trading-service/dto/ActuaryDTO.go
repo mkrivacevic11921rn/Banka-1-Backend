@@ -39,5 +39,5 @@ type EmployeeResponse struct {
 type ActuaryProfitDTO struct {
 	FullName string  `json:"fullName"`
 	Profit   float64 `json:"profit"`
-	Position string  `json:"position"`
+	Role     string  `json:"role"`
 }
