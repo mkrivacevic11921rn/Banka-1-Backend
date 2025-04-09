@@ -3,7 +3,7 @@ package main
 import (
 	"banka1.com/listings/forex"
 	"banka1.com/listings/futures"
-	"banka1.com/listings/options"
+	options "banka1.com/listings/option"
 	"banka1.com/listings/securities"
 	"banka1.com/listings/stocks"
 	"banka1.com/listings/tax"

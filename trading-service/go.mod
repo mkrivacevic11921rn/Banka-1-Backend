@@ -2,8 +2,6 @@ module banka1.com
 
 go 1.24.1
 
-replace banka1.com/listings/options => ./listings/options
-
 require (
 	github.com/Finnhub-Stock-API/finnhub-go/v2 v2.0.19
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
