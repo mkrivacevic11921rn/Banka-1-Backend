@@ -46,7 +46,7 @@ func main() {
 		panic("Error loading .env file")
 	}
 
-	broker.Connect(os.Getenv("MESSAGE_BROKER_NETWORK"), os.Getenv("MESSAGE_BROKER_HOSTNAME_PORT"))
+	broker.Connect(os.Getenv("STOMP_NETWORK"), os.Getenv("STOMP_HOST"))
 	db.Init()
 	cron.StartScheduler()
 
