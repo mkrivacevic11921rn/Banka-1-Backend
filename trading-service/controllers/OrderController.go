@@ -166,13 +166,13 @@ func (oc *OrderController) CreateOrder(c *fiber.Ctx) error {
 	var orderType string
 	switch {
 	case orderRequest.StopPricePerUnit == nil && orderRequest.LimitPricePerUnit == nil:
-		orderType = "market"
+		orderType = "MARKET"
 	case orderRequest.StopPricePerUnit == nil && orderRequest.LimitPricePerUnit != nil:
-		orderType = "limit"
+		orderType = "LIMIT"
 	case orderRequest.StopPricePerUnit != nil && orderRequest.LimitPricePerUnit == nil:
-		orderType = "stop"
+		orderType = "STOP"
 	case orderRequest.StopPricePerUnit != nil && orderRequest.LimitPricePerUnit != nil:
-		orderType = "stop-limit"
+		orderType = "STOP-LIMIT"
 	}
 
 	order := types.Order{

@@ -21,6 +21,7 @@ import (
 
 	"banka1.com/middlewares"
 
+	"banka1.com/broker"
 	"banka1.com/db"
 	_ "banka1.com/docs"
 	"banka1.com/exchanges"
@@ -40,12 +41,12 @@ import (
 // @name						Authorization
 // @description				Unesite token. Primer: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 func main() {
-
 	err := godotenv.Load()
 	if err != nil {
 		panic("Error loading .env file")
 	}
 
+	broker.Connect(os.Getenv("STOMP_NETWORK"), os.Getenv("STOMP_HOST"))
 	db.Init()
 	cron.StartScheduler()
 
@@ -107,6 +108,14 @@ func main() {
 		orders.LoadOrders()
 		log.Println("Finished loading default orders")
 	}()
+
+	func() {
+		log.Println("Starting to load default portfolios...")
+		orders.LoadPortfolios()
+		log.Println("Finished loading default portfolios")
+	}()
+
+	broker.StartListeners()
 
 	app := fiber.New()
 

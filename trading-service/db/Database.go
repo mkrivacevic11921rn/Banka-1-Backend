@@ -91,6 +91,7 @@ func migrate(db *gorm.DB) {
 		&types.ForexPair{},
 		&types.FuturesContract{},
 		&types.Option{},
+		&types.OptionContract{},
 	)
 }
 
@@ -100,5 +101,5 @@ func InitTestDatabase() error {
 	if err != nil {
 		return err
 	}
-	return DB.AutoMigrate(&types.Security{}, &types.Order{}, &types.Actuary{}, &types.Transaction{}, &types.Portfolio{})
+	return DB.AutoMigrate(&types.Security{}, &types.Order{}, &types.Actuary{}, &types.Transaction{}, &types.Portfolio{}, &types.OTCTrade{}, types.OptionContract{})
 }
