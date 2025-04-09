@@ -1,7 +1,11 @@
 package main
 
 import (
+	"banka1.com/listings/forex"
+	"banka1.com/listings/futures"
+	options "banka1.com/listings/option"
 	"banka1.com/listings/securities"
+	"banka1.com/listings/stocks"
 	"banka1.com/listings/tax"
 	"banka1.com/portfolio"
 	"banka1.com/routes"
@@ -15,15 +19,11 @@ import (
 
 	"banka1.com/cron"
 
-	// options "banka1.com/listings/options"
 	"banka1.com/middlewares"
 
 	"banka1.com/db"
 	_ "banka1.com/docs"
 	"banka1.com/exchanges"
-	"banka1.com/listings/forex"
-	"banka1.com/listings/futures"
-	"banka1.com/listings/stocks"
 	"banka1.com/types"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
@@ -75,14 +75,14 @@ func main() {
 		log.Println("Finished loading default futures")
 	}()
 
-	//func() {
-	//	log.Println("Starting to load default options...")
-	//	err = options.LoadAllOptions()
-	//	if err != nil {
-	//		log.Printf("Warning: Failed to load options: %v", err)
-	//	}
-	//	log.Println("Finished loading default options")
-	//}()
+	func() {
+		log.Println("Starting to load default options...")
+		err = options.LoadAllOptions()
+		if err != nil {
+			log.Printf("Warning: Failed to load options: %v", err)
+		}
+		log.Println("Finished loading default options")
+	}()
 
 	func() {
 		log.Println("Starting to load default securities...")
