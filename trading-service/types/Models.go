@@ -1,9 +1,11 @@
 package types
 
+import "time"
+
 type Actuary struct {
 	ID           uint    `gorm:"primaryKey" json:"id,omitempty"`
 	UserID       uint    `gorm:"uniqueIndex;not null" json:"userId"`
-	Role         string  `gorm:"type:text;not null" json:"role,omitempty"`
+	Department   string  `gorm:"type:text;not null" json:"department,omitempty"`
 	FullName     string  `gorm:"not null" json:"fullName"`
 	Email        string  `gorm:"not null" json:"email"`
 	LimitAmount  float64 `gorm:"default:null" json:"limit"`         // Samo za agente
@@ -56,17 +58,23 @@ type Order struct {
 }
 
 type OTCTrade struct {
-	ID           uint     `gorm:"primaryKey"`
-	SellerID     uint     `gorm:"not null"`
-	BuyerID      *uint    `gorm:"default:null"` // NULL dok se ne nađe kupac
-	SecurityID   uint     `gorm:"not null"`
-	Quantity     int      `gorm:"not null"`
-	PricePerUnit float64  `gorm:"not null"`
-	Status       string   `gorm:"type:text;default:'pending'"`
-	CreatedAt    int64    `gorm:"autoCreateTime"`
-	Seller       uint     `gorm:"foreignKey:SellerID"`
-	Buyer        *uint    `gorm:"foreignKey:BuyerID"`
-	Security     Security `gorm:"foreignKey:SecurityID"`
+	ID           uint      `gorm:"primaryKey"`
+	PortfolioID  uint      `gorm:"not null"`
+	SecurityId   uint      `gorm:"not null"`
+	SellerID     uint      `gorm:"not null"`
+	BuyerID      *uint     `gorm:"default:null"`
+	Quantity     int       `gorm:"not null"`
+	PricePerUnit float64   `gorm:"not null"`
+	Premium      float64   `gorm:"not null"`
+	SettlementAt time.Time `gorm:"not null"`
+	Status       string    `gorm:"type:text;default:'pending'"`
+	LastModified int64     `gorm:"autoUpdateTime"`
+	//promeniti da pise ime korisnika koji je menjao a ne id(komunbikacija sa user servisom)
+	ModifiedBy *uint `gorm:"default:null"`
+	CreatedAt  int64 `gorm:"autoCreateTime"`
+	//Seller       *uint      `gorm:"foreignKey:SellerID"`
+	//Buyer        *uint     `gorm:"foreignKey:BuyerID"`
+	Portfolio Portfolio `gorm:"foreignKey:PortfolioID" json:"portfolio"`
 }
 
 type Portfolio struct {
@@ -75,9 +83,31 @@ type Portfolio struct {
 	SecurityID    uint     `gorm:"not null" json:"security_id,omitempty"`
 	Quantity      int      `gorm:"not null" json:"quantity,omitempty"`
 	PurchasePrice float64  `gorm:"not null" json:"purchase_price,omitempty"`
+	PublicCount   int      `gorm:"default:0" json:"public"`
 	CreatedAt     int64    `gorm:"autoCreateTime" json:"created_at,omitempty"`
 	User          uint     `gorm:"foreignKey:UserID" json:"user,omitempty"`
 	Security      Security `gorm:"foreignKey:SecurityID" json:"security"`
+}
+
+type OptionContract struct {
+	ID           uint      `gorm:"primaryKey"`
+	OTCTradeID   uint      `gorm:"not null"`
+	BuyerID      uint      `gorm:"not null"`
+	SellerID     uint      `gorm:"not null"`
+	PortfolioID  uint      `gorm:"not null"`
+	SecurityID   uint      `gorm:"not null"`
+	Quantity     int       `gorm:"not null"`
+	StrikePrice  float64   `gorm:"not null"`
+	Premium      float64   `gorm:"not null"`
+	SettlementAt time.Time `gorm:"not null"`
+	Status       string    `gorm:"type:text;default:'active'"`
+	IsExercised  bool      `gorm:"default:false"`
+	CreatedAt    int64     `gorm:"autoCreateTime"`
+	ExercisedAt  *int64    `gorm:"default:null"`
+	UID          string    `gorm:"type:varchar(255);uniqueIndex"`
+	OTCTrade     OTCTrade  `gorm:"foreignKey:OTCTradeID" json:"otc_trade"`
+	Portfolio    Portfolio `gorm:"foreignKey:PortfolioID" json:"portfolio"`
+	// Security   Security  `gorm:"foreignKey:SecurityID"`
 }
 
 type Tax struct {
