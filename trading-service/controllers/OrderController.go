@@ -10,6 +10,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -233,7 +234,9 @@ func (oc *OrderController) CreateOrder(c *fiber.Ctx) error {
 			}
 		} else {
 			client := &http.Client{}
-			req, _ := http.NewRequest("GET", fmt.Sprintf("http://localhost:8082/loans/has-approved-loan/%d", orderRequest.UserID), nil)
+			req, _ := http.NewRequest("GET", fmt.Sprintf("%s/loans/has-approved-loan/%d", os.Getenv("BANKING_SERVICE"), orderRequest.UserID), nil)
+			//url := fmt.Sprintf("%s/orders/execute/%s", os.Getenv("BANKING_SERVICE"), token)
+
 			req.Header = http.Header{
 				"Authorization": []string{c.Get("Authorization")},
 			}
