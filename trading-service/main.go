@@ -1,7 +1,11 @@
 package main
 
 import (
+	"banka1.com/listings/forex"
+	"banka1.com/listings/futures"
+	options "banka1.com/listings/option"
 	"banka1.com/listings/securities"
+	"banka1.com/listings/stocks"
 	"banka1.com/listings/tax"
 	"banka1.com/portfolio"
 	"banka1.com/routes"
@@ -15,15 +19,12 @@ import (
 
 	"banka1.com/cron"
 
-	// options "banka1.com/listings/options"
 	"banka1.com/middlewares"
 
+	"banka1.com/broker"
 	"banka1.com/db"
 	_ "banka1.com/docs"
 	"banka1.com/exchanges"
-	"banka1.com/listings/forex"
-	"banka1.com/listings/futures"
-	"banka1.com/listings/stocks"
 	"banka1.com/types"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
@@ -40,12 +41,12 @@ import (
 // @name						Authorization
 // @description				Unesite token. Primer: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 func main() {
-
 	err := godotenv.Load()
 	if err != nil {
 		panic("Error loading .env file")
 	}
 
+	broker.Connect(os.Getenv("STOMP_NETWORK"), os.Getenv("STOMP_HOST"))
 	db.Init()
 	cron.StartScheduler()
 
@@ -75,14 +76,14 @@ func main() {
 		log.Println("Finished loading default futures")
 	}()
 
-	//func() {
-	//	log.Println("Starting to load default options...")
-	//	err = options.LoadAllOptions()
-	//	if err != nil {
-	//		log.Printf("Warning: Failed to load options: %v", err)
-	//	}
-	//	log.Println("Finished loading default options")
-	//}()
+	func() {
+		log.Println("Starting to load default options...")
+		err = options.LoadAllOptions()
+		if err != nil {
+			log.Printf("Warning: Failed to load options: %v", err)
+		}
+		log.Println("Finished loading default options")
+	}()
 
 	func() {
 		log.Println("Starting to load default securities...")
@@ -107,6 +108,14 @@ func main() {
 		orders.LoadOrders()
 		log.Println("Finished loading default orders")
 	}()
+
+	func() {
+		log.Println("Starting to load default portfolios...")
+		orders.LoadPortfolios()
+		log.Println("Finished loading default portfolios")
+	}()
+
+	broker.StartListeners()
 
 	app := fiber.New()
 
