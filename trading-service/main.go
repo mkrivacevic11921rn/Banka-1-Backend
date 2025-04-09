@@ -634,6 +634,7 @@ func main() {
 	app.Get("/actuaries", controllers.NewActuaryController().GetAllActuaries)
 	app.Put("/actuaries/:ID", controllers.NewActuaryController().ChangeAgentLimits)
 	app.Get("/actuaries/filter", controllers.NewActuaryController().FilterActuaries)
+	app.Get("/actuaries/profits", controllers.NewActuaryController().GetActuaryProfits)
 
 	orders.InitRoutes(app)
 

@@ -21,5 +21,7 @@ func Setup(app *fiber.App) {
 
 	app.Get("/actuaries/filter", actuaryController.FilterActuaries)
 
+	app.Get("/actuaries/profits", actuaryController.GetActuaryProfits)
+
 	app.Get("/securities/:id", portfolioController.GetUserSecurities)
 }
