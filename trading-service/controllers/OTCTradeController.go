@@ -575,7 +575,7 @@ func (c *OTCTradeController) RejectOTCTrade(ctx *fiber.Ctx) error {
 		})
 	}
 
-	if trade.Status != "active" {
+	if trade.Status != "pending" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(types.Response{
 			Success: false,
 			Error:   "Ponuda više nije aktivna",
