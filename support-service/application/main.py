@@ -1,6 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .routes import router
+import os
+import logging
+
+
+log_level = os.getenv("LOG_LEVEL", "info").upper()
+logging.basicConfig(level=log_level)
 
 app = FastAPI(
     title="Banking Chatbot API",
