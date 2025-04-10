@@ -67,7 +67,7 @@ public class ReceiverServiceTest {
 
     @Test
     void getReceiversByAccountIdShouldReturnReceivers() {
-        when(receiverRepository.findByCustomerId(1L)).thenReturn(List.of(receiver));
+        when(receiverRepository.findByCustomerIdOrderByUsageCountDesc(1L)).thenReturn(List.of(receiver));
 
         List<Receiver> receivers = receiverService.getReceiversByCustomerId(1L);
 

@@ -12,7 +12,7 @@ public interface ReceiverRepository extends JpaRepository<Receiver, Long> {
 
     //List<Receiver> findByOwnerAccountId(Long ownerAccountId);
 
-    List<Receiver> findByCustomerId(Long customerId);
+    List<Receiver> findByCustomerIdOrderByUsageCountDesc(Long customerId);
 
 
     Optional<Receiver> findById(Long id);

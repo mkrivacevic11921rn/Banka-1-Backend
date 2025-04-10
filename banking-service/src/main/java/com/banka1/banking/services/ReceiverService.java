@@ -42,7 +42,7 @@ public class ReceiverService {
     }
 
     public List<Receiver> getReceiversByCustomerId(Long customerId){
-        return receiverRepository.findByCustomerId(customerId);
+        return receiverRepository.findByCustomerIdOrderByUsageCountDesc(customerId);
     }
 
     public Receiver updateReceiver(Long id,ReceiverDTO receiverDTO){
