@@ -1,9 +1,12 @@
 package main
 
 import (
+	"banka1.com/listings/forex"
+	"banka1.com/listings/futures"
+	"banka1.com/listings/option"
 	"banka1.com/listings/securities"
+	"banka1.com/listings/stocks"
 	"banka1.com/listings/tax"
-	"banka1.com/portfolio"
 	"banka1.com/routes"
 	fiberSwagger "github.com/swaggo/fiber-swagger"
 
@@ -15,15 +18,12 @@ import (
 
 	"banka1.com/cron"
 
-	// options "banka1.com/listings/options"
 	"banka1.com/middlewares"
 
+	"banka1.com/broker"
 	"banka1.com/db"
 	_ "banka1.com/docs"
 	"banka1.com/exchanges"
-	"banka1.com/listings/forex"
-	"banka1.com/listings/futures"
-	"banka1.com/listings/stocks"
 	"banka1.com/types"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
@@ -40,73 +40,60 @@ import (
 // @name						Authorization
 // @description				Unesite token. Primer: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 func main() {
-
 	err := godotenv.Load()
 	if err != nil {
 		panic("Error loading .env file")
 	}
 
+	broker.Connect(os.Getenv("MESSAGE_BROKER_NETWORK"), os.Getenv("MESSAGE_BROKER_HOST"))
 	db.Init()
-	cron.StartScheduler()
 
 	err = exchanges.LoadDefaultExchanges()
 	if err != nil {
 		log.Printf("Warning: Failed to load exchanges: %v", err)
 	}
 
-	func() {
-		log.Println("Starting to load default stocks...")
-		stocks.LoadDefaultStocks()
-		log.Println("Finished loading default stocks")
-	}()
+	log.Println("Starting to load default stocks...")
+	stocks.LoadDefaultStocks()
+	log.Println("Finished loading default stocks")
 
-	func() {
-		log.Println("Starting to load default forex pairs...")
-		forex.LoadDefaultForexPairs()
-		log.Println("Finished loading default forex pairs")
-	}()
+	log.Println("Starting to load default forex pairs...")
+	forex.LoadDefaultForexPairs()
+	log.Println("Finished loading default forex pairs")
 
-	func() {
-		log.Println("Starting to load default futures...")
-		err = futures.LoadDefaultFutures()
-		if err != nil {
-			log.Printf("Warning: Failed to load futures: %v", err)
-		}
-		log.Println("Finished loading default futures")
-	}()
+	log.Println("Starting to load default futures...")
+	err = futures.LoadDefaultFutures()
+	if err != nil {
+		log.Printf("Warning: Failed to load futures: %v", err)
+	}
+	log.Println("Finished loading default futures")
 
-	//func() {
-	//	log.Println("Starting to load default options...")
-	//	err = options.LoadAllOptions()
-	//	if err != nil {
-	//		log.Printf("Warning: Failed to load options: %v", err)
-	//	}
-	//	log.Println("Finished loading default options")
-	//}()
+	log.Println("Starting to load default options...")
+	err = option.LoadAllOptions()
+	if err != nil {
+		log.Printf("Warning: Failed to load options: %v", err)
+	}
+	log.Println("Finished loading default options")
 
-	func() {
-		log.Println("Starting to load default securities...")
-		securities.LoadAvailableSecurities()
-		log.Println("Finished loading default securities")
-	}()
+	log.Println("Starting to load default securities...")
+	securities.LoadAvailableSecurities()
+	log.Println("Finished loading default securities")
 
-	func() {
-		log.Println("Starting to load default taxes...")
-		tax.LoadTax()
-		log.Println("Finished loading default taxes")
-	}()
+	log.Println("Starting to load default taxes...")
+	tax.LoadTax()
+	log.Println("Finished loading default taxes")
 
-	func() {
-		log.Println("Starting to load default portfolios...")
-		portfolio.LoadPortfolios()
-		log.Println("Finished loading default portfolios")
-	}()
+	log.Println("Starting to load default orders...")
+	orders.LoadOrders()
+	log.Println("Finished loading default orders")
 
-	func() {
-		log.Println("Starting to load default orders...")
-		orders.LoadOrders()
-		log.Println("Finished loading default orders")
-	}()
+	log.Println("Starting to load default portfolios...")
+	orders.LoadPortfolios()
+	log.Println("Finished loading default portfolios")
+
+	cron.StartScheduler()
+
+	broker.StartListeners()
 
 	app := fiber.New()
 
@@ -130,6 +117,7 @@ func main() {
 	})
 
 	routes.SetupRoutes(app)
+	routes.Setup(app)
 
 	// svaki put kad menjate swagger dokumentaciju (komentari iznad funkcija u controllerima), uradite "swag init" da bi se azuriralo
 	app.Get("/swagger/*", fiberSwagger.WrapHandler)

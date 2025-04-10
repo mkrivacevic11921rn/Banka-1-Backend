@@ -112,6 +112,126 @@ const docTemplate = `{
                 }
             }
         },
+        "/actuaries/filter": {
+            "get": {
+                "description": "Vraća listu aktuara filtriranu po imenu, prezimenu, email-u i/ili poziciji..",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Actuaries"
+                ],
+                "summary": "Filtriranje aktuara",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter po imenu (case-insensitive, partial match)",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter po prezimenu (case-insensitive, partial match)",
+                        "name": "surname",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter po email-u (case-insensitive, partial match)",
+                        "name": "email",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter po poziciji (exact match from user-service)",
+                        "name": "position",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Uspešno filtrirani aktuari",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/dto.FilteredActuaryDTO"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "Greska pri preuzimanju aktuara.",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/actuaries/{ID}": {
+            "get": {
+                "description": "Vraća detalje jednog aktuara na osnovu njegovog ID-ja.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Actuaries"
+                ],
+                "summary": "Dobavljanje aktuara po ID-ju",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID aktuara",
+                        "name": "ID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Uspešno dobavljen aktuar",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/types.Actuary"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Aktuar nije pronadjen",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Greška u bazi",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/actuaries/{id}": {
             "put": {
                 "description": "Ažurira iznos limita za određeni aktuar prema ID-ju.",
@@ -1690,28 +1810,60 @@ const docTemplate = `{
         "dto.ActuaryDTO": {
             "type": "object",
             "required": [
-                "role",
+                "department",
                 "userID"
             ],
             "properties": {
-                "limitAmount": {
-                    "type": "number"
-                },
-                "needApproval": {
-                    "type": "boolean"
-                },
-                "role": {
+                "department": {
                     "type": "string",
                     "enum": [
                         "supervisor",
                         "agent"
                     ]
                 },
+                "limitAmount": {
+                    "type": "number"
+                },
+                "needApproval": {
+                    "type": "boolean"
+                },
                 "usedLimit": {
                     "type": "number"
                 },
                 "userID": {
                     "type": "integer"
+                }
+            }
+        },
+        "dto.FilteredActuaryDTO": {
+            "type": "object",
+            "properties": {
+                "department": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "firstName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lastName": {
+                    "type": "string"
+                },
+                "limitAmount": {
+                    "type": "number"
+                },
+                "needApproval": {
+                    "type": "boolean"
+                },
+                "position": {
+                    "type": "string"
+                },
+                "usedLimit": {
+                    "type": "number"
                 }
             }
         },
@@ -1758,6 +1910,9 @@ const docTemplate = `{
         "types.Actuary": {
             "type": "object",
             "properties": {
+                "department": {
+                    "type": "string"
+                },
                 "email": {
                     "type": "string"
                 },
@@ -1774,9 +1929,6 @@ const docTemplate = `{
                 "needApproval": {
                     "description": "Da li orderi agenta trebaju supervizorsko odobrenje",
                     "type": "boolean"
-                },
-                "role": {
-                    "type": "string"
                 },
                 "usedLimit": {
                     "description": "Samo za agente, resetuje se dnevno",
