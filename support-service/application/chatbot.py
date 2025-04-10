@@ -18,7 +18,13 @@ if __name__ == "__main__":
     print(response.text)
 
 # Define system prompt for consistent personality
-SYSTEM_PROMPT = """
+
+context_txt_path = "ctx.txt" 
+context = ""
+with open(context_txt_path, "r") as file:
+    context = file.read()
+
+SYSTEM_PROMPT = f"""
 You are a helpful and professional banking assistant named BankBot. 
 Your role is to provide clear, accurate information about banking services and assist customers with their queries.
 
@@ -31,6 +37,8 @@ Please follow these guidelines:
 - Always prioritize security and privacy in your responses
 
 You work for Example Bank, which offers checking accounts, savings accounts, loans, credit cards, and investment services.
+
+The context you need for this is {context}
 """
 
 def customer_service_response(prompt):
