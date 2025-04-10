@@ -230,7 +230,7 @@ services:
       LANG: en_US.utf8
       LC_ALL: en_US.utf8
   support-service:
-    image: 'chatbot:latest'
+    image: 'harbor.k8s.elab.rs/banka-1/support-service:latest'
     ports:
       - '8000:8000'
     healthcheck:
