@@ -6,6 +6,7 @@ import com.banka1.banking.dto.request.CreateAccountDTO;
 import com.banka1.banking.models.*;
 import com.banka1.banking.services.*;
 import com.banka1.banking.services.implementation.AuthService;
+import com.banka1.common.model.Position;
 import io.jsonwebtoken.Claims;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
@@ -29,6 +30,8 @@ public class AuthServiceTests {
     @Mock
     private AccountService accountService;
     @Mock
+    private LoanService loanService;
+    @Mock
     private CardService cardService;
     @Mock
     private ReceiverService receiverService;
@@ -47,6 +50,8 @@ public class AuthServiceTests {
     @Mock
     private AccountAuthorization accountAuthorization;
     @Mock
+    private LoanAuthorization loanAuthorization;
+    @Mock
     private CardAuthorization cardAuthorization;
     @Mock
     private ReceiverAuthorization receiverAuthorization;
@@ -56,6 +61,8 @@ public class AuthServiceTests {
     private Receiver receiver;
     @Mock
     private Card card;
+    @Mock
+    private Loan loan;
     @Mock
     private Transfer transfer;
     @Mock
