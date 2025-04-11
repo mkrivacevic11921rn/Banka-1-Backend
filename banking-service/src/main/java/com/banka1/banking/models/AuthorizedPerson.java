@@ -18,7 +18,7 @@ public class AuthorizedPerson {
     @Column(nullable = false)
     private String lastName;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String birthDate;
 
     @Column(nullable = false)
