@@ -1,19 +1,35 @@
 package orders
 
 import (
+	"banka1.com/middlewares"
 	"fmt"
+	"github.com/gofiber/fiber/v2"
 	"math/rand"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"banka1.com/db"
-	"banka1.com/middlewares"
 	"banka1.com/types"
 	"gorm.io/gorm"
-
-	"github.com/gofiber/fiber/v2"
 )
+
+var (
+	securityLocks = make(map[uint]*sync.Mutex)
+	locksMu       sync.Mutex
+)
+
+// Funkcija koja vraća uvek isti mutex po securityID
+func getLock(securityID uint) *sync.Mutex {
+	locksMu.Lock()
+	defer locksMu.Unlock()
+
+	if _, exists := securityLocks[securityID]; !exists {
+		securityLocks[securityID] = &sync.Mutex{}
+	}
+	return securityLocks[securityID]
+}
 
 func MatchOrder(order types.Order) {
 	go func() {
@@ -63,7 +79,19 @@ func MatchOrder(order types.Order) {
 
 				*order.RemainingParts -= quantityToExecute
 
-				db.DB.First(&order, order.ID)
+				// SKIDANJE unita ako je kupovina (smanjuje se dostupnost hartija)
+				if order.Direction == "buy" {
+					var security types.Security
+					if err := db.DB.First(&security, order.SecurityID).Error; err == nil {
+						security.Volume -= int64(quantityToExecute)
+						if security.Volume < 0 {
+							security.Volume = 0
+						}
+						tx.Save(&security)
+					}
+					//fmt.Printf("Volume pre: %d | Smanjujem za %d\n", security.Volume, quantityToExecute)
+				}
+
 				if order.RemainingParts == nil || *order.RemainingParts == 0 {
 					order.IsDone = true
 					order.Status = "done"
@@ -82,6 +110,7 @@ func MatchOrder(order types.Order) {
 				} else {
 					fmt.Printf("Nalog %v izvršen\n", order.ID)
 				}
+				db.DB.First(&order, order.ID)
 			}
 
 			delay := calculateDelay(order)
@@ -128,6 +157,10 @@ func getOrderPrice(order types.Order) float64 {
 }
 
 func executePartial(order types.Order, quantity int, price float64, tx *gorm.DB) {
+	lock := getLock(order.SecurityID)
+	lock.Lock()
+	defer lock.Unlock()
+
 	var match types.Order
 	direction := "buy"
 	if order.Direction == "buy" {
@@ -186,7 +219,9 @@ func executePartial(order types.Order, quantity int, price float64, tx *gorm.DB)
 		PricePerUnit: price,
 		TotalPrice:   price * float64(matchQuantity),
 	}
-	tx.Create(&txn)
+	if err := tx.Create(&txn).Error; err != nil {
+		fmt.Printf("Greska pri kreiranju transakcije: %v\n", err)
+	}
 
 	*order.RemainingParts -= matchQuantity
 	*match.RemainingParts -= matchQuantity
@@ -194,8 +229,14 @@ func executePartial(order types.Order, quantity int, price float64, tx *gorm.DB)
 		match.IsDone = true
 		match.Status = "done"
 	}
-	tx.Save(&order)
-	tx.Save(&match)
+	//tx.Save(&order)
+	//tx.Save(&match)
+	if err := tx.Save(&order).Error; err != nil {
+		fmt.Printf("Greska pri save za order: %v\n", err)
+	}
+	if err := tx.Save(&match).Error; err != nil {
+		fmt.Printf("Greska pri save za match: %v\n", err)
+	}
 
 	updatePortfolio(getBuyerID(order, match), order.SecurityID, matchQuantity, tx)
 	updatePortfolio(getSellerID(order, match), order.SecurityID, -matchQuantity, tx)
@@ -214,7 +255,8 @@ func executePartial(order types.Order, quantity int, price float64, tx *gorm.DB)
 
 func updatePortfolio(userID uint, securityID uint, delta int, tx *gorm.DB) {
 	var portfolio types.Portfolio
-	err := db.DB.Where("user_id = ? AND security_id = ?", userID, securityID).First(&portfolio).Error
+
+	err := tx.Where("user_id = ? AND security_id = ?", userID, securityID).First(&portfolio).Error
 	if err != nil {
 		if delta > 0 {
 			portfolio = types.Portfolio{
@@ -223,16 +265,24 @@ func updatePortfolio(userID uint, securityID uint, delta int, tx *gorm.DB) {
 				Quantity:      delta,
 				PurchasePrice: 0,
 			}
-			tx.Create(&portfolio)
+			//fmt.Printf("Kreiram portfolio za user: %d, security: %d, quantity: %d\n", userID, securityID, delta)
+			if err := tx.Create(&portfolio).Error; err != nil {
+				fmt.Printf("Greška pri kreiranju portfolia: %v\n", err)
+			}
 		}
 		return
 	}
 
 	portfolio.Quantity += delta
 	if portfolio.Quantity <= 0 {
-		tx.Delete(&portfolio)
+		if err := tx.Delete(&portfolio).Error; err != nil {
+			fmt.Printf("Greška pri brisanju portfolia: %v\n", err)
+		}
 	} else {
-		tx.Save(&portfolio)
+		//fmt.Printf("Ažuriram portfolio → User: %d | Security: %d | Nova količina: %d\n", userID, securityID, portfolio.Quantity)
+		if err := tx.Save(&portfolio).Error; err != nil {
+			fmt.Printf("Greška pri ažuriranju portfolia: %v\n", err)
+		}
 	}
 }
 

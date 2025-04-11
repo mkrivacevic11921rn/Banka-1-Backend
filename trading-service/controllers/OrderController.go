@@ -164,6 +164,23 @@ func (oc *OrderController) CreateOrder(c *fiber.Ctx) error {
 		}
 	}
 
+	// Provera dostupnosti unita ako se order odobrava odmah
+	if status == "approved" {
+		var security types.Security
+		if err := db.DB.First(&security, orderRequest.SecurityID).Error; err != nil {
+			return c.Status(404).JSON(types.Response{
+				Success: false,
+				Error:   "Hartija nije pronađena",
+			})
+		}
+		if orderRequest.Quantity > int(security.Volume) {
+			return c.Status(400).JSON(types.Response{
+				Success: false,
+				Error:   fmt.Sprintf("Nedovoljno dostupnih unita (%d dostupno)", security.Volume),
+			})
+		}
+	}
+
 	var orderType string
 	switch {
 	case orderRequest.StopPricePerUnit == nil && orderRequest.LimitPricePerUnit == nil:
@@ -300,6 +317,21 @@ func ApproveDeclineOrder(c *fiber.Ctx, decline bool) error {
 	if decline {
 		order.Status = "declined"
 	} else {
+		// Provera dostupnosti unita pre odobrenja
+		var security types.Security
+		if err := db.DB.First(&security, order.SecurityID).Error; err != nil {
+			return c.Status(404).JSON(types.Response{
+				Success: false,
+				Error:   "Hartija nije pronađena",
+			})
+		}
+		if order.Quantity > int(security.Volume) {
+			return c.Status(400).JSON(types.Response{
+				Success: false,
+				Error:   fmt.Sprintf("Nedovoljno dostupnih unita (%d dostupno)", security.Volume),
+			})
+		}
+
 		order.Status = "approved"
 		order.ApprovedBy = new(uint)
 		*order.ApprovedBy = 0
