@@ -416,6 +416,7 @@ func InitActuaryRoutes(app *fiber.App) {
 	app.Get("/actuaries/all", middlewares.Auth, actuaryController.GetAllActuariesDB)
 	//	app.Get("/actuaries/filter", middlewares.Auth, actuaryController.FilterActuaries)
 	app.Get("/actuaries/filter", middlewares.Auth, actuaryController.FilterActuariesDB)
+	app.Get("/actuaries/profits", middlewares.Auth, actuaryController.GetActuaryProfits)
 	app.Get("/actuaries/:ID", middlewares.Auth, actuaryController.GetActuaryByID)
 	app.Put("/actuaries/:ID/limit", middlewares.Auth, actuaryController.ChangeAgentLimits)
 	app.Put("/actuaries/:ID/reset-used-limit", middlewares.Auth, actuaryController.ResetActuaryLimit)
