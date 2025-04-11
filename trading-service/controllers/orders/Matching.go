@@ -221,6 +221,7 @@ func executePartial(order types.Order, quantity int, price float64, tx *gorm.DB)
 	}
 	if err := tx.Create(&txn).Error; err != nil {
 		fmt.Printf("Greska pri kreiranju transakcije: %v\n", err)
+		return
 	}
 
 	*order.RemainingParts -= matchQuantity
@@ -233,9 +234,11 @@ func executePartial(order types.Order, quantity int, price float64, tx *gorm.DB)
 	//tx.Save(&match)
 	if err := tx.Save(&order).Error; err != nil {
 		fmt.Printf("Greska pri save za order: %v\n", err)
+		return
 	}
 	if err := tx.Save(&match).Error; err != nil {
 		fmt.Printf("Greska pri save za match: %v\n", err)
+		return
 	}
 
 	updatePortfolio(getBuyerID(order, match), order.SecurityID, matchQuantity, tx)
