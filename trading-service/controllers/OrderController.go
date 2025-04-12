@@ -173,11 +173,30 @@ func (oc *OrderController) CreateOrder(c *fiber.Ctx) error {
 				Error:   "Hartija nije pronađena",
 			})
 		}
-		if orderRequest.Quantity > int(security.Volume) {
-			return c.Status(400).JSON(types.Response{
-				Success: false,
-				Error:   fmt.Sprintf("Nedovoljno dostupnih unita (%d dostupno)", security.Volume),
-			})
+
+		if strings.ToLower(orderRequest.Direction) == "buy" {
+			if orderRequest.AON {
+				if orderRequest.Quantity > int(security.Volume) {
+					return c.Status(400).JSON(types.Response{
+						Success: false,
+						Error:   fmt.Sprintf("Nedovoljno dostupnih unita (%d dostupno)", security.Volume),
+					})
+				}
+			}
+		} else if strings.ToLower(orderRequest.Direction) == "sell" {
+			var portfolio types.Portfolio
+			if err := db.DB.Where("user_id = ? AND security_id = ?", orderRequest.UserID, orderRequest.SecurityID).First(&portfolio).Error; err != nil {
+				return c.Status(400).JSON(types.Response{
+					Success: false,
+					Error:   "Nemate ovu hartiju u portfoliju",
+				})
+			}
+			if orderRequest.AON && portfolio.Quantity < orderRequest.Quantity {
+				return c.Status(400).JSON(types.Response{
+					Success: false,
+					Error:   fmt.Sprintf("Nemate dovoljno hartija za AON prodaju (imate %d, traženo %d)", portfolio.Quantity, orderRequest.Quantity),
+				})
+			}
 		}
 	}
 
@@ -325,11 +344,30 @@ func ApproveDeclineOrder(c *fiber.Ctx, decline bool) error {
 				Error:   "Hartija nije pronađena",
 			})
 		}
-		if order.Quantity > int(security.Volume) {
-			return c.Status(400).JSON(types.Response{
-				Success: false,
-				Error:   fmt.Sprintf("Nedovoljno dostupnih unita (%d dostupno)", security.Volume),
-			})
+
+		if strings.ToLower(order.Direction) == "buy" {
+			// Provera da li ima dostupnih unita za kupovinu
+			if order.Quantity > int(security.Volume) {
+				return c.Status(400).JSON(types.Response{
+					Success: false,
+					Error:   fmt.Sprintf("Nedovoljno dostupnih unita (%d dostupno)", security.Volume),
+				})
+			}
+		} else if strings.ToLower(order.Direction) == "sell" {
+			// Provera da li korisnik ima dovoljno hartija u portfoliju
+			var portfolio types.Portfolio
+			if err := db.DB.Where("user_id = ? AND security_id = ?", order.UserID, order.SecurityID).First(&portfolio).Error; err != nil {
+				return c.Status(400).JSON(types.Response{
+					Success: false,
+					Error:   "Nemate ovu hartiju u portfoliju",
+				})
+			}
+			if portfolio.Quantity < order.Quantity {
+				return c.Status(400).JSON(types.Response{
+					Success: false,
+					Error:   fmt.Sprintf("Nemate dovoljno hartija da biste prodali (imate %d, traženo %d)", portfolio.Quantity, order.Quantity),
+				})
+			}
 		}
 
 		order.Status = "approved"
