@@ -9,8 +9,6 @@ create table authorized_person
     phone_number varchar(255) not null
 );
 
-alter table authorized_person
-    owner to banking_service_user;
 
 drop table if exists company cascade;
 create table company
@@ -25,8 +23,6 @@ create table company
     ownerid        bigint
 );
 
-alter table company
-    owner to banking_service_user;
 
 drop table if exists account cascade;
 create table account
@@ -68,8 +64,6 @@ create table account
                    ((ARRAY ['CURRENT'::character varying, 'FOREIGN_CURRENCY'::character varying, 'BANK'::character varying, 'COUNTRY'::character varying])::text[]))
 );
 
-alter table account
-    owner to banking_service_user;
 
 drop table if exists card cascade;
 create table card
@@ -100,8 +94,6 @@ create table card
             check ((card_type)::text = ANY ((ARRAY ['DEBIT'::character varying, 'CREDIT'::character varying])::text[]))
 );
 
-alter table card
-    owner to banking_service_user;
 
 drop table if exists currency cascade;
 create table currency
@@ -119,8 +111,6 @@ create table currency
     symbol  varchar(255) not null
 );
 
-alter table currency
-    owner to banking_service_user;
 
 drop table if exists exchange_pair cascade;
 create table exchange_pair
@@ -137,8 +127,6 @@ create table exchange_pair
             references currency
 );
 
-alter table exchange_pair
-    owner to banking_service_user;
 
 drop table if exists loan cascade;
 create table loan
@@ -180,8 +168,6 @@ create table loan
                    ((ARRAY ['PENDING'::character varying, 'APPROVED'::character varying, 'DENIED'::character varying, 'PAID_OFF'::character varying, 'LATE'::character varying])::text[]))
 );
 
-alter table loan
-    owner to banking_service_user;
 
 drop table if exists otp_token cascade;
 create table otp_token
@@ -194,8 +180,6 @@ create table otp_token
     otp_code        varchar(255) not null
 );
 
-alter table otp_token
-    owner to banking_service_user;
 
 drop table if exists receiver cascade;
 create table receiver
@@ -210,8 +194,6 @@ create table receiver
     usage_count     integer default 0 -- za praćenje koliko puta je korišćen
 );
 
-alter table receiver
-    owner to banking_service_user;
 
 drop table if exists transfer cascade;
 create table transfer
@@ -252,8 +234,6 @@ create table transfer
                    ((ARRAY ['INTERNAL'::character varying, 'EXTERNAL'::character varying, 'EXCHANGE'::character varying, 'FOREIGN'::character varying])::text[]))
 );
 
-alter table transfer
-    owner to banking_service_user;
 
 drop table if exists transaction cascade;
 create table transaction
@@ -280,8 +260,6 @@ create table transaction
     description     varchar(255)
 );
 
-alter table transaction
-    owner to banking_service_user;
 
 drop table if exists installment cascade;
 create table installment
@@ -313,8 +291,6 @@ create table installment
 )
     );
 
-alter table installment
-    owner to banking_service_user;
 
 drop table if exists rate_change cascade;
 create table rate_change
@@ -325,6 +301,3 @@ create table rate_change
     month  integer          not null DEFAULT 0,
     change double precision not null
 );
-
-alter table rate_change
-    owner to banking_service_user;
