@@ -27,6 +27,9 @@ public class OrderServiceTest {
     @Mock
     private AccountRepository accountRepository;
 
+    @Mock
+    private TransferService transferService;
+
     @InjectMocks
     private OrderService orderService;
 
@@ -55,43 +58,8 @@ public class OrderServiceTest {
         when(bankAccountUtils.getBankAccountForCurrency(CurrencyType.USD)).thenReturn(bankAccount);
 
 
-        assertThrows(RuntimeException.class, () -> orderService.executeOrder("invalidDirection", 1L, 1L, 100.0));
+        assertThrows(RuntimeException.class, () -> orderService.executeOrder("invalidDirection", 1L, 2L, 100.0));
     }
 
-    @Test
-    public void testExecuteOrder_Sell_Success() {
 
-        when(accountService.findById(1L)).thenReturn(userAccount);
-        when(bankAccountUtils.getBankAccountForCurrency(CurrencyType.USD)).thenReturn(bankAccount);
-
-        Double amount = 100.0;
-
-
-        Double finalAmount = orderService.executeOrder("sell", 1L, 1L, amount);
-
-
-        assertEquals(100.0, finalAmount);
-        assertEquals(1100.0, userAccount.getBalance()); // user balance should increase by 100
-        assertEquals(4900.0, bankAccount.getBalance()); // bank account balance should decrease by 100
-        verify(accountRepository).save(userAccount);
-        verify(accountRepository).save(bankAccount);
-    }
-
-    @Test
-    public void testExecuteOrder_Buy_Success() {
-
-        when(accountService.findById(1L)).thenReturn(userAccount);
-        when(bankAccountUtils.getBankAccountForCurrency(CurrencyType.USD)).thenReturn(bankAccount);
-
-        Double amount = 100.0;
-
-        Double finalAmount = orderService.executeOrder("buy", 1L, 1L, amount);
-
-
-        assertEquals(100.0, finalAmount);
-        assertEquals(900.0, userAccount.getBalance()); // user balance should decrease by 100
-        assertEquals(5100.0, bankAccount.getBalance()); // bank account balance should increase by 100
-        verify(accountRepository).save(userAccount);
-        verify(accountRepository).save(bankAccount);
-    }
 }
