@@ -239,7 +239,7 @@ public class TransferService {
     /**
      * Performs an exchange from RSD to a foreign currency.
      */
-    private Map<String, Object> performRsdToForeign(Double amount, Account fromAccount, Account toAccount) {
+    public Map<String, Object> performRsdToForeign(Double amount, Account fromAccount, Account toAccount) {
         if (amount <= 0) {
             throw new IllegalArgumentException("Amount must be positive");
         }
@@ -321,7 +321,7 @@ public class TransferService {
     /**
      * Performs an exchange from a foreign currency to RSD.
      */
-    private Map<String, Object> performForeignToRsd(Double amount, Account fromAccount, Account toAccount) {
+    public Map<String, Object> performForeignToRsd(Double amount, Account fromAccount, Account toAccount) {
         if (amount <= 0) {
             throw new IllegalArgumentException("Amount must be positive");
         }
