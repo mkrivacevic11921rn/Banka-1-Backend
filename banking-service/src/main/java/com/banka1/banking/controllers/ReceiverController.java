@@ -1,4 +1,5 @@
 package com.banka1.banking.controllers;
+
 import com.banka1.banking.aspect.ReceiverAuthorization;
 import com.banka1.banking.dto.ReceiverDTO;
 import com.banka1.banking.models.Receiver;
@@ -30,7 +31,7 @@ public class ReceiverController {
 
     @Operation(
             summary = "Dodavanje novog primaoca",
-            description = "Dodaje novog primaoca u listu primaoca plaćanja za određeni bankovni nalog."
+            description = "Dodaje novog primaoca u listu primaoca plaćanja za određenog customer-a."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Primalac uspešno dodat",
@@ -60,8 +61,8 @@ public class ReceiverController {
     }
 
     @Operation(
-            summary = "Dohvatanje liste primaoca za određeni bankovni nalog",
-            description = "Vraća listu svih primaoca plaćanja za određeni bankovni nalog korisnika."
+            summary = "Dohvatanje liste primaoca za određenog customer-a",
+            description = "Vraća listu svih primaoca plaćanja za određenog customer-a."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista primaoca uspešno dohvaćena",
@@ -73,15 +74,15 @@ public class ReceiverController {
                             examples = @ExampleObject(value = "{ \"success\": false, \"error\": \"Nema sačuvanih primaoca za ovaj nalog.\" }"))
             )
     })
-    @GetMapping("/{accountId}")
+    @GetMapping("/{receiverId}")
     @ReceiverAuthorization
     public ResponseEntity<?> getReceivers(
             @Parameter(description = "ID naloga korisnika", required = true, example = "2")
-            @PathVariable Long accountId) {
-        if (!receiverService.accountExists(accountId)) {
+            @PathVariable Long receiverId) {
+        if (!receiverService.accountExists(receiverId)) {
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, "Nalog ne postoji.");
         }
-        List<Receiver> receivers = receiverService.getReceiversByAccountId(accountId);
+        List<Receiver> receivers = receiverService.getReceiversByCustomerId(receiverId);
         return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("receivers", receivers), null);
     }
 
