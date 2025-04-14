@@ -13,16 +13,20 @@ import com.banka1.common.listener.MessageHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.jms.JmsException;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
-@Transactional
+@Transactional(isolation = Isolation.SERIALIZABLE)
 @Slf4j
 @RequiredArgsConstructor
 public class OTCService {
@@ -87,6 +91,7 @@ public class OTCService {
         accountRepository.save(transaction.getBuyerAccount());
 
         otcTransactionRepository.delete(transaction);
+        otcTransactionRepository.flush();
     }
 
     public synchronized void proceed(String uid) {
@@ -99,6 +104,8 @@ public class OTCService {
                 return;
 
             if(transaction.getFinished()) {
+                log.info("Finishing transaction " + uid);
+
                 Account fromAccount = transaction.getBuyerAccount();
                 Account toAccount = transaction.getSellerAccount();
 
@@ -138,23 +145,30 @@ public class OTCService {
                 transactionRepository.save(bankTransaction);
 
                 otcTransactionRepository.delete(transaction);
+                otcTransactionRepository.flush();
                 log.info("Finished transaction " + uid);
             } else if(transaction.getAmountGiven() > 0) {
+                log.info("Consistency check for " + uid);
+
                 if(!transaction.getAmountGiven().equals(transaction.getAmountTaken()) || !transaction.getAmountTaken().equals(transaction.getAmount()) || !transaction.getAmountGiven().equals(transaction.getAmount()))
                     throw new Exception("Inconsistency found, rolling back...");
 
                 transaction.setFinished(true);
 
-                otcTransactionRepository.save(transaction);
+                otcTransactionRepository.saveAndFlush(transaction);
                 nextStage(transaction);
             } else if(transaction.getAmountTaken() > 0) {
+                log.info("Transfer funds for " + uid);
+
                 transaction.getSellerAccount().setBalance(transaction.getSellerAccount().getBalance() + transaction.getAmount());
                 transaction.setAmountGiven(transaction.getAmount());
 
                 accountRepository.save(transaction.getSellerAccount());
-                otcTransactionRepository.save(transaction);
+                otcTransactionRepository.saveAndFlush(transaction);
                 nextStage(transaction);
             } else {
+                log.info("Reserve funds for " + uid);
+
                 if(transaction.getBuyerAccount().getBalance() < transaction.getAmount())
                     throw new Exception("Insufficient funds");
 
@@ -162,13 +176,13 @@ public class OTCService {
                 transaction.setAmountTaken(transaction.getAmount());
 
                 accountRepository.save(transaction.getBuyerAccount());
-                otcTransactionRepository.save(transaction);
+                otcTransactionRepository.saveAndFlush(transaction);
                 nextStage(transaction);
             }
         } catch(Exception e) {
             if(transaction != null) {
                 transaction.setFailed(true);
-                otcTransactionRepository.save(transaction);
+                otcTransactionRepository.saveAndFlush(transaction);
             }
             retryableFailureMessage(uid, e.getMessage(), true);
         }
@@ -183,7 +197,7 @@ public class OTCService {
             transaction.setBuyerAccount(accountRepository.findById(sellerAccountId).orElseThrow());
             transaction.setSellerAccount(accountRepository.findById(buyerAccountId).orElseThrow());
 
-            otcTransactionRepository.save(transaction);
+            otcTransactionRepository.saveAndFlush(transaction);
 
             jmsTemplate.convertAndSend(destinationOtcAck, messageHelper.createTextMessage(new OTCTransactionACKDTO(
                     uid, false, ""
@@ -213,6 +227,18 @@ public class OTCService {
             log.info("Premium paid");
         } catch(Exception e) {
             log.error("Unable to pay premium: " + e.getMessage());
+        }
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void rollbackUnfinishedTransactions() {
+        List<OTCTransaction> transactions = otcTransactionRepository.findAll();
+        for(OTCTransaction transaction : transactions) {
+            log.info("Rolling back " + transaction.getUid());
+            transaction.setFailed(true);
+            otcTransactionRepository.saveAndFlush(transaction);
+
+            retryableFailureMessage(transaction.getUid(), "Crash recovery", true);
         }
     }
 }

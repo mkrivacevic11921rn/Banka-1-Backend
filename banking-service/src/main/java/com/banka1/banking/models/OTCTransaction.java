@@ -11,6 +11,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "otc_transaction")
 public class OTCTransaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

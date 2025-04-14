@@ -335,8 +335,8 @@ create table otc_transaction
     amount            double precision not null,
     uid               varchar(255)     not null
         unique,
-    failed            boolean          not null,
-    finished          boolean          not null,
+    failed            boolean          not null DEFAULT false,
+    finished          boolean          not null DEFAULT false,
     amount_taken      double precision not null DEFAULT 0,
     amount_given      double precision not null DEFAULT 0,
     seller_account_id bigint
