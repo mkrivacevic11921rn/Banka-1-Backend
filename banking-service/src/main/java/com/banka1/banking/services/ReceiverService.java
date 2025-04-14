@@ -77,7 +77,7 @@ public class ReceiverService {
     }
 
     public boolean accountExists(Long id){
-        return receiverRepository.existsById(id);
+        return receiverRepository.existsByCustomerId(id);
     }
 
 
