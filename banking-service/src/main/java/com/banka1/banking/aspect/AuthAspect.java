@@ -306,8 +306,6 @@ public class AuthAspect {
 
             if(!authorization.customerOnlyOperation()) {
                 if(claims.get("isEmployed", Boolean.class)) {
-                    // Zaposleni
-                    System.out.println("Zaposleni, proceed pozvan");
                     return joinPoint.proceed();
                 }
             }

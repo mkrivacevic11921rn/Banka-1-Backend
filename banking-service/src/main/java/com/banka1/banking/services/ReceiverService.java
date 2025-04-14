@@ -54,14 +54,17 @@ public class ReceiverService {
 
         Receiver receiver = optionalReceiver.get();
 
-        receiver.setAccountNumber(receiverDTO.getAccountNumber());
+        if(receiverDTO.getAddress() != null)
+             receiver.setAccountNumber(receiverDTO.getAccountNumber());
+
         if(receiverDTO.getFullName() != null){
             String[] fullName = receiverDTO.getFullName().trim().split("\\s+",2);
             receiver.setFirstName(fullName[0]);
             receiver.setLastName(fullName.length > 1 ? fullName[1] : "");
         }
 
-        receiver.setAddress(receiverDTO.getAddress());
+        if(receiverDTO.getAddress() != null)
+             receiver.setAddress(receiverDTO.getAddress());
 
         return receiverRepository.save(receiver);
     }

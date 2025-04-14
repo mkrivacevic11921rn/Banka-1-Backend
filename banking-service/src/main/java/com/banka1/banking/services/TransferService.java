@@ -4,10 +4,7 @@ import com.banka1.banking.dto.CustomerDTO;
 import com.banka1.banking.dto.InternalTransferDTO;
 import com.banka1.banking.dto.MoneyTransferDTO;
 import com.banka1.banking.dto.NotificationDTO;
-import com.banka1.banking.models.Account;
-import com.banka1.banking.models.Currency;
-import com.banka1.banking.models.Transaction;
-import com.banka1.banking.models.Transfer;
+import com.banka1.banking.models.*;
 import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.models.helper.TransferStatus;
 import com.banka1.banking.models.helper.TransferType;
@@ -52,10 +49,9 @@ public class TransferService {
 
     private final BankAccountUtils bankAccountUtils;
     private final ReceiverService receiverService;
-    private final ReceiverRepository receiverRepository;
 
 
-    public TransferService(AccountRepository accountRepository, TransferRepository transferRepository, TransactionRepository transactionRepository, CurrencyRepository currencyRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("${destination.email}") String destinationEmail, UserServiceCustomer userServiceCustomer, ExchangeService exchangeService, OtpTokenService otpTokenService, BankAccountUtils bankAccountUtils, ReceiverService receiverService, ReceiverRepository receiverRepository) {
+    public TransferService(AccountRepository accountRepository, TransferRepository transferRepository, TransactionRepository transactionRepository, CurrencyRepository currencyRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("${destination.email}") String destinationEmail, UserServiceCustomer userServiceCustomer, ExchangeService exchangeService, OtpTokenService otpTokenService, BankAccountUtils bankAccountUtils, ReceiverService receiverService) {
         this.accountRepository = accountRepository;
         this.transferRepository = transferRepository;
         this.transactionRepository = transactionRepository;
@@ -68,7 +64,6 @@ public class TransferService {
         this.otpTokenService = otpTokenService;
         this.bankAccountUtils = bankAccountUtils;
         this.receiverService = receiverService;
-        this.receiverRepository = receiverRepository;
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -686,10 +681,9 @@ public class TransferService {
 
         // PROVERA ZA RECEIVERA
         if (transferDTO.getSavedReceiverId() != null) {
-            boolean receiverExists = receiverRepository
-                    .existsById(transferDTO.getSavedReceiverId());
+            Receiver receiverExists = receiverService.findById(transferDTO.getSavedReceiverId());
 
-            if (!receiverExists) {
+            if (receiverExists == null) {
                 return false;
             }
         }
