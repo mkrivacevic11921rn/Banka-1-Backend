@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 type OrderController struct {
@@ -371,8 +372,14 @@ func ApproveDeclineOrder(c *fiber.Ctx, decline bool) error {
 		}
 
 		order.Status = "approved"
-		order.ApprovedBy = new(uint)
-		*order.ApprovedBy = 0
+
+		if uidRaw := c.Locals("user_id"); uidRaw != nil {
+			if uid, ok := uidRaw.(float64); ok {
+				id := uint(uid)
+				order.ApprovedBy = &id
+			}
+		}
+		order.LastModified = time.Now().Unix()
 		db.DB.Save(&order)
 
 		orders.MatchOrder(order)
@@ -429,6 +436,50 @@ func (oc *OrderController) ApproveOrder(c *fiber.Ctx) error {
 	return ApproveDeclineOrder(c, false)
 }
 
+// CancelOrder godoc
+//
+//	@Summary		Otkazivanje naloga
+//	@Description	Menja status naloga u 'cancelled' ukoliko još nije izvršen.
+//	@Tags			Orders
+//	@Produce		json
+//	@Param			id	path	int	true	"ID naloga koji se otkazuje"
+//	@Security		BearerAuth
+//	@Security		BearerAuth
+//	@Success		200	{object}	types.Response{data=string}	"Nalog uspešno otkazan"
+//	@Failure		400	{object}	types.Response					"Nevalidan ID ili nalog je već završen"
+//	@Failure		403	{object}	types.Response					"Nedovoljne privilegije (ne može se otkazati tuđi nalog)"
+//	@Failure		404	{object}	types.Response					"Nalog sa datim ID-jem ne postoji"
+//	@Failure		500	{object}	types.Response					"Greška prilikom otkazivanja naloga"
+//	@Router			/orders/{id}/cancel [post]
+func (oc *OrderController) CancelOrder(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id", -1)
+	if err != nil || id <= 0 {
+		return c.Status(400).JSON(types.Response{Success: false, Error: "Nevalidan ID"})
+	}
+
+	var order types.Order
+	if err := db.DB.First(&order, id).Error; err != nil {
+		return c.Status(404).JSON(types.Response{Success: false, Error: "Order nije pronađen"})
+	}
+
+	userID := uint(c.Locals("user_id").(float64))
+	if order.UserID != userID {
+		return c.Status(403).JSON(types.Response{Success: false, Error: "Nije dozvoljeno otkazati tuđi order"})
+	}
+
+	if order.IsDone || order.Status == "done" || order.Status == "cancelled" {
+		return c.Status(400).JSON(types.Response{Success: false, Error: "Order je već izvršen ili otkazan"})
+	}
+
+	order.Status = "cancelled"
+	order.LastModified = time.Now().Unix()
+	if err := db.DB.Save(&order).Error; err != nil {
+		return c.Status(500).JSON(types.Response{Success: false, Error: "Greška pri otkazivanju ordera"})
+	}
+
+	return c.JSON(types.Response{Success: true, Data: fmt.Sprintf("Order %d je uspešno otkazan", order.ID)})
+}
+
 func InitOrderRoutes(app *fiber.App) {
 	orderController := NewOrderController()
 
@@ -437,4 +488,5 @@ func InitOrderRoutes(app *fiber.App) {
 	app.Post("/orders", middlewares.Auth, orderController.CreateOrder)
 	app.Post("/orders/:id/decline", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), orderController.DeclineOrder)
 	app.Post("/orders/:id/approve", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), orderController.ApproveOrder)
+	app.Post("/orders/:id/cancel", middlewares.Auth, orderController.CancelOrder)
 }

@@ -23,6 +23,25 @@ var (
 	orderLocksMu  sync.Mutex
 )
 
+func CalculateFee(order types.Order, total float64) float64 {
+	switch strings.ToUpper(order.OrderType) {
+	case "MARKET":
+		fee := total * 0.14
+		if fee > 7 {
+			return 7
+		}
+		return fee
+	case "LIMIT":
+		fee := total * 0.24
+		if fee > 12 {
+			return 12
+		}
+		return fee
+	default:
+		return 0
+	}
+}
+
 // Funkcija koja vraća uvek isti mutex po securityID
 func getLock(securityID uint) *sync.Mutex {
 	locksMu.Lock()
@@ -85,76 +104,52 @@ func MatchOrder(order types.Order) {
 
 			price := getOrderPrice(order)
 
-			token, err := middlewares.NewOrderToken(order.Direction, order.UserID, order.AccountID, price)
-			url := fmt.Sprintf("%s/orders/execute/%s", os.Getenv("BANKING_SERVICE"), token)
+			executePartial(order, quantityToExecute, price, tx)
 
-			hadError := false
-			if err == nil {
-				agent := fiber.Post(url)
-
-				statusCode, _, errs := agent.Bytes()
-
-				fmt.Printf("📡 BANKING-RESPONSE: status=%d, errors=%v\n", statusCode, errs)
-
-				if len(errs) != 0 || statusCode != 200 {
-					hadError = true
-				}
-
-			} else {
-				hadError = true
+			if order.RemainingParts == nil || *order.RemainingParts == 0 {
+				order.IsDone = true
+				order.Status = "done"
 			}
 
-			if hadError {
-				fmt.Printf("Nalog %v nije izvršen\n", order.ID)
+			// SKIDANJE unita ako je kupovina (smanjuje se dostupnost hartija)
+			if order.Direction == "buy" {
+				var security types.Security
+				if err := tx.First(&security, order.SecurityID).Error; err == nil {
+					security.Volume -= int64(quantityToExecute)
+					if security.Volume < 0 {
+						security.Volume = 0
+					}
+					tx.Save(&security)
+				}
+			}
+
+			// Ažuriraj order u bazi (unutar transakcije)
+			if err := tx.Model(&types.Order{}).Where("id = ?", order.ID).Updates(map[string]interface{}{
+				"remaining_parts": *order.RemainingParts,
+				"is_done":         order.IsDone,
+				"status":          order.Status,
+			}).Error; err != nil {
+				fmt.Printf("Greska pri upisu order statusa: %v\n", err)
+				tx.Rollback()
+				break
+			}
+
+			if err := tx.Commit().Error; err != nil {
+				fmt.Printf("Nalog %v nije izvršen: %v\n", order.ID, err)
+				tx.Rollback()
 				break
 			} else {
-				executePartial(order, quantityToExecute, price, tx)
+				fmt.Printf("Nalog %v izvršen\n", order.ID)
 
-				if order.RemainingParts == nil || *order.RemainingParts == 0 {
-					order.IsDone = true
-					order.Status = "done"
-				}
-
-				// SKIDANJE unita ako je kupovina (smanjuje se dostupnost hartija)
-				if order.Direction == "buy" {
-					var security types.Security
-					if err := tx.First(&security, order.SecurityID).Error; err == nil {
-						security.Volume -= int64(quantityToExecute)
-						if security.Volume < 0 {
-							security.Volume = 0
-						}
-						tx.Save(&security)
-					}
-				}
-
-				// Ažuriraj order u bazi (unutar transakcije)
-				if err := tx.Model(&types.Order{}).Where("id = ?", order.ID).Updates(map[string]interface{}{
-					"remaining_parts": *order.RemainingParts,
-					"is_done":         order.IsDone,
-					"status":          order.Status,
-				}).Error; err != nil {
-					fmt.Printf("Greska pri upisu order statusa: %v\n", err)
-					tx.Rollback()
+				// REFETCH ORDER IZ BAZE
+				if err := db.DB.First(&order, order.ID).Error; err != nil {
+					fmt.Printf("Greska pri refetch ordera %d nakon commit-a: %v\n", order.ID, err)
 					break
 				}
 
-				if err := tx.Commit().Error; err != nil {
-					fmt.Printf("Nalog %v nije izvršen: %v\n", order.ID, err)
-					tx.Rollback()
+				if order.RemainingParts == nil || *order.RemainingParts <= 0 {
+					fmt.Printf("Order %d je već izvršen ili nema više delova za obradu\n", order.ID)
 					break
-				} else {
-					fmt.Printf("Nalog %v izvršen\n", order.ID)
-
-					// REFETCH ORDER IZ BAZE
-					if err := db.DB.First(&order, order.ID).Error; err != nil {
-						fmt.Printf("Greska pri refetch ordera %d nakon commit-a: %v\n", order.ID, err)
-						break
-					}
-
-					if order.RemainingParts == nil || *order.RemainingParts <= 0 {
-						fmt.Printf("Order %d je već izvršen ili nema više delova za obradu\n", order.ID)
-						break
-					}
 				}
 			}
 
@@ -269,6 +264,25 @@ func executePartial(order types.Order, quantity int, price float64, tx *gorm.DB)
 
 	if matchQuantity <= 0 || order.RemainingParts == nil || *order.RemainingParts < matchQuantity {
 		fmt.Printf("Nevalidan matchQuantity = %d za Order %d\n", matchQuantity, order.ID)
+		return
+	}
+
+	total := price * float64(matchQuantity)
+	fee := CalculateFee(order, total)
+	token, err := middlewares.NewOrderToken(order.Direction, order.UserID, order.AccountID, price, fee)
+	if err != nil {
+		fmt.Printf("Greška pri pravljenju tokena za izvršenje ordera %d: %v\n", order.ID, err)
+		return
+	}
+
+	url := fmt.Sprintf("%s/orders/execute/%s", os.Getenv("BANKING_SERVICE"), token)
+
+	agent := fiber.Post(url)
+	statusCode, _, errs := agent.Bytes()
+
+	if len(errs) != 0 || statusCode != 200 {
+		fmt.Printf("Skidanje novca nije uspelo za order %d. Status: %d, Greške: %v\n", order.ID, statusCode, errs)
+		tx.Rollback()
 		return
 	}
 
