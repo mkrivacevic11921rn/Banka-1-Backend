@@ -31,7 +31,7 @@ public class ReceiverController {
 
     @Operation(
             summary = "Dodavanje novog primaoca",
-            description = "Dodaje novog primaoca u listu primaoca plaćanja za određeni bankovni nalog."
+            description = "Dodaje novog primaoca u listu primaoca plaćanja za određenog customer-a."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Primalac uspešno dodat",
@@ -61,8 +61,8 @@ public class ReceiverController {
     }
 
     @Operation(
-            summary = "Dohvatanje liste primaoca za određeni bankovni nalog",
-            description = "Vraća listu svih primaoca plaćanja za određeni bankovni nalog korisnika."
+            summary = "Dohvatanje liste primaoca za određenog customer-a",
+            description = "Vraća listu svih primaoca plaćanja za određenog customer-a."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista primaoca uspešno dohvaćena",
