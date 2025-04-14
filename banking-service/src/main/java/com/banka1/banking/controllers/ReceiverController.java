@@ -74,15 +74,15 @@ public class ReceiverController {
                             examples = @ExampleObject(value = "{ \"success\": false, \"error\": \"Nema sačuvanih primaoca za ovaj nalog.\" }"))
             )
     })
-    @GetMapping("/{receiverId}")
+    @GetMapping("/{customerId}")
     @ReceiverAuthorization
     public ResponseEntity<?> getReceivers(
-            @Parameter(description = "ID naloga korisnika", required = true, example = "2")
-            @PathVariable Long receiverId) {
-        if (!receiverService.accountExists(receiverId)) {
+            @Parameter(description = "ID korisnika", required = true, example = "2")
+            @PathVariable Long customerId) {
+        if (!receiverService.accountExists(customerId)) {
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, "Nalog ne postoji.");
         }
-        List<Receiver> receivers = receiverService.getReceiversByCustomerId(receiverId);
+        List<Receiver> receivers = receiverService.getReceiversByCustomerId(customerId);
         return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("receivers", receivers), null);
     }
 
