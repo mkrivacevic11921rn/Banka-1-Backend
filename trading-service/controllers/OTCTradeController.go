@@ -7,14 +7,9 @@ import (
 	"banka1.com/middlewares"
 	"banka1.com/saga"
 	"banka1.com/types"
-	"encoding/json"
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
-	"io"
-	"net/http"
-	"os"
 	"time"
 )
 
@@ -89,6 +84,13 @@ func (c *OTCTradeController) CreateOTCTrade(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(types.Response{
 			Success: false,
 			Error:   "Nedovoljno javno dostupnih akcija u portfoliju",
+		})
+	}
+
+	if portfolio.Security.Type != "Stock" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(types.Response{
+			Success: false,
+			Error:   "Hartija od vrednosti mora biti akcija",
 		})
 	}
 
@@ -608,8 +610,10 @@ func NewPortfolioControllerr() *PortfolioControllerr {
 func (c *PortfolioControllerr) GetAllPublicPortfolios(ctx *fiber.Ctx) error {
 	var portfolios []types.Portfolio
 
+	userID := uint(ctx.Locals("user_id").(float64))
+
 	if err := db.DB.
-		Where("public_count > 0").
+		Where("public_count > 0 AND user_id != ?", userID).
 		Preload("Security").
 		Find(&portfolios).Error; err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -641,51 +645,4 @@ func InitOTCTradeRoutes(app *fiber.App) {
 	otc.Put("/option/:id/execute", middlewares.RequirePermission("user.customer.otc_trade"), otcController.ExecuteOptionContract)
 	otc.Get("/offer/active", otcController.GetActiveOffers)
 	otc.Get("/option/contracts", otcController.GetUserOptionContracts)
-}
-
-type CustomerResponse struct {
-	ID          uint     `json:"id"`
-	FirstName   string   `json:"firstName"`
-	LastName    string   `json:"lastName"`
-	Username    string   `json:"username"`
-	BirthDate   string   `json:"birthDate"`
-	Gender      string   `json:"gender"`
-	Email       string   `json:"email"`
-	PhoneNumber string   `json:"phoneNumber"`
-	Address     string   `json:"address"`
-	Permissions []string `json:"permissions"`
-}
-
-type CustomerAPIResponse struct {
-	Success bool             `json:"success"`
-	Data    CustomerResponse `json:"data"`
-}
-
-func GetCustomerByID(userID uint) (*CustomerAPIResponse, error) {
-	basePath := os.Getenv("USER_SERVICE")
-	url := fmt.Sprintf("%s/api/customer/%d", basePath, userID)
-
-	resp, err := http.Get(url)
-	if err != nil {
-		log.Infof("Failed to fetch %s: %v\n", url, err)
-		return nil, err
-	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Errorf("Failed to close response body: %v", err)
-		}
-	}(resp.Body)
-
-	if resp.StatusCode != 200 {
-		log.Infof("Error fetching %s: HTTP %d\n", url, resp.StatusCode)
-		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
-	}
-
-	var apiResponse *CustomerAPIResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
-		log.Infof("Failed to parse JSON: %v\n", err)
-		return nil, err
-	}
-	return apiResponse, nil
 }

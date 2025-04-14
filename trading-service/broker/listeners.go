@@ -209,7 +209,7 @@ func removeOwnership(uid string) error {
 		sellerPortfolio.Quantity -= contract.Quantity
 		sellerPortfolio.PublicCount -= contract.Quantity
 		if sellerPortfolio.PublicCount < 0 {
-			sellerPortfolio.PublicCount = 0
+			return fmt.Errorf("PublicCount je postao negativan")
 		}
 
 		if err := tx.Save(&sellerPortfolio).Error; err != nil {
