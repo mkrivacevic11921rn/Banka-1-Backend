@@ -321,6 +321,12 @@ public class AuthAspect {
                     if (Objects.equals(claims.get("id", Long.class), receiver.getCustomerId()))
                         return joinPoint.proceed();
                 }
+
+                OptionalInt maybeCustomerIdIndex = IntStream.range(0, methodSignature.getParameterNames().length).filter(i -> methodSignature.getParameterNames()[i].compareTo("customerId") == 0).findFirst();
+                if (maybeCustomerIdIndex.isPresent()) {
+                    if (Objects.equals(claims.get("id", Long.class), Long.valueOf(joinPoint.getArgs()[maybeCustomerIdIndex.getAsInt()].toString())))
+                        return joinPoint.proceed();
+                }
             }
 
             // ako je admin
