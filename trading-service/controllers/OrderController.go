@@ -256,6 +256,7 @@ func (oc *OrderController) CreateOrder(c *fiber.Ctx) error {
 		Direction:         orderRequest.Direction,
 		Status:            status, // TODO: pribaviti needs approval vrednost preko token-a?
 		ApprovedBy:        approvedBy,
+		LastModified:      time.Now().Unix(),
 		IsDone:            false,
 		RemainingParts:    &orderRequest.Quantity,
 		AfterHours:        false, // TODO: dodati check za ovo

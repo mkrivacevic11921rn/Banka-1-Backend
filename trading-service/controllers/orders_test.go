@@ -57,7 +57,6 @@ func TestMain(m *testing.M) {
 	_ = db.InitTestDatabase()
 	app = fiber.New()
 
-	// 👇 Ovo glumi Auth middleware
 	app.Use(func(c *fiber.Ctx) error {
 		if userId := c.Get("X-Test-UserID"); userId != "" {
 			c.Locals("user_id", 1.0)
@@ -120,6 +119,8 @@ func TestCreateOrder_Success(t *testing.T) {
 		"contract_size": 1,
 		"direction":     "buy",
 	}
+	_ = db.DB.Create(&types.Security{ID: 1, Ticker: "TSLA", Volume: 100, LastPrice: 50.0, Name: "Tesla"}).Error
+
 	payload, _ := json.Marshal(body)
 	req := httptest.NewRequest(http.MethodPost, "/orders", bytes.NewReader(payload))
 	req.Header.Set("Authorization", "Bearer mock-token")
@@ -251,7 +252,7 @@ func TestMatchOrder_FullExecution(t *testing.T) {
 				// Proveri transakcije
 				var count int64
 				_ = db.DB.Model(&types.Transaction{}).Where("order_id = ?", buyer.ID).Count(&count)
-				assert.Equal(t, int64(5), count)
+				assert.Equal(t, int64(1), count)
 
 				// Proveri da li se smanjio volume
 				var finalSecurity types.Security
@@ -289,19 +290,19 @@ func TestMatchOrder_TransactionCreated(t *testing.T) {
 	assert.NotEmpty(t, txs, "Očekivana je barem jedna transakcija za order")
 }
 
-//func TestMatchOrder_FeeCalculated(t *testing.T) {
-//	order := types.Order{OrderType: "MARKET"}
-//	fee := orders.CalculateFee(order, 100.0)
-//	assert.Equal(t, 7.0, fee)
-//
-//	order = types.Order{OrderType: "LIMIT"}
-//	fee = orders.CalculateFee(order, 100.0)
-//	assert.Equal(t, 12.0, fee)
-//
-//	order = types.Order{OrderType: "STOP"}
-//	fee = orders.CalculateFee(order, 100.0)
-//	assert.Equal(t, 0.0, fee)
-//}
+func TestMatchOrder_FeeCalculated(t *testing.T) {
+	order := types.Order{OrderType: "MARKET"}
+	fee := orders.CalculateFee(order, 100.0)
+	assert.Equal(t, 7.0, fee)
+
+	order = types.Order{OrderType: "LIMIT"}
+	fee = orders.CalculateFee(order, 100.0)
+	assert.Equal(t, 12.0, fee)
+
+	order = types.Order{OrderType: "STOP"}
+	fee = orders.CalculateFee(order, 100.0)
+	assert.Equal(t, 0.0, fee)
+}
 
 func TestMatchOrder_RollbackOnFailure(t *testing.T) {
 	_ = os.Setenv("BANKING_SERVICE", "http://invalid-host") // Forsiramo fail

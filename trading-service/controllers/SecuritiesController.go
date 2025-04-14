@@ -100,9 +100,9 @@ func (sc *SecuritiesController) GetUserSecurities(c *fiber.Ctx) error {
 		}
 
 		item := dto.PortfolioSecurityDTO{
+			PortfolioID:  p.ID,
 			SecurityID:   p.SecurityID,
 			Ticker:       p.Security.Ticker,
-			ID:           p.Security.ID,
 			Type:         p.Security.Type,
 			Symbol:       p.Security.Ticker,
 			Amount:       p.Quantity,

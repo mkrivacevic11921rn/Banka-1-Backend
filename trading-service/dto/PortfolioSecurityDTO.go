@@ -1,9 +1,9 @@
 package dto
 
 type PortfolioSecurityDTO struct {
+	PortfolioID  uint    `json:"portfolio_id"`
 	SecurityID   uint    `json:"securityId"`
 	Ticker       string  `json:"ticker"`
-	ID           uint    `json:"security_id"`
 	Type         string  `json:"type"`
 	Symbol       string  `json:"symbol"`
 	Amount       int     `json:"amount"`
