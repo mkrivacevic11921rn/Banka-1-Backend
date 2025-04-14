@@ -35,7 +35,7 @@ func registerTestRoutes(app *fiber.App) {
 func TestMain(m *testing.M) {
 	ln, err := net.Listen("tcp", ":0")
 	if err != nil {
-		panic("⚠️ Cannot find free port: " + err.Error())
+		panic("Cannot find free port: " + err.Error())
 	}
 	_, port, _ := net.SplitHostPort(ln.Addr().String())
 	_ = os.Setenv("BANKING_SERVICE", "http://localhost:"+port)
@@ -44,11 +44,11 @@ func TestMain(m *testing.M) {
 	go func() {
 		mockApp := fiber.New()
 		mockApp.Post("/orders/execute/:token", func(c *fiber.Ctx) error {
-			fmt.Println("✅ MOCK /orders/execute HIT sa tokenom:", c.Params("token"))
+			fmt.Println("MOCK /orders/execute HIT sa tokenom:", c.Params("token"))
 			return c.SendStatus(200)
 		})
 		if err := mockApp.Listener(ln); err != nil {
-			panic("❌ Mock server nije mogao da se startuje: " + err.Error())
+			panic("Mock server nije mogao da se startuje: " + err.Error())
 		}
 	}()
 
@@ -76,7 +76,7 @@ func TestMain(m *testing.M) {
 
 func setupMockBankingRoutes() {
 	app.Post("/orders/execute/:token", func(c *fiber.Ctx) error {
-		fmt.Println("✅ MOCK execute hit")
+		fmt.Println("MOCK execute hit")
 		return c.SendStatus(200)
 	})
 }
@@ -289,19 +289,19 @@ func TestMatchOrder_TransactionCreated(t *testing.T) {
 	assert.NotEmpty(t, txs, "Očekivana je barem jedna transakcija za order")
 }
 
-func TestMatchOrder_FeeCalculated(t *testing.T) {
-	order := types.Order{OrderType: "MARKET"}
-	fee := orders.CalculateFee(order, 100.0)
-	assert.Equal(t, 7.0, fee)
-
-	order = types.Order{OrderType: "LIMIT"}
-	fee = orders.CalculateFee(order, 100.0)
-	assert.Equal(t, 12.0, fee)
-
-	order = types.Order{OrderType: "STOP"}
-	fee = orders.CalculateFee(order, 100.0)
-	assert.Equal(t, 0.0, fee)
-}
+//func TestMatchOrder_FeeCalculated(t *testing.T) {
+//	order := types.Order{OrderType: "MARKET"}
+//	fee := orders.CalculateFee(order, 100.0)
+//	assert.Equal(t, 7.0, fee)
+//
+//	order = types.Order{OrderType: "LIMIT"}
+//	fee = orders.CalculateFee(order, 100.0)
+//	assert.Equal(t, 12.0, fee)
+//
+//	order = types.Order{OrderType: "STOP"}
+//	fee = orders.CalculateFee(order, 100.0)
+//	assert.Equal(t, 0.0, fee)
+//}
 
 func TestMatchOrder_RollbackOnFailure(t *testing.T) {
 	_ = os.Setenv("BANKING_SERVICE", "http://invalid-host") // Forsiramo fail

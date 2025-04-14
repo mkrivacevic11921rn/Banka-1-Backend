@@ -99,7 +99,7 @@ public class OrderServiceTest {
     @Test
     void testExecuteOrder_ForeignCurrency_CallsTransfer() {
         userAccount.setCurrencyType(CurrencyType.USD);
-        bankAccount.setCurrencyType(CurrencyType.EUR); // devizni
+        bankAccount.setCurrencyType(CurrencyType.EUR);
 
         when(accountService.findById(1L)).thenReturn(userAccount);
         when(bankAccountUtils.getBankAccountForCurrency(CurrencyType.USD)).thenReturn(bankAccount);
@@ -112,7 +112,7 @@ public class OrderServiceTest {
 
     @Test
     void testExecuteOrder_InvalidUser_ThrowsException() {
-        userAccount.setOwnerID(99L); // drugi korisnik
+        userAccount.setOwnerID(99L);
 
         when(accountService.findById(1L)).thenReturn(userAccount);
         when(bankAccountUtils.getBankAccountForCurrency(CurrencyType.RSD)).thenReturn(bankAccount);
@@ -124,7 +124,7 @@ public class OrderServiceTest {
 
     @Test
     void testExecuteOrder_InsufficientFunds_ThrowsException() {
-        userAccount.setBalance(100.0); // premalo
+        userAccount.setBalance(100.0);
 
         when(accountService.findById(1L)).thenReturn(userAccount);
         when(bankAccountUtils.getBankAccountForCurrency(CurrencyType.RSD)).thenReturn(bankAccount);
@@ -137,7 +137,7 @@ public class OrderServiceTest {
     @Test
     void testExecuteOrder_SameAccount_UpdatesBalanceDirectly() {
         when(accountService.findById(1L)).thenReturn(userAccount);
-        when(bankAccountUtils.getBankAccountForCurrency(CurrencyType.RSD)).thenReturn(userAccount); // isti
+        when(bankAccountUtils.getBankAccountForCurrency(CurrencyType.RSD)).thenReturn(userAccount);
 
         double result = orderService.executeOrder("buy", 10L, 1L, 1000.0, 100.0);
 
@@ -148,25 +148,20 @@ public class OrderServiceTest {
     }
     @Test
     void testExecuteOrder_RollbackIfTransferFails() {
-        // Postavljamo stanje
         when(accountService.findById(1L)).thenReturn(userAccount);
         when(bankAccountUtils.getBankAccountForCurrency(CurrencyType.RSD)).thenReturn(bankAccount);
 
-        // Pravimo fail u transfer servisu
         doThrow(new RuntimeException("Greška u transferu"))
                 .when(transferService).createMoneyTransfer(any());
 
         double originalBalance = userAccount.getBalance();
 
-        // Izvršavamo i očekujemo izuzetak
         assertThrows(RuntimeException.class, () ->
                 orderService.executeOrder("buy", 10L, 1L, 1000.0, 100.0)
         );
 
-        // Proveravamo da je stanje NEPROMENJENO
         assertEquals(originalBalance, userAccount.getBalance());
 
-        // Verifikacija da se nije snimilo (može i verifyNoInteractions ako koristiš mocking za repo)
         verify(accountRepository, never()).save(userAccount);
     }
 
