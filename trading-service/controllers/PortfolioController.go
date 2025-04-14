@@ -74,6 +74,32 @@ func (sc *PortfolioController) UpdatePublicCount(c *fiber.Ctx) error {
 		})
 	}
 
+	// Dohvatanje portfolija
+	var portfolio types.Portfolio
+	if err := db.DB.Where("user_id = ? AND security_id = ?", userID, req.SecurityID).
+		First(&portfolio).Error; err != nil {
+		return c.Status(404).JSON(types.Response{
+			Success: false,
+			Error:   "Portfolio not found",
+		})
+	}
+
+	// Validacije
+	if req.PublicCount < 0 {
+		return c.Status(400).JSON(types.Response{
+			Success: false,
+			Error:   "Public count cannot be negative",
+		})
+	}
+
+	// Proveri da public ne prelazi ukupnu količinu
+	if req.PublicCount > portfolio.Quantity {
+		return c.Status(400).JSON(types.Response{
+			Success: false,
+			Error:   "Public count cannot be greater than total amount",
+		})
+	}
+
 	// Izmena u bazi
 	if err := db.DB.Model(&types.Portfolio{}).
 		Where("user_id = ? AND security_id = ?", userID, req.SecurityID).

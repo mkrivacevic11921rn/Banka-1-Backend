@@ -154,6 +154,37 @@ func (oc *OrderController) CreateOrder(c *fiber.Ctx) error {
 		})
 	}
 
+	// Učitaj hartiju odmah nakon validacije korisnika
+	var security types.Security
+	if err := db.DB.First(&security, orderRequest.SecurityID).Error; err != nil {
+		return c.Status(404).JSON(types.Response{
+			Success: false,
+			Error:   "Hartija nije pronađena",
+		})
+	}
+
+	// Proveri da li je hartija istekla
+	if security.SettlementDate != nil {
+		parsed, err := time.Parse("2006-01-02", *security.SettlementDate)
+		if err != nil {
+			return c.Status(400).JSON(types.Response{
+				Success: false,
+				Error:   "Nevažeći settlement date format",
+			})
+		}
+
+		// Poredi samo po danima, ne po satu
+		now := time.Now().Truncate(24 * time.Hour)
+		parsed = parsed.Truncate(24 * time.Hour)
+
+		if parsed.Before(now) {
+			return c.Status(400).JSON(types.Response{
+				Success: false,
+				Error:   "Nije moguće kreirati order za hartiju kojoj je istekao settlement date",
+			})
+		}
+	}
+
 	status := "pending"
 	var approvedBy *uint = nil
 
