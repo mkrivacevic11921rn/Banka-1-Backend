@@ -1,6 +1,7 @@
 package dto
 
 type PortfolioSecurityDTO struct {
+	SecurityID   uint    `json:"securityId"`
 	Ticker       string  `json:"ticker"`
 	Type         string  `json:"type"`
 	Symbol       string  `json:"symbol"`
