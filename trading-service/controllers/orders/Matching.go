@@ -2,6 +2,7 @@ package orders
 
 import (
 	"banka1.com/middlewares"
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
@@ -125,17 +126,24 @@ func MatchOrder(order types.Order) {
 				break
 			}
 
-			// SKIDANJE unita ako je kupovina (smanjuje se dostupnost hartija)
-			if order.Direction == "buy" {
-				var security types.Security
-				if err := tx.First(&security, order.SecurityID).Error; err == nil {
-					security.Volume -= int64(matchQuantity)
-					if security.Volume < 0 {
-						security.Volume = 0
-					}
-					tx.Save(&security)
-				}
+			// Ažuriraj volume preko helper funkcije
+			if err := UpdateAvailableVolumeTx(tx, order.SecurityID); err != nil {
+				fmt.Printf("Greska pri UpdateAvailableVolume: %v\n", err)
+				tx.Rollback()
+				break
 			}
+
+			//// SKIDANJE unita ako je kupovina (smanjuje se dostupnost hartija)
+			//if order.Direction == "buy" {
+			//	var security types.Security
+			//	if err := tx.First(&security, order.SecurityID).Error; err == nil {
+			//		security.Volume -= int64(matchQuantity)
+			//		if security.Volume < 0 {
+			//			security.Volume = 0
+			//		}
+			//		tx.Save(&security)
+			//	}
+			//}
 
 			// Ažuriraj RemainingParts u bazi (bez is_done/status!)
 			if err := tx.Model(&types.Order{}).Where("id = ?", order.ID).Update("remaining_parts", *order.RemainingParts).Error; err != nil {
@@ -509,4 +517,37 @@ func IsSettlementDateValid(order *types.Order) bool {
 	}
 
 	return true
+}
+
+func UpdateAvailableVolume(securityID uint) error {
+	return UpdateAvailableVolumeTx(db.DB, securityID)
+}
+
+func UpdateAvailableVolumeTx(tx *gorm.DB, securityID uint) error {
+	var total sql.NullInt64
+
+	// Direktno koristi RAW SQL da izbegnemo GORM probleme sa pointerima i imenovanjem
+	query := `
+		SELECT SUM(remaining_parts)
+		FROM orders
+		WHERE security_id = ?
+		  AND lower(direction) = 'sell'
+		  AND lower(status) = 'approved'
+		  AND COALESCE(is_done, false) = false
+	`
+
+	err := tx.Raw(query, securityID).Scan(&total).Error
+	if err != nil {
+		return fmt.Errorf("greska pri izvrsavanju SUM upita: %w", err)
+	}
+
+	final := int64(0)
+	if total.Valid {
+		final = total.Int64
+	}
+
+	// Ažuriraj volume u security tabeli
+	return tx.Model(&types.Security{}).
+		Where("id = ?", securityID).
+		Update("volume", final).Error
 }
