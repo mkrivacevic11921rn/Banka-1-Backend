@@ -100,11 +100,11 @@ public class ReceiverController {
                             examples = @ExampleObject(value = "{ \"success\": false, \"error\": \"Primalac ne postoji ili su podaci nevalidni.\" }"))
             )
     })
-    @PutMapping("/{id}")
+    @PutMapping("/{receiverId}")
     @ReceiverAuthorization
     public ResponseEntity<?> updateReceiver(
             @Parameter(description = "ID primaoca", required = true, example = "1")
-            @PathVariable Long id,
+            @PathVariable Long receiverId,
             @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Podaci za ažuriranje primaoca",
                     required = true,
@@ -112,7 +112,7 @@ public class ReceiverController {
                             examples = @ExampleObject(value = "{ \"ownerAccountId\": 2, \"accountNumber\": \"987654321\", \"fullName\": \"Nikola Nikolić\", \"address\": \"Nemanjina 4\" }"))
             ) ReceiverDTO receiverDTO) {
         try {
-            Receiver updatedReceiver = receiverService.updateReceiver(id, receiverDTO);
+            Receiver updatedReceiver = receiverService.updateReceiver(receiverId, receiverDTO);
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("message", "Primalac uspešno ažuriran", "receiver", updatedReceiver), null);
         } catch (Exception e) {
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
