@@ -337,8 +337,8 @@ create table otc_transaction
         unique,
     failed            boolean          not null DEFAULT false,
     finished          boolean          not null DEFAULT false,
-    amount_taken      double precision not null DEFAULT 0,
-    amount_given      double precision not null DEFAULT 0,
+    amount_taken      double precision not null DEFAULT -1,
+    amount_given      double precision not null DEFAULT -1,
     seller_account_id bigint
         constraint fk5fp8nocwl0ei3m0ffmfa1bmdq
             references account,
