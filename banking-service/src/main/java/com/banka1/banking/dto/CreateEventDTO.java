@@ -1,6 +1,7 @@
 package com.banka1.banking.dto;
 
 import com.banka1.banking.models.helper.IdempotenceKey;
+import com.banka1.banking.models.interbank.EventDirection;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;

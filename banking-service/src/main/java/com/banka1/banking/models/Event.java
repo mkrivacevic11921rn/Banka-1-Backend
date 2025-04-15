@@ -2,6 +2,7 @@ package com.banka1.banking.models;
 
 import com.banka1.banking.models.helper.DeliveryStatus;
 import com.banka1.banking.models.helper.IdempotenceKey;
+import com.banka1.banking.models.interbank.EventDirection;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -39,6 +40,9 @@ public class Event {
 
     @Enumerated(EnumType.STRING)
     private DeliveryStatus status = DeliveryStatus.PENDING;
+
+    @Enumerated(EnumType.STRING)
+    private EventDirection direction = EventDirection.OUTGOING;
 
     @PostLoad @PrePersist
     private void setUniqueKey() {
