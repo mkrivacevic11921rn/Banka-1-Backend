@@ -39,13 +39,41 @@ public class EventService {
     }
 
     public Event receiveEvent(InterbankMessageDTO<?> dto, String rawPayload, String sourceUrl) {
+
         Event event = new Event();
-        event.setMessageType(dto.getMessageType().name());
-        event.setPayload(rawPayload);
-        event.setUrl(sourceUrl);
-        event.setIdempotenceKey(dto.getIdempotenceKey());
-        event.setDirection(EventDirection.INCOMING);
-        event.setStatus(DeliveryStatus.PENDING);
+
+        if (dto == null) {
+            return null;
+        }
+
+        if (eventRepository.existsByIdempotenceKey(dto.getIdempotenceKey())) {
+            throw new RuntimeException("Event already exists");
+        }
+
+        try {
+            event.setMessageType(dto.getMessageType());
+            event.setPayload(rawPayload);
+            event.setUrl(sourceUrl);
+            event.setIdempotenceKey(dto.getIdempotenceKey());
+            event.setDirection(EventDirection.INCOMING);
+            event.setStatus(DeliveryStatus.PENDING);
+        } catch (Exception e) {
+            event.setMessageType(null);
+            event.setPayload(rawPayload);
+            event.setUrl(sourceUrl);
+            if (dto.getIdempotenceKey() != null && dto.getIdempotenceKey().getRoutingNumber() != null && dto.getIdempotenceKey().getLocallyGeneratedKey() != null) {
+                event.setIdempotenceKey(dto.getIdempotenceKey());
+            } else {
+                IdempotenceKey idempotenceKey = new IdempotenceKey();
+                idempotenceKey.setRoutingNumber(111);
+                idempotenceKey.setLocallyGeneratedKey(UUID.randomUUID().toString());
+                event.setIdempotenceKey(idempotenceKey);
+            }
+            event.setDirection(EventDirection.INCOMING);
+            event.setStatus(DeliveryStatus.FAILED);
+
+            throw new RuntimeException("Failed to create event: " + e.getMessage());
+        }
 
         return eventRepository.save(event);
     }

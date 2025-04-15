@@ -1,5 +1,6 @@
 package com.banka1.banking.dto.interbank;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum InterbankMessageType {
@@ -9,6 +10,7 @@ public enum InterbankMessageType {
 
     private final String value;
 
+    @JsonCreator
     InterbankMessageType(String value) {
         this.value = value;
     }

@@ -1,5 +1,6 @@
 package com.banka1.banking.models;
 
+import com.banka1.banking.dto.interbank.InterbankMessageType;
 import com.banka1.banking.models.helper.DeliveryStatus;
 import com.banka1.banking.models.helper.IdempotenceKey;
 import com.banka1.banking.models.interbank.EventDirection;
@@ -20,7 +21,8 @@ public class Event {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String messageType;
+    @Enumerated(EnumType.STRING)
+    private InterbankMessageType messageType;
 
     @Column(columnDefinition = "TEXT")
     private String payload;

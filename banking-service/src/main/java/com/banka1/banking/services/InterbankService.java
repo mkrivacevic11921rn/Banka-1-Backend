@@ -27,7 +27,7 @@ public class InterbankService {
             String payloadJson = objectMapper.writeValueAsString(messageDto.getMessage());
 
             Event event = eventService.createEvent(new CreateEventDTO(
-                    messageDto.getMessageType().name(),
+                    messageDto.getMessageType(),
                     payloadJson,
                     targetUrl
             ));
@@ -40,7 +40,7 @@ public class InterbankService {
     }
 
     public void webhook(InterbankMessageDTO<?> messageDto, String rawPayload, String sourceUrl) {
-        eventService.receiveEvent(messageDto, rawPayload, sourceUrl);
+//        eventService.receiveEvent(messageDto, rawPayload, sourceUrl);
 
         switch (messageDto.getMessageType()) {
             case NEW_TX :

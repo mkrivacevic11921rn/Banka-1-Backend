@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
@@ -22,8 +23,7 @@ public class InterbankDeliveryInterceptor implements ResponseBodyAdvice<Object> 
 
     @Override
     public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
-        // aktiviraj samo za rutu /interbank
-        return true; // možeš usloviti po potrebi
+        return true;
     }
 
     @Override
@@ -31,14 +31,15 @@ public class InterbankDeliveryInterceptor implements ResponseBodyAdvice<Object> 
                                   MediaType selectedContentType, Class<? extends HttpMessageConverter<?>> selectedConverterType,
                                   ServerHttpRequest request, ServerHttpResponse response) {
 
-        // Proveri da li je to /interbank poziv
+
         if (!request.getURI().getPath().contains("/interbank")) return body;
 
         try {
-            HttpServletRequest servletRequest = (HttpServletRequest) request;
+            HttpServletRequest servletRequest = ((ServletServerHttpRequest) request).getServletRequest();
 
-            // Izvuci event (npr. ako si ga sačuvao kao request attribute)
+
             Event event = (Event) servletRequest.getAttribute("event");
+
 
             if (event != null) {
                 long durationMs = System.currentTimeMillis() - (long) servletRequest.getAttribute("startTime");
@@ -56,7 +57,7 @@ public class InterbankDeliveryInterceptor implements ResponseBodyAdvice<Object> 
             }
 
         } catch (Exception e) {
-            // loguj ako hoćeš
+            e.printStackTrace();
         }
 
         return body;

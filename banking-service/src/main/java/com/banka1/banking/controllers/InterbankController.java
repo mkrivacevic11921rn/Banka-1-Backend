@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/interbank")
@@ -22,7 +23,8 @@ public class InterbankController {
     private final InterbankService interbankService;
 
     @PostMapping
-    public ResponseEntity<?> receiveWebhook(@RequestBody String rawPayload, HttpServletRequest request) throws IOException {
+    public ResponseEntity<?> receiveWebhook(HttpServletRequest request) throws IOException {
+        String rawPayload = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
 
         ObjectMapper mapper = new ObjectMapper();
         InterbankMessageDTO<?> message = mapper.readValue(rawPayload, InterbankMessageDTO.class);
@@ -31,4 +33,5 @@ public class InterbankController {
 
         return ResponseEntity.ok().build();
     }
+
 }
