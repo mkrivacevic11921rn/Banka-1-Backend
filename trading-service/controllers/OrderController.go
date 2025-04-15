@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 type OrderController struct {
@@ -153,6 +154,37 @@ func (oc *OrderController) CreateOrder(c *fiber.Ctx) error {
 		})
 	}
 
+	// Učitaj hartiju odmah nakon validacije korisnika
+	var security types.Security
+	if err := db.DB.First(&security, orderRequest.SecurityID).Error; err != nil {
+		return c.Status(404).JSON(types.Response{
+			Success: false,
+			Error:   "Hartija nije pronađena",
+		})
+	}
+
+	// Proveri da li je hartija istekla
+	if security.SettlementDate != nil {
+		parsed, err := time.Parse("2006-01-02", *security.SettlementDate)
+		if err != nil {
+			return c.Status(400).JSON(types.Response{
+				Success: false,
+				Error:   "Nevažeći settlement date format",
+			})
+		}
+
+		// Poredi samo po danima, ne po satu
+		now := time.Now().Truncate(24 * time.Hour)
+		parsed = parsed.Truncate(24 * time.Hour)
+
+		if parsed.Before(now) {
+			return c.Status(400).JSON(types.Response{
+				Success: false,
+				Error:   "Nije moguće kreirati order za hartiju kojoj je istekao settlement date",
+			})
+		}
+	}
+
 	status := "pending"
 	var approvedBy *uint = nil
 
@@ -161,6 +193,42 @@ func (oc *OrderController) CreateOrder(c *fiber.Ctx) error {
 			status = "approved"
 			id := uint(userId)
 			approvedBy = &id
+		}
+	}
+
+	// Provera dostupnosti unita ako se order odobrava odmah
+	if status == "approved" {
+		var security types.Security
+		if err := db.DB.First(&security, orderRequest.SecurityID).Error; err != nil {
+			return c.Status(404).JSON(types.Response{
+				Success: false,
+				Error:   "Hartija nije pronađena",
+			})
+		}
+
+		if strings.ToLower(orderRequest.Direction) == "buy" {
+			if orderRequest.AON {
+				if orderRequest.Quantity > int(security.Volume) {
+					return c.Status(400).JSON(types.Response{
+						Success: false,
+						Error:   fmt.Sprintf("Nedovoljno dostupnih unita (%d dostupno)", security.Volume),
+					})
+				}
+			}
+		} else if strings.ToLower(orderRequest.Direction) == "sell" {
+			var portfolio types.Portfolio
+			if err := db.DB.Where("user_id = ? AND security_id = ?", orderRequest.UserID, orderRequest.SecurityID).First(&portfolio).Error; err != nil {
+				return c.Status(400).JSON(types.Response{
+					Success: false,
+					Error:   "Nemate ovu hartiju u portfoliju",
+				})
+			}
+			if orderRequest.AON && portfolio.Quantity < orderRequest.Quantity {
+				return c.Status(400).JSON(types.Response{
+					Success: false,
+					Error:   fmt.Sprintf("Nemate dovoljno hartija za AON prodaju (imate %d, traženo %d)", portfolio.Quantity, orderRequest.Quantity),
+				})
+			}
 		}
 	}
 
@@ -188,6 +256,7 @@ func (oc *OrderController) CreateOrder(c *fiber.Ctx) error {
 		Direction:         orderRequest.Direction,
 		Status:            status, // TODO: pribaviti needs approval vrednost preko token-a?
 		ApprovedBy:        approvedBy,
+		LastModified:      time.Now().Unix(),
 		IsDone:            false,
 		RemainingParts:    &orderRequest.Quantity,
 		AfterHours:        false, // TODO: dodati check za ovo
@@ -300,9 +369,49 @@ func ApproveDeclineOrder(c *fiber.Ctx, decline bool) error {
 	if decline {
 		order.Status = "declined"
 	} else {
+		// Provera dostupnosti unita pre odobrenja
+		var security types.Security
+		if err := db.DB.First(&security, order.SecurityID).Error; err != nil {
+			return c.Status(404).JSON(types.Response{
+				Success: false,
+				Error:   "Hartija nije pronađena",
+			})
+		}
+
+		if strings.ToLower(order.Direction) == "buy" {
+			// Provera da li ima dostupnih unita za kupovinu
+			if order.Quantity > int(security.Volume) {
+				return c.Status(400).JSON(types.Response{
+					Success: false,
+					Error:   fmt.Sprintf("Nedovoljno dostupnih unita (%d dostupno)", security.Volume),
+				})
+			}
+		} else if strings.ToLower(order.Direction) == "sell" {
+			// Provera da li korisnik ima dovoljno hartija u portfoliju
+			var portfolio types.Portfolio
+			if err := db.DB.Where("user_id = ? AND security_id = ?", order.UserID, order.SecurityID).First(&portfolio).Error; err != nil {
+				return c.Status(400).JSON(types.Response{
+					Success: false,
+					Error:   "Nemate ovu hartiju u portfoliju",
+				})
+			}
+			if portfolio.Quantity < order.Quantity {
+				return c.Status(400).JSON(types.Response{
+					Success: false,
+					Error:   fmt.Sprintf("Nemate dovoljno hartija da biste prodali (imate %d, traženo %d)", portfolio.Quantity, order.Quantity),
+				})
+			}
+		}
+
 		order.Status = "approved"
-		order.ApprovedBy = new(uint)
-		*order.ApprovedBy = 0
+
+		if uidRaw := c.Locals("user_id"); uidRaw != nil {
+			if uid, ok := uidRaw.(float64); ok {
+				id := uint(uid)
+				order.ApprovedBy = &id
+			}
+		}
+		order.LastModified = time.Now().Unix()
 		db.DB.Save(&order)
 
 		orders.MatchOrder(order)
@@ -359,6 +468,50 @@ func (oc *OrderController) ApproveOrder(c *fiber.Ctx) error {
 	return ApproveDeclineOrder(c, false)
 }
 
+// CancelOrder godoc
+//
+//	@Summary		Otkazivanje naloga
+//	@Description	Menja status naloga u 'cancelled' ukoliko još nije izvršen.
+//	@Tags			Orders
+//	@Produce		json
+//	@Param			id	path	int	true	"ID naloga koji se otkazuje"
+//	@Security		BearerAuth
+//	@Security		BearerAuth
+//	@Success		200	{object}	types.Response{data=string}	"Nalog uspešno otkazan"
+//	@Failure		400	{object}	types.Response					"Nevalidan ID ili nalog je već završen"
+//	@Failure		403	{object}	types.Response					"Nedovoljne privilegije (ne može se otkazati tuđi nalog)"
+//	@Failure		404	{object}	types.Response					"Nalog sa datim ID-jem ne postoji"
+//	@Failure		500	{object}	types.Response					"Greška prilikom otkazivanja naloga"
+//	@Router			/orders/{id}/cancel [post]
+func (oc *OrderController) CancelOrder(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id", -1)
+	if err != nil || id <= 0 {
+		return c.Status(400).JSON(types.Response{Success: false, Error: "Nevalidan ID"})
+	}
+
+	var order types.Order
+	if err := db.DB.First(&order, id).Error; err != nil {
+		return c.Status(404).JSON(types.Response{Success: false, Error: "Order nije pronađen"})
+	}
+
+	userID := uint(c.Locals("user_id").(float64))
+	if order.UserID != userID {
+		return c.Status(403).JSON(types.Response{Success: false, Error: "Nije dozvoljeno otkazati tuđi order"})
+	}
+
+	if order.IsDone || order.Status == "done" || order.Status == "cancelled" {
+		return c.Status(400).JSON(types.Response{Success: false, Error: "Order je već izvršen ili otkazan"})
+	}
+
+	order.Status = "cancelled"
+	order.LastModified = time.Now().Unix()
+	if err := db.DB.Save(&order).Error; err != nil {
+		return c.Status(500).JSON(types.Response{Success: false, Error: "Greška pri otkazivanju ordera"})
+	}
+
+	return c.JSON(types.Response{Success: true, Data: fmt.Sprintf("Order %d je uspešno otkazan", order.ID)})
+}
+
 func InitOrderRoutes(app *fiber.App) {
 	orderController := NewOrderController()
 
@@ -367,4 +520,5 @@ func InitOrderRoutes(app *fiber.App) {
 	app.Post("/orders", middlewares.Auth, orderController.CreateOrder)
 	app.Post("/orders/:id/decline", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), orderController.DeclineOrder)
 	app.Post("/orders/:id/approve", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), orderController.ApproveOrder)
+	app.Post("/orders/:id/cancel", middlewares.Auth, orderController.CancelOrder)
 }

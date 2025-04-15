@@ -1,5 +1,6 @@
 package com.banka1.banking.services;
 
+import com.banka1.banking.dto.MoneyTransferDTO;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.services.implementation.AuthService;
@@ -16,48 +17,65 @@ public class OrderService {
     private final AccountService accountService;
     private final BankAccountUtils bankAccountUtils;
     private final AccountRepository accountRepository;
+    private final TransferService transferService;
 
     @Transactional
-    public Double executeOrder(String direction, Long userId, Long accountId, Double amount) {
+    public Double executeOrder(String direction, Long userId, Long accountId, Double amount, Double fee) {
         Account account = accountService.findById(accountId);
         Account bankAccount = bankAccountUtils.getBankAccountForCurrency(account.getCurrencyType());
 
-        Double finalAmount = amount;
+        if (!Objects.equals(account.getOwnerID(), userId)) {
+            throw new RuntimeException("Korisnik nije vlasnik računa");
+        }
 
-        if(Objects.equals(account.getId(), bankAccount.getId())) {
-            if(direction.compareToIgnoreCase("buy") == 0) {
-                account.setBalance(account.getBalance() - finalAmount);
-            } else if(direction.compareToIgnoreCase("sell") == 0) {
-                account.setBalance(account.getBalance() + finalAmount);
+        if (direction.equalsIgnoreCase("buy") && account.getBalance() < amount + fee) {
+            throw new IllegalArgumentException("Nedovoljno sredstava na računu za iznos + proviziju");
+        }
+
+        boolean sameCurrency = account.getCurrencyType().equals(bankAccount.getCurrencyType());
+        System.out.printf("[ORDER EXEC] account=%s, bank=%s, direction=%s, devizni=%s%n",
+                account.getCurrencyType(), bankAccount.getCurrencyType(), direction, !sameCurrency);
+
+        if (Objects.equals(account.getId(), bankAccount.getId())) {
+            if (direction.equalsIgnoreCase("buy")) {
+                account.setBalance(account.getBalance() - amount - fee);
+            } else if (direction.equalsIgnoreCase("sell")) {
+                account.setBalance(account.getBalance() + amount);
             } else {
-                throw new RuntimeException();
+                throw new IllegalArgumentException("Nepoznata direkcija");
             }
 
             accountRepository.save(account);
         } else {
-            if(!Objects.equals(account.getOwnerID(), userId))
-                throw new RuntimeException();
+            // Glavni transfer
+            MoneyTransferDTO dto = new MoneyTransferDTO();
+            dto.setFromAccountNumber(direction.equalsIgnoreCase("buy") ? account.getAccountNumber() : bankAccount.getAccountNumber());
+            dto.setRecipientAccount(direction.equalsIgnoreCase("buy") ? bankAccount.getAccountNumber() : account.getAccountNumber());
+            dto.setAmount(amount);
+            dto.setReceiver("Order Execution");
+            dto.setAdress("System");
+            dto.setPayementCode("999");
+            dto.setPayementReference("Auto");
+            dto.setPayementDescription("Realizacija naloga");
 
-            // TODO: provizije
+            transferService.createMoneyTransfer(dto);
 
-            if(direction.compareToIgnoreCase("buy") == 0) {
-                if(account.getBalance() < finalAmount) {
-                    throw new IllegalArgumentException();
-                }
+            // Transfer za fee banci
+            if (fee != null && fee > 0) {
+                MoneyTransferDTO feeDto = new MoneyTransferDTO();
+                feeDto.setFromAccountNumber(account.getAccountNumber());
+                feeDto.setRecipientAccount(bankAccount.getAccountNumber());
+                feeDto.setAmount(fee);
+                feeDto.setReceiver("Bank Fee");
+                feeDto.setAdress("System");
+                feeDto.setPayementCode("999");
+                feeDto.setPayementReference("Fee");
+                feeDto.setPayementDescription("Provizija za realizaciju naloga");
 
-                bankAccount.setBalance(bankAccount.getBalance() + finalAmount);
-                account.setBalance(account.getBalance() - finalAmount);
-            } else if(direction.compareToIgnoreCase("sell") == 0) {
-                bankAccount.setBalance(bankAccount.getBalance() - finalAmount);
-                account.setBalance(account.getBalance() + finalAmount);
-            } else {
-                throw new RuntimeException();
+                transferService.createMoneyTransfer(feeDto);
             }
-
-            accountRepository.save(account);
-            accountRepository.save(bankAccount);
         }
 
-        return finalAmount;
+        return amount;
     }
 }

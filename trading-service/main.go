@@ -156,6 +156,16 @@ func checkUncompletedOrders() {
 	for len(undoneOrders) > 0 && previousLength != len(undoneOrders) {
 		fmt.Printf("Preostalo još %v neizvršenih naloga\n", len(undoneOrders))
 		for _, order := range undoneOrders {
+			if !orders.IsSettlementDateValid(&order) {
+				fmt.Printf("Order %d automatski odbijen zbog isteka settlement datuma\n", order.ID)
+				db.DB.Model(&order).Updates(map[string]interface{}{
+					"status":          "declined",
+					"is_done":         true,
+					"remaining_parts": 0,
+				})
+				continue
+			}
+
 			if orders.CanExecuteAny(order) {
 				orders.MatchOrder(order)
 				break
