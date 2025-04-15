@@ -100,7 +100,7 @@ func (oc *OrderController) GetOrders(c *fiber.Ctx) error {
 	if "all" == filterStatus {
 		err = db.DB.Find(&ordersList).Error
 	} else {
-		err = db.DB.Find(&ordersList, "status = ?", filterStatus).Error
+		err = db.DB.Find(&ordersList, "lower(status) = ?", filterStatus).Error
 	}
 	if err != nil {
 		return c.Status(400).JSON(types.Response{
