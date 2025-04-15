@@ -53,7 +53,7 @@ public class CardMapper {
         authorizedPerson.setLastName(dto.getLastName());
         authorizedPerson.setPhoneNumber(dto.getPhoneNumber());
         if (dto.getBirthday() != null) {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
             Date date = null;
             try {
                 date = sdf.parse(dto.getBirthday());
