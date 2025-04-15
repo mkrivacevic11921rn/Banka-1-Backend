@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class AssetDTO {
-    private String type; // "MONAS", "STOCK", "OPTION"
-    private Object asset; // možeš razdvojiti ako želiš
+    private String type;
+    private Object asset;
 }
