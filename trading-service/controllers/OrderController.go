@@ -520,7 +520,7 @@ func (oc *OrderController) CancelOrder(c *fiber.Ctx) error {
 //	@Tags			Orders
 //	@Produce		json
 //	@Param			id	path	int	true	"ID korisnika za kog se računa profit"
-//	@Success		200	{object}	types.Response{data=types.RealizedProfitResponse}	"Uspešno vraćen obračun profita"
+//	@Success		200	{object}	types.Response{data=dto.RealizedProfitResponse}	"Uspešno vraćen obračun profita"
 //	@Failure		400	{object}	types.Response										"Nevalidan ID korisnika"
 //	@Failure		404	{object}	types.Response										"Korisnik nema transakcija, nije moguće izračunati profit"
 //	@Failure		500	{object}	types.Response										"Greška prilikom obračuna profita"
