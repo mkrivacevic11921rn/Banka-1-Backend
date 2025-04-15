@@ -121,17 +121,27 @@ func getActuary(id any) any {
 func handleOTCACK(data any) error {
 	dto := data.(*types.OTCTransactionACKDTO)
 
-	if dto.Failure {
-		log.Println("Saga failed:", dto.Message)
-		return nil
-	}
-
 	phase, exists, err := saga.StateManager.GetPhase(db.DB, dto.Uid)
 	if err != nil {
 		return err
 	}
 	if !exists {
 		log.Printf("[SAGA] Nepoznat UID: %s", dto.Uid)
+		return nil
+	}
+
+	if dto.Failure {
+		log.Println("Saga failed:", dto.Message)
+		go func() {
+			for true {
+				err := rollbackOwnership(dto.Uid)
+				if err == nil {
+					break
+				}
+				log.Printf("Greska u rollbackOwnership (uid %v, poruka %v): %v", dto.Uid, dto.Message, err)
+				time.Sleep(3 * time.Second)
+			}
+		}()
 		return nil
 	}
 
@@ -255,6 +265,18 @@ func successOTC(uid string) {
 		}
 		log.Printf("Greska u SendOTCTransactionSuccess (uid %v): %v", uid, err)
 		time.Sleep(3 * time.Second)
+	}
+}
+
+func FailAllOTC() {
+	var states []types.OTCSagaState
+
+	if err := db.DB.Find(&states).Error; err != nil {
+		log.Fatalf("Greska pri pristupanju transakcijama u bazi: %v", err)
+	}
+
+	for _, state := range states {
+		FailOTC(state.UID, "Ostala nakon pada servisa")
 	}
 }
 
