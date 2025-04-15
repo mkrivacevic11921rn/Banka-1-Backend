@@ -66,7 +66,7 @@ func (c *OTCTradeController) CreateOTCTrade(ctx *fiber.Ctx) error {
 	userID := uint(ctx.Locals("user_id").(float64))
 
 	var portfolio types.Portfolio
-	if err := db.DB.First(&portfolio, req.PortfolioID).Error; err != nil {
+	if err := db.DB.Preload("Security").First(&portfolio, req.PortfolioID).Error; err != nil {
 		return ctx.Status(fiber.StatusNotFound).JSON(types.Response{
 			Success: false,
 			Error:   "Portfolio nije pronađen",
@@ -363,7 +363,7 @@ func (c *OTCTradeController) AcceptOTCTrade(ctx *fiber.Ctx) error {
 	if err := db.DB.Create(&contract).Error; err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
 			Success: false,
-			Error:   "Greška pri kreiranju ugovora",
+			Error:   "Greška pri kreiranju ugovora " + err.Error(),
 		})
 	}
 
@@ -485,18 +485,10 @@ func (c *OTCTradeController) ExecuteOptionContract(ctx *fiber.Ctx) error {
 		Amount:          contract.StrikePrice * float64(contract.Quantity),
 	}
 
-	if err := broker.SendOTCTransactionInit(dto); err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
-			Success: false,
-			Error:   "Greška prilikom slanja OTC transakcije",
-		})
-	}
-	saga.StateManager.UpdatePhase(uid, saga.PhaseInit)
-
 	contract.UID = uid
 
 	if err := db.DB.Save(&contract).Error; err != nil {
-		_ = broker.SendOTCTransactionFailure(uid, "Greška prilikom čuvanja statusa ugovora")
+		go broker.FailOTC(uid, "Greška prilikom čuvanja statusa ugovora")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
 			Success: false,
 			Error:   "Greška prilikom čuvanja statusa ugovora",
@@ -504,10 +496,24 @@ func (c *OTCTradeController) ExecuteOptionContract(ctx *fiber.Ctx) error {
 	}
 
 	if err := db.DB.Model(&types.OTCTrade{}).Where("id = ?", contract.OTCTradeID).Update("status", "completed").Error; err != nil {
-		_ = broker.SendOTCTransactionFailure(uid, "Greška pri ažuriranju OTC ponude")
+		go broker.FailOTC(uid, "Greška pri ažuriranju OTC ponude")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
 			Success: false,
 			Error:   "Greška pri ažuriranju OTC ponude",
+		})
+	}
+
+	if err := saga.StateManager.UpdatePhase(db.DB, uid, types.PhaseInit); err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
+			Success: false,
+			Error:   "Greška prilikom kreiranja OTC transakcije",
+		})
+	}
+
+	if err := broker.SendOTCTransactionInit(dto); err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(types.Response{
+			Success: false,
+			Error:   "Greška prilikom slanja OTC transakcije",
 		})
 	}
 
@@ -631,7 +637,7 @@ func (c *PortfolioControllerr) GetAllPublicPortfolios(ctx *fiber.Ctx) error {
 func InitPortfolioRoutess(app *fiber.App) {
 	portfolioController := NewPortfolioControllerr()
 
-	app.Get("/portfolio/public", portfolioController.GetAllPublicPortfolios)
+	app.Get("/portfolio/public", middlewares.Auth, portfolioController.GetAllPublicPortfolios)
 }
 
 func InitOTCTradeRoutes(app *fiber.App) {
