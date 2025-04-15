@@ -4,6 +4,7 @@ import (
 	"banka1.com/controllers/orders"
 	"banka1.com/db"
 	"banka1.com/middlewares"
+	"banka1.com/services"
 	"banka1.com/types"
 	"encoding/json"
 	"fmt"
@@ -512,6 +513,49 @@ func (oc *OrderController) CancelOrder(c *fiber.Ctx) error {
 	return c.JSON(types.Response{Success: true, Data: fmt.Sprintf("Order %d je uspešno otkazan", order.ID)})
 }
 
+// GetRealizedProfit godoc
+//
+//	@Summary		Obračun realizovanog profita
+//	@Description	Računa ukupni ostvareni profit korisnika na osnovu izvršenih transakcija (FIFO).
+//	@Tags			Orders
+//	@Produce		json
+//	@Param			id	path	int	true	"ID korisnika za kog se računa profit"
+//	@Success		200	{object}	types.Response{data=types.RealizedProfitResponse}	"Uspešno vraćen obračun profita"
+//	@Failure		400	{object}	types.Response										"Nevalidan ID korisnika"
+//	@Failure		404	{object}	types.Response										"Korisnik nema transakcija, nije moguće izračunati profit"
+//	@Failure		500	{object}	types.Response										"Greška prilikom obračuna profita"
+//	@Router			/profit/{id} [get]
+func (oc *OrderController) GetRealizedProfit(c *fiber.Ctx) error {
+	userID, err := c.ParamsInt("id", -1)
+	if err != nil || userID <= 0 {
+		return c.Status(400).JSON(types.Response{
+			Success: false,
+			Error:   "Nevalidan ID korisnika",
+		})
+	}
+
+	profit, err := services.CalculateRealizedProfit(uint(userID))
+	if err != nil {
+		// Ako korisnik nema transakcija, vrati 404
+		if err.Error() == "Korisnik nema transakcija. Ne može se izračunati profit." {
+			return c.Status(404).JSON(types.Response{
+				Success: false,
+				Error:   err.Error(),
+			})
+		}
+		// Sve ostalo tretiraj kao internu grešku
+		return c.Status(500).JSON(types.Response{
+			Success: false,
+			Error:   "Greška prilikom obračuna profita: " + err.Error(),
+		})
+	}
+
+	return c.JSON(types.Response{
+		Success: true,
+		Data:    profit,
+	})
+}
+
 func InitOrderRoutes(app *fiber.App) {
 	orderController := NewOrderController()
 
@@ -521,4 +565,5 @@ func InitOrderRoutes(app *fiber.App) {
 	app.Post("/orders/:id/decline", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), orderController.DeclineOrder)
 	app.Post("/orders/:id/approve", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), orderController.ApproveOrder)
 	app.Post("/orders/:id/cancel", middlewares.Auth, orderController.CancelOrder)
+	app.Get("/profit/:id", orderController.GetRealizedProfit)
 }

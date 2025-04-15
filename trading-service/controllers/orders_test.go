@@ -30,6 +30,7 @@ func registerTestRoutes(app *fiber.App) {
 	app.Post("/orders/:id/decline", controller.DeclineOrder)
 	app.Post("/orders/:id/approve", controller.ApproveOrder)
 	app.Post("/orders/:id/cancel", controller.CancelOrder)
+	app.Get("/profit/:id", controller.GetRealizedProfit)
 }
 
 func TestMain(m *testing.M) {
@@ -448,4 +449,113 @@ func TestMatchOrder_SelfMatch(t *testing.T) {
 	var updated types.Order
 	_ = db.DB.First(&updated, order2.ID).Error
 	assert.False(t, updated.IsDone)
+}
+
+func TestProfit_NoTransactions(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/profit/999", nil)
+	resp, err := app.Test(req)
+	assert.NoError(t, err)
+	assert.Equal(t, 404, resp.StatusCode)
+
+	var result types.Response
+	_ = json.NewDecoder(resp.Body).Decode(&result)
+
+	assert.False(t, result.Success)
+	assert.Contains(t, result.Error, "nema transakcija")
+}
+
+func TestProfit_OnlyBuys(t *testing.T) {
+	security := types.Security{ID: 100, Ticker: "ONLYBUY", Volume: 100, LastPrice: 100.0, Name: "Only Buy Inc."}
+	_ = db.DB.Create(&security).Error
+
+	tx := types.Transaction{
+		BuyerID:      1000,
+		SecurityID:   100,
+		Quantity:     10,
+		PricePerUnit: 50.0,
+	}
+	_ = db.DB.Create(&tx).Error
+
+	req := httptest.NewRequest(http.MethodGet, "/profit/1000", nil)
+	resp, err := app.Test(req)
+	assert.NoError(t, err)
+	assert.Equal(t, 200, resp.StatusCode)
+
+	var result types.Response
+	_ = json.NewDecoder(resp.Body).Decode(&result)
+	data := result.Data.(map[string]interface{})
+	assert.Equal(t, float64(0), data["total_profit"])
+}
+
+func TestProfit_SingleBuySingleSell(t *testing.T) {
+	security := types.Security{ID: 101, Ticker: "BNS", Volume: 100, LastPrice: 100.0, Name: "Buy & Sell Ltd."}
+	_ = db.DB.Create(&security).Error
+
+	_ = db.DB.Create(&types.Transaction{BuyerID: 1010, SecurityID: 101, Quantity: 10, PricePerUnit: 50.0}).Error
+	_ = db.DB.Create(&types.Transaction{SellerID: 1010, SecurityID: 101, Quantity: 10, PricePerUnit: 60.0}).Error
+
+	req := httptest.NewRequest(http.MethodGet, "/profit/1010", nil)
+	resp, err := app.Test(req)
+	assert.NoError(t, err)
+	assert.Equal(t, 200, resp.StatusCode)
+
+	var result types.Response
+	_ = json.NewDecoder(resp.Body).Decode(&result)
+	data := result.Data.(map[string]interface{})
+	assert.Equal(t, float64(100), data["total_profit"])
+}
+
+func TestProfit_MultipleBuysSingleSell(t *testing.T) {
+	security := types.Security{ID: 102, Ticker: "FIFO", Volume: 100, LastPrice: 100.0, Name: "Fifo Corp."}
+	_ = db.DB.Create(&security).Error
+
+	_ = db.DB.Create(&types.Transaction{BuyerID: 1020, SecurityID: 102, Quantity: 5, PricePerUnit: 80.0}).Error
+	_ = db.DB.Create(&types.Transaction{BuyerID: 1020, SecurityID: 102, Quantity: 5, PricePerUnit: 90.0}).Error
+	_ = db.DB.Create(&types.Transaction{SellerID: 1020, SecurityID: 102, Quantity: 10, PricePerUnit: 100.0}).Error
+
+	req := httptest.NewRequest(http.MethodGet, "/profit/1020", nil)
+	resp, err := app.Test(req)
+	assert.NoError(t, err)
+	assert.Equal(t, 200, resp.StatusCode)
+
+	var result types.Response
+	_ = json.NewDecoder(resp.Body).Decode(&result)
+	data := result.Data.(map[string]interface{})
+	assert.Equal(t, float64(150), data["total_profit"])
+}
+
+func TestProfit_SellWithoutEnoughBuys(t *testing.T) {
+	security := types.Security{ID: 103, Ticker: "PARTIAL", Volume: 100, LastPrice: 100.0, Name: "Partial Match"}
+	_ = db.DB.Create(&security).Error
+
+	_ = db.DB.Create(&types.Transaction{BuyerID: 1030, SecurityID: 103, Quantity: 5, PricePerUnit: 80.0}).Error
+	_ = db.DB.Create(&types.Transaction{SellerID: 1030, SecurityID: 103, Quantity: 10, PricePerUnit: 100.0}).Error
+
+	req := httptest.NewRequest(http.MethodGet, "/profit/1030", nil)
+	resp, err := app.Test(req)
+	assert.NoError(t, err)
+	assert.Equal(t, 200, resp.StatusCode)
+
+	var result types.Response
+	_ = json.NewDecoder(resp.Body).Decode(&result)
+	data := result.Data.(map[string]interface{})
+	assert.Equal(t, float64(100), data["total_profit"])
+}
+
+func TestProfit_LossScenario(t *testing.T) {
+	security := types.Security{ID: 104, Ticker: "LOSS", Volume: 100, LastPrice: 100.0, Name: "Loss Co."}
+	_ = db.DB.Create(&security).Error
+
+	_ = db.DB.Create(&types.Transaction{BuyerID: 1040, SecurityID: 104, Quantity: 10, PricePerUnit: 120.0}).Error
+	_ = db.DB.Create(&types.Transaction{SellerID: 1040, SecurityID: 104, Quantity: 10, PricePerUnit: 100.0}).Error
+
+	req := httptest.NewRequest(http.MethodGet, "/profit/1040", nil)
+	resp, err := app.Test(req)
+	assert.NoError(t, err)
+	assert.Equal(t, 200, resp.StatusCode)
+
+	var result types.Response
+	_ = json.NewDecoder(resp.Body).Decode(&result)
+	data := result.Data.(map[string]interface{})
+	assert.Equal(t, float64(-200), data["total_profit"])
 }
