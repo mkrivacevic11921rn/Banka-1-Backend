@@ -2,10 +2,14 @@ package com.banka1.banking.models;
 
 import com.banka1.banking.models.helper.DeliveryStatus;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.Instant;
 
 @Entity
+@Getter
+@Setter
 public class EventDelivery {
 
     @Id
@@ -19,12 +23,12 @@ public class EventDelivery {
     private Instant sentAt;
 
     @Enumerated(EnumType.STRING)
-    private DeliveryStatus status; // npr. SUCCESS, FAILED, PENDING
+    private DeliveryStatus status;
 
     private int httpStatus;
 
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String responseBody;
 
-    private long durationMs; // trajanje u milisekundama
+    private long durationMs;
 }
