@@ -96,34 +96,29 @@ func GetAggregatedTaxForUser(c *fiber.Ctx) error {
 
 	now := time.Now()
 	currentYear := now.Year()
-	currentMonth := now.Month()
+	currentMonth := int(now.Month())
 
-	// This Year Range (Jan 1st current year UTC to Jan 1st next year UTC)
 	startOfYear := time.Date(currentYear, time.January, 1, 0, 0, 0, 0, time.UTC)
 	startOfNextYear := time.Date(currentYear+1, time.January, 1, 0, 0, 0, 0, time.UTC)
-	startOfYearTs := startOfYear.Unix()         // Timestamp (seconds) for start of year
-	startOfNextYearTs := startOfNextYear.Unix() // Timestamp (seconds) for end of year (exclusive)
+	startOfYearTs := startOfYear.Unix()
+	startOfNextYearTs := startOfNextYear.Unix()
 
-	// This Month Range (1st current month UTC to 1st next month UTC)
-	startOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, time.UTC)
-	startOfNextMonth := startOfMonth.AddDate(0, 1, 0) // Add 1 month
-	startOfMonthTs := startOfMonth.Unix()             // Timestamp (seconds) for start of month
-	startOfNextMonthTs := startOfNextMonth.Unix()     // Timestamp (seconds) for end of month (exclusive)
-	// --- End Timestamp Calculations ---
+	startOfMonth := time.Date(currentYear, time.Month(currentMonth), 1, 0, 0, 0, 0, time.UTC) // Use integer month
+	startOfNextMonth := startOfMonth.AddDate(0, 1, 0)
+	startOfMonthTs := startOfMonth.Unix()
+	startOfNextMonthTs := startOfNextMonth.Unix()
 
 	var paid float64
-	// Filter created_at using timestamp ranges
 	errPaid := db.DB.Raw(`
 		SELECT COALESCE(SUM(tax_amount), 0) 
 		FROM tax
-		WHERE is_paid = 1 
+		WHERE is_paid = TRUE  
 		  AND user_id = ? 
 		  AND created_at >= ? 
 		  AND created_at < ? 
 	`, userID, startOfYearTs, startOfNextYearTs).Scan(&paid).Error
 
 	if errPaid != nil {
-		// log.Printf("Error fetching paid tax: %v", errPaid)
 		return c.Status(fiber.StatusInternalServerError).JSON(types.Response{
 			Success: false,
 			Error:   "Greška pri dohvatanju plaćenog poreza.",
@@ -131,18 +126,16 @@ func GetAggregatedTaxForUser(c *fiber.Ctx) error {
 	}
 
 	var unpaid float64
-	// Filter created_at using timestamp ranges
 	errUnpaid := db.DB.Raw(`
 		SELECT COALESCE(SUM(tax_amount), 0)
 		FROM tax
-		WHERE is_paid = 0 
+		WHERE is_paid = FALSE 
 		  AND user_id = ? 
 		  AND created_at >= ? 
 		  AND created_at < ?
 	`, userID, startOfMonthTs, startOfNextMonthTs).Scan(&unpaid).Error
 
 	if errUnpaid != nil {
-		// log.Printf("Error fetching unpaid tax: %v", errUnpaid)
 		return c.Status(fiber.StatusInternalServerError).JSON(types.Response{
 			Success: false,
 			Error:   "Greška pri dohvatanju neplaćenog poreza.",
