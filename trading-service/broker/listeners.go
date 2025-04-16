@@ -257,7 +257,6 @@ func assignOwnership(uid string) error {
 }
 
 func successOTC(uid string) {
-	log.Printf("ajmo malo %v", uid)
 	for true {
 		err := SendOTCTransactionSuccess(uid)
 		if err == nil {
