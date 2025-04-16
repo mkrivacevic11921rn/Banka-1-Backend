@@ -608,7 +608,7 @@ func UpdateAvailableVolumeTx(tx *gorm.DB, securityID uint) error {
 	// Direktno koristi RAW SQL da izbegnemo GORM probleme sa pointerima i imenovanjem
 	query := `
 		SELECT SUM(remaining_parts)
-		FROM orders
+		FROM "order"
 		WHERE security_id = ?
 		  AND lower(direction) = 'sell'
 		  AND lower(status) = 'approved'
