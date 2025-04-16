@@ -2,6 +2,7 @@ package orders
 
 import (
 	"banka1.com/middlewares"
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
@@ -22,6 +23,25 @@ var (
 	orderLocks    = make(map[uint]*sync.Mutex)
 	orderLocksMu  sync.Mutex
 )
+
+func CalculateFee(order types.Order, total float64) float64 {
+	switch strings.ToUpper(order.OrderType) {
+	case "MARKET":
+		fee := total * 0.14
+		if fee > 7 {
+			return 7
+		}
+		return fee
+	case "LIMIT":
+		fee := total * 0.24
+		if fee > 12 {
+			return 12
+		}
+		return fee
+	default:
+		return 0
+	}
+}
 
 // Funkcija koja vraća uvek isti mutex po securityID
 func getLock(securityID uint) *sync.Mutex {
@@ -86,30 +106,6 @@ func MatchOrder(order types.Order) {
 			}
 
 			price := getOrderPrice(order)
-			token, err := middlewares.NewOrderToken(order.Direction, order.UserID, order.AccountID, price)
-			url := fmt.Sprintf("%s/orders/execute/%s", os.Getenv("BANKING_SERVICE"), token)
-
-			hadError := false
-			if err == nil {
-				agent := fiber.Post(url)
-
-				statusCode, _, errs := agent.Bytes()
-
-				fmt.Printf("BANKING-RESPONSE: status=%d, errors=%v\n", statusCode, errs)
-
-				if len(errs) != 0 || statusCode != 200 {
-					hadError = true
-				}
-
-			} else {
-				hadError = true
-			}
-
-			if hadError {
-				fmt.Printf("Nalog %v nije izvršen\n", order.ID)
-				tx.Rollback()
-				break
-			}
 
 			// izvršavanje koliko može
 			matchQuantity := executePartial(order, price, tx)
@@ -124,25 +120,64 @@ func MatchOrder(order types.Order) {
 				tx.Rollback()
 				break
 			}
+			//TO-DO PROVERITI OVO ISPOD
+			//executePartial(order, quantityToExecute, price, tx)
+
+			//if order.RemainingParts == nil || *order.RemainingParts == 0 {
+			//	order.IsDone = true
+			//	order.Status = "done"
+			//}
 
 			// SKIDANJE unita ako je kupovina (smanjuje se dostupnost hartija)
-			if order.Direction == "buy" {
-				var security types.Security
-				if err := tx.First(&security, order.SecurityID).Error; err == nil {
-					security.Volume -= int64(matchQuantity)
-					if security.Volume < 0 {
-						security.Volume = 0
-					}
-					tx.Save(&security)
-				}
-			}
+			//if order.Direction == "buy" {
+			//	var security types.Security
+			//	if err := tx.First(&security, order.SecurityID).Error; err == nil {
+			//		security.Volume -= int64(quantityToExecute)
+			//		if security.Volume < 0 {
+			//			security.Volume = 0
+			//		}
+			//		tx.Save(&security)
+			//	}
+			//}
 
-			// Ažuriraj RemainingParts u bazi (bez is_done/status!)
+			// Ažuriraj order u bazi (unutar transakcije)
 			if err := tx.Model(&types.Order{}).Where("id = ?", order.ID).Update("remaining_parts", *order.RemainingParts).Error; err != nil {
 				fmt.Printf("Greska pri upisu remaining_parts: %v\n", err)
 				tx.Rollback()
 				break
 			}
+
+			//if err := tx.Commit().Error; err != nil {
+			//	fmt.Printf("Nalog %v nije izvršen: %v\n", order.ID, err)
+			//	tx.Rollback()
+			//	break
+			//}
+
+			// Ažuriraj volume preko helper funkcije
+			if err := UpdateAvailableVolumeTx(tx, order.SecurityID); err != nil {
+				fmt.Printf("Greska pri UpdateAvailableVolume: %v\n", err)
+				tx.Rollback()
+				break
+			}
+
+			//// SKIDANJE unita ako je kupovina (smanjuje se dostupnost hartija)
+			//if order.Direction == "buy" {
+			//	var security types.Security
+			//	if err := tx.First(&security, order.SecurityID).Error; err == nil {
+			//		security.Volume -= int64(matchQuantity)
+			//		if security.Volume < 0 {
+			//			security.Volume = 0
+			//		}
+			//		tx.Save(&security)
+			//	}
+			//}
+
+			//// Ažuriraj RemainingParts u bazi (bez is_done/status!)
+			//if err := tx.Model(&types.Order{}).Where("id = ?", order.ID).Update("remaining_parts", *order.RemainingParts).Error; err != nil {
+			//	fmt.Printf("Greska pri upisu remaining_parts: %v\n", err)
+			//	tx.Rollback()
+			//	break
+			//}
 
 			if err := tx.Commit().Error; err != nil {
 				fmt.Printf("Nalog %v nije izvršen: %v\n", order.ID, err)
@@ -259,9 +294,15 @@ func executePartial(order types.Order, price float64, tx *gorm.DB) int {
 		return 0
 	}
 
-	if match.AON && (match.RemainingParts == nil || *match.RemainingParts < *order.RemainingParts) {
-		fmt.Println("Matchovani order je AON i ne može da se izvrši u celosti")
-		return 0
+	if match.AON {
+		if match.RemainingParts == nil || order.RemainingParts == nil {
+			fmt.Println("AON match bez remaining parts")
+			return 0
+		}
+		if *match.RemainingParts < *order.RemainingParts {
+			fmt.Println("Matchovani order je AON i ne može da se izvrši u celosti")
+			return 0
+		}
 	}
 
 	if !canPreExecute(match) {
@@ -269,13 +310,26 @@ func executePartial(order types.Order, price float64, tx *gorm.DB) int {
 		return 0
 	}
 
-	if match.Margin {
+	marginOrder := order
+	if !order.Margin && match.Margin == true {
+		marginOrder = match
+	}
+
+	if marginOrder.Margin {
 		var actuary types.Actuary
-		if err := tx.Where("user_id = ?", match.UserID).First(&actuary).Error; err != nil || actuary.Department != "agent" {
+		if err := tx.Where("user_id = ?", marginOrder.UserID).First(&actuary).Error; err != nil || actuary.Department != "agent" {
 			fmt.Println("Matchovani margin order nema validnog aktuara")
 			return 0
 		}
-		initialMargin := price * float64(*order.RemainingParts) * 0.3 * 1.1
+		if actuary.Department != "agent" {
+			fmt.Println("Korisnik nije agent")
+			return 0
+		}
+		if marginOrder.RemainingParts == nil {
+			fmt.Println("RemainingParts je nil u margin logici")
+			return 0
+		}
+		initialMargin := price * float64(*marginOrder.RemainingParts) * 0.3 * 1.1
 		if actuary.LimitAmount-actuary.UsedLimit < initialMargin {
 			fmt.Println("Matchovani margin order nema dovoljno limita")
 			return 0
@@ -289,6 +343,25 @@ func executePartial(order types.Order, price float64, tx *gorm.DB) int {
 
 	if matchQty <= 0 {
 		fmt.Printf("Nevalidan matchQty = %d za Order %d\n", matchQty, order.ID)
+		return 0
+	}
+
+	total := price * float64(matchQty)
+	fee := CalculateFee(order, total)
+	token, err := middlewares.NewOrderToken(order.Direction, order.UserID, order.AccountID, price, fee)
+	if err != nil {
+		fmt.Printf("Greška pri pravljenju tokena za izvršenje ordera %d: %v\n", order.ID, err)
+		return 0
+	}
+
+	url := fmt.Sprintf("%s/orders/execute/%s", os.Getenv("BANKING_SERVICE"), token)
+
+	agent := fiber.Post(url)
+	statusCode, _, errs := agent.Bytes()
+
+	if len(errs) != 0 || statusCode != 200 {
+		fmt.Printf("Skidanje novca nije uspelo za order %d. Status: %d, Greške: %v\n", order.ID, statusCode, errs)
+		tx.Rollback()
 		return 0
 	}
 
@@ -439,23 +512,37 @@ func canPreExecute(order types.Order) bool {
 		return false
 	}
 	if strings.ToUpper(order.OrderType) == "LIMIT" {
+		if order.LimitPricePerUnit == nil {
+			fmt.Println("LIMIT order bez LimitPricePerUnit")
+			return false
+		}
 		if order.Direction == "sell" {
 			return price >= *order.LimitPricePerUnit
 		} else {
 			return price <= *order.LimitPricePerUnit
 		}
 	} else if strings.ToUpper(order.OrderType) == "STOP" {
+		if order.StopPricePerUnit == nil {
+			fmt.Println("STOP order bez StopPricePerUnit")
+			return false
+		}
 		if order.Direction == "sell" {
 			return price <= *order.StopPricePerUnit
 		} else {
 			return price >= *order.StopPricePerUnit
 		}
 	} else if strings.ToUpper(order.OrderType) == "STOP-LIMIT" {
+		if order.LimitPricePerUnit == nil || order.StopPricePerUnit == nil {
+			fmt.Println("STOP-LIMIT order bez neophodnih cena")
+			return false
+		}
 		if order.Direction == "sell" {
 			return price <= *order.StopPricePerUnit && price >= *order.LimitPricePerUnit
 		} else {
 			return price >= *order.StopPricePerUnit && price <= *order.LimitPricePerUnit
 		}
+	} else if strings.ToUpper(order.OrderType) == "MARKET" {
+		return true
 	}
 	return true
 }
@@ -509,4 +596,37 @@ func IsSettlementDateValid(order *types.Order) bool {
 	}
 
 	return true
+}
+
+func UpdateAvailableVolume(securityID uint) error {
+	return UpdateAvailableVolumeTx(db.DB, securityID)
+}
+
+func UpdateAvailableVolumeTx(tx *gorm.DB, securityID uint) error {
+	var total sql.NullInt64
+
+	// Direktno koristi RAW SQL da izbegnemo GORM probleme sa pointerima i imenovanjem
+	query := `
+		SELECT SUM(remaining_parts)
+		FROM orders
+		WHERE security_id = ?
+		  AND lower(direction) = 'sell'
+		  AND lower(status) = 'approved'
+		  AND COALESCE(is_done, false) = false
+	`
+
+	err := tx.Raw(query, securityID).Scan(&total).Error
+	if err != nil {
+		return fmt.Errorf("greska pri izvrsavanju SUM upita: %w", err)
+	}
+
+	final := int64(0)
+	if total.Valid {
+		final = total.Int64
+	}
+
+	// Ažuriraj volume u security tabeli
+	return tx.Model(&types.Security{}).
+		Where("id = ?", securityID).
+		Update("volume", final).Error
 }
