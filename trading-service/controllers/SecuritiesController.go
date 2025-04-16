@@ -90,7 +90,7 @@ func (sc *SecuritiesController) GetUserSecurities(c *fiber.Ctx) error {
 
 		var lastMod int64
 		err := db.DB.
-			Table("order").
+			Model(&types.Order{}).
 			Select("MAX(last_modified)").
 			Where("user_id = ? AND security_id = ?", p.UserID, p.SecurityID).
 			Scan(&lastMod).Error
