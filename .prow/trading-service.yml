@@ -63,9 +63,10 @@ presubmits:
               # Docker Compose servise.
               docker compose up -d trading-db message-broker user-service banking-service
               
-              go install github.com/swaggo/swag/cmd/swag@latest
               SERVICE_NAME="trading-service"
               cd trading-service
+              go install github.com/swaggo/swag/cmd/swag@latest
+              go install
               go test ./...
               swag init
           securityContext:
