@@ -133,7 +133,7 @@ type PaginatedOrders struct {
 //	@Param			page			query		int											false	"Broj stranice (počinje od 1)"					default(1)
 //	@Param			size			query		int											false	"Broj naloga po stranici"						default(20)
 //	@Param			filter_status	query		string										false	"Status naloga za filtriranje"					example(pending)
-//	@Success		200				{object}	types.Response{data=types.PaginatedOrders}	"Uspešno preuzeta stranica naloga"
+//	@Success		200				{object}	types.Response{data=controllers.PaginatedOrders}	"Uspešno preuzeta stranica naloga"
 //	@Failure		500				{object}	types.Response								"Greška pri preuzimanju naloga iz baze"
 //	@Router			/orders/paged [get]
 func (oc *OrderController) GetOrdersPaged(c *fiber.Ctx) error {
@@ -629,6 +629,7 @@ func (oc *OrderController) GetRealizedProfit(c *fiber.Ctx) error {
 func InitOrderRoutes(app *fiber.App) {
 	orderController := NewOrderController()
 
+	app.Get("/orders/paged", orderController.GetOrdersPaged)
 	app.Get("/orders/:id", orderController.GetOrderByID)
 	app.Get("/orders", orderController.GetOrders)
 	app.Post("/orders", middlewares.Auth, orderController.CreateOrder)
