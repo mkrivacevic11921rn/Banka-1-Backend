@@ -50,6 +50,7 @@ presubmits:
               # pokrenete sve potrebe dependency-e (npr. baze podataka i vaše druge
               # mikroservise).
               start-docker.sh
+              ls $HOME -lah
 
               # PROMENITI PRI KOPIRANJU
               # Ovde treba da pokrenete sve mikroservise i dependency-e koji vam trebaju
@@ -68,7 +69,10 @@ presubmits:
               go install github.com/swaggo/swag/cmd/swag@latest
               go install
               go test ./...
-              swag init
+              echo $PATH
+              echo $GOPATH
+              echo $GOROOT
+              /go/bin/swag init
           securityContext:
             privileged: true
           imagePullPolicy: Always
