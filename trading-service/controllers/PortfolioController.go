@@ -66,8 +66,15 @@ func (sc *PortfolioController) UpdatePublicCount(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := db.DB.Model(&portfolio).
-		Update("public_count", req.PublicCount).Error; err != nil {
+	if portfolio.Security.Type != "Stock" {
+		return c.Status(400).JSON(types.Response{
+			Success: false,
+			Error:   "Hartija od vrednosti mora biti akcija",
+		})
+	}
+
+	// Izmena u bazi
+	if err := db.DB.Model(&portfolio).Update("public_count", req.PublicCount).Error; err != nil {
 		return c.Status(500).JSON(types.Response{
 			Success: false,
 			Error:   "Failed to update public count: " + err.Error(),

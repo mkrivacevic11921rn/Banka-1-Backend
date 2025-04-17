@@ -114,6 +114,8 @@ func main() {
 
 	cron.StartScheduler()
 
+	broker.FailAllOTC()
+
 	broker.StartListeners()
 
 	app := fiber.New()
