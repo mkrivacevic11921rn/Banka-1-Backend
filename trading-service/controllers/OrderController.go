@@ -629,9 +629,9 @@ func (oc *OrderController) GetRealizedProfit(c *fiber.Ctx) error {
 func InitOrderRoutes(app *fiber.App) {
 	orderController := NewOrderController()
 
+	app.Get("/orders/paged", orderController.GetOrdersPaged)
 	app.Get("/orders/:id", orderController.GetOrderByID)
 	app.Get("/orders", orderController.GetOrders)
-	app.Get("/orders/paged", orderController.GetOrdersPaged)
 	app.Post("/orders", middlewares.Auth, orderController.CreateOrder)
 	app.Post("/orders/:id/decline", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), orderController.DeclineOrder)
 	app.Post("/orders/:id/approve", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), orderController.ApproveOrder)
