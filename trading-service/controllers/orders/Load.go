@@ -161,6 +161,10 @@ func CreateInitialSellOrdersFromBank() {
 	}
 
 	for _, sec := range securities {
+		if sec.Ticker == "MSFT" {
+			log.Printf("Preskačem SELL ordere za MSFT zbog testiranja\n")
+			continue
+		}
 		price := sec.LastPrice
 		if price <= 0 {
 			price = 100.0
