@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"time"
 
 	"banka1.com/db"
@@ -68,9 +69,79 @@ AND NOT is_paid;`).Rows()
 //	@Failure		500	{object}	types.Response	"Greska"
 //	@Router			/tax/run [post]
 func (tc *TaxController) RunTax(c *fiber.Ctx) error {
-	return c.Status(500).JSON(types.Response{
-		Success: false,
-		Error:   "Nije implementirano.",
+	now := time.Now()
+	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+	endOfMonth := startOfMonth.AddDate(0, 1, 0)
+
+	rows, err := db.DB.Raw(`
+		SELECT t.id, t.user_id, t.account_id, t.buy_price, t.sell_price, t.currency
+		FROM transactions t
+		WHERE t.sell_price > t.buy_price
+		  AND t.created_at >= ?
+		  AND t.created_at < ?
+		  AND t.tax_paid = FALSE
+	`, startOfMonth, endOfMonth).Rows()
+
+	if err != nil {
+		return c.Status(500).JSON(types.Response{
+			Success: false,
+			Error:   "Error fetching transactions: " + err.Error(),
+		})
+	}
+	defer rows.Close()
+
+	var failedTransactions []int64
+	for rows.Next() {
+		var transaction struct {
+			ID        int64
+			UserID    int64
+			AccountID int64
+			BuyPrice  float64
+			SellPrice float64
+			Currency  string
+		}
+		if err := rows.Scan(&transaction.ID, &transaction.UserID, &transaction.AccountID, &transaction.BuyPrice, &transaction.SellPrice, &transaction.Currency); err != nil {
+			return c.Status(500).JSON(types.Response{
+				Success: false,
+				Error:   "Error reading transaction data: " + err.Error(),
+			})
+		}
+
+		profit := transaction.SellPrice - transaction.BuyPrice
+		tax := profit * 0.15
+
+		err = db.DB.Exec(`
+			UPDATE accounts
+			SET balance = balance - ?
+			WHERE id = ?
+			  AND balance >= ?
+		`, tax, transaction.AccountID, tax).Error
+		if err != nil {
+			failedTransactions = append(failedTransactions, transaction.ID)
+			continue
+		}
+
+		err = db.DB.Exec(`
+			UPDATE transactions
+			SET tax_paid = TRUE
+			WHERE id = ?
+		`, transaction.ID).Error
+		if err != nil {
+			failedTransactions = append(failedTransactions, transaction.ID)
+			continue
+		}
+	}
+
+	if len(failedTransactions) > 0 {
+		return c.Status(207).JSON(types.Response{
+			Success: false,
+			Error:   "Some transactions failed to process: " + fmt.Sprint(failedTransactions),
+		})
+	}
+
+	return c.Status(202).JSON(types.Response{
+		Success: true,
+		Data:    "Tax calculation and deduction completed successfully.",
 	})
 }
 
@@ -96,34 +167,29 @@ func GetAggregatedTaxForUser(c *fiber.Ctx) error {
 
 	now := time.Now()
 	currentYear := now.Year()
-	currentMonth := now.Month()
+	currentMonth := int(now.Month())
 
-	// This Year Range (Jan 1st current year UTC to Jan 1st next year UTC)
 	startOfYear := time.Date(currentYear, time.January, 1, 0, 0, 0, 0, time.UTC)
 	startOfNextYear := time.Date(currentYear+1, time.January, 1, 0, 0, 0, 0, time.UTC)
-	startOfYearTs := startOfYear.Unix()         // Timestamp (seconds) for start of year
-	startOfNextYearTs := startOfNextYear.Unix() // Timestamp (seconds) for end of year (exclusive)
+	startOfYearTs := startOfYear.Unix()
+	startOfNextYearTs := startOfNextYear.Unix()
 
-	// This Month Range (1st current month UTC to 1st next month UTC)
-	startOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, time.UTC)
-	startOfNextMonth := startOfMonth.AddDate(0, 1, 0) // Add 1 month
-	startOfMonthTs := startOfMonth.Unix()             // Timestamp (seconds) for start of month
-	startOfNextMonthTs := startOfNextMonth.Unix()     // Timestamp (seconds) for end of month (exclusive)
-	// --- End Timestamp Calculations ---
+	startOfMonth := time.Date(currentYear, time.Month(currentMonth), 1, 0, 0, 0, 0, time.UTC) // Use integer month
+	startOfNextMonth := startOfMonth.AddDate(0, 1, 0)
+	startOfMonthTs := startOfMonth.Unix()
+	startOfNextMonthTs := startOfNextMonth.Unix()
 
 	var paid float64
-	// Filter created_at using timestamp ranges
 	errPaid := db.DB.Raw(`
 		SELECT COALESCE(SUM(tax_amount), 0) 
 		FROM tax
-		WHERE is_paid = 1 
+		WHERE is_paid = TRUE  
 		  AND user_id = ? 
 		  AND created_at >= ? 
 		  AND created_at < ? 
 	`, userID, startOfYearTs, startOfNextYearTs).Scan(&paid).Error
 
 	if errPaid != nil {
-		// log.Printf("Error fetching paid tax: %v", errPaid)
 		return c.Status(fiber.StatusInternalServerError).JSON(types.Response{
 			Success: false,
 			Error:   "Greška pri dohvatanju plaćenog poreza.",
@@ -131,18 +197,16 @@ func GetAggregatedTaxForUser(c *fiber.Ctx) error {
 	}
 
 	var unpaid float64
-	// Filter created_at using timestamp ranges
 	errUnpaid := db.DB.Raw(`
 		SELECT COALESCE(SUM(tax_amount), 0)
 		FROM tax
-		WHERE is_paid = 0 
+		WHERE is_paid = FALSE 
 		  AND user_id = ? 
 		  AND created_at >= ? 
 		  AND created_at < ?
 	`, userID, startOfMonthTs, startOfNextMonthTs).Scan(&unpaid).Error
 
 	if errUnpaid != nil {
-		// log.Printf("Error fetching unpaid tax: %v", errUnpaid)
 		return c.Status(fiber.StatusInternalServerError).JSON(types.Response{
 			Success: false,
 			Error:   "Greška pri dohvatanju neplaćenog poreza.",
